@@ -1,0 +1,67 @@
+# MAIN CONTEXT
+# lower level contexts inherit information from upper level contexts
+# https://www.digitalocean.com/community/tutorials/understanding-the-nginx-configuration-file-structure-and-configuration-contexts
+
+events {
+	# EVENTS CONTEXT
+	# supposed to be like epoll events
+}
+
+http {
+	# HTTP CONTEXT
+	# context for all http(s?) requests
+
+	# Apparently all the conf file is based on NGINX's server context
+	server {
+		# SERVER CONTEXT
+		# context for each server for a different server
+		# multiple servers can indeed exist for different requests
+		# https://www.digitalocean.com/community/tutorials/understanding-nginx-server-and-location-block-selection-algorithms
+
+		listen PORT # server is now listening to PORT
+		# NGINX will differentiate different servers first by port
+
+		server_name DOMAIN_NAME # the name of the server, and thus the URL/s
+		# NGINX will then differentiate servers listening to the same port by this
+		# ACCEPTS REGEX D^:
+
+		# directives in server if specified should override directives in http context
+
+		# modifiers can be =, ~, ~* and ^~ whichs changes the accuracy needed for the match
+		location modifier location_match {
+			# LOCATION CONTEXT
+			# checks what the (y)URI looks like to make a match
+			# THIS FUCKER ALSO ACCEPTS REGEX T_T
+
+
+			location {} # Locations can be nested inside other locations
+			# An example of nested locations would be a location that matches *.html
+			# and then one that matches based on ?data=1 or ?data=2 inside the *.html location
+
+			autoindex on # enables (or disables with off) directory listing
+		}
+
+		index index.html, index.htm # indicates, from left to right, in which order try indexes
+		# this type of redirect gets checked before other locations
+
+		try_files file1, file2 # Can also exist in server
+		# checks the existence of files from left to right and uses first match to jump to location
+		location = file1 {
+			# things to do with file1
+		}
+		# like that
+
+		error_page 404  /404.html; # define pages to be served in case of certain errors
+
+		rewrite # Este es un quilombo y no creo que lo pida el subject, paso
+
+		client_max_body_size # Nginx default is 1mb
+
+		location *.extension {
+			fastcgi_pass # This is for cgi passes but I dunno exactly how to implement it
+			# Maybe with execve?
+			# NGINX does not support native CGI anyways so we have space to work here
+			# I say we implement it with a mikucgi_pass keyword (?)
+		}
+	}
+}
