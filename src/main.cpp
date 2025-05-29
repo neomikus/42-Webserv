@@ -1,15 +1,40 @@
 #include "webserv.hpp"
 
-struct pollfd {
-	int   fd;         /* file descriptor */
-	short events;     /* requested events */
-	short revents;    /* returned events */
-};
 
+Server context_server(std::ifstream &confFile)
+{
 
-int	main(/*int argc, char **argv*/) {
-	int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	
+	return newServer;
+}
+location context_location()
+{
+	location loca;
+	return loca;
+}
 
+int	main(int argc, char *argv[]) {
 
-	//write(fd, );
+	if (argc < 2)
+	{
+		std::cout << "file not given" << std::endl;
+		return (1);
+	}
+
+	std::vector<Server> servers;
+
+	std::ifstream		confFile(argv[1]);
+
+	if (!confFile.is_open())
+	{
+		std::cout << "file not found" << std::endl;
+		return (1);
+	}
+
+	for (std::string buffer; !confFile.eof(); std::getline(confFile, buffer))
+	{
+		if (buffer == "server {")
+			servers.push_back(context_server(confFile));
+	}
+	return (0);
 }

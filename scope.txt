@@ -28,7 +28,7 @@ que tiene que salir del parseo:
 
 ----------------------------------------------------------------
 
-server {
+server { ("")
 	
 	(key_word" "value;)
 
@@ -45,7 +45,7 @@ server {
 	error_page [404 ...] /page.html; ([int" "int" "...]" "string)
 	error_page [404 ...] =200 /page.html; ([int" "int" "...]" "=int" "string)
 
-	max_body_size 1mb; (intstring)
+	client_max_body_size 1mb; (intstring)
 
 	locations [ =, ~, ~*, ^~ ] / { (string" "string) ???
 	locations / { (string)
@@ -55,10 +55,12 @@ server {
 
 		root path.html; (string)
 
-
-
 		[string" "string" "...]
 		index [file.html ...]; ([string" "string" "...])
+
+		cgi php; (string)
+		cgi python; (string)
+		cgi go; (string)
 
 	}
 
