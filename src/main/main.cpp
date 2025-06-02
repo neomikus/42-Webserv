@@ -1,18 +1,5 @@
 #include "webserv.hpp"
 
-
-Server context_server(std::ifstream &confFile)
-{
-
-	
-	return newServer;
-}
-location context_location()
-{
-	location loca;
-	return loca;
-}
-
 int	main(int argc, char *argv[]) {
 
 	if (argc < 2)
@@ -34,7 +21,8 @@ int	main(int argc, char *argv[]) {
 	for (std::string buffer; !confFile.eof(); std::getline(confFile, buffer))
 	{
 		if (buffer == "server {")
-			servers.push_back(context_server(confFile));
+			servers.push_back(Server(confFile));
 	}
+	std::cout << servers.front().displayConf() << std::endl;
 	return (0);
 }
