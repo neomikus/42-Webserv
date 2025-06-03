@@ -17,7 +17,63 @@ std::string trim(std::string str)
 Server::Server() { }
 
 
-location Server::parseLocation(std::string value, std::ifstream &confFile) {
+Location::Location()
+{
+}
+
+Location::~Location()
+{
+}
+
+
+Location::Location(std::string value, std::ifstream &confFile)
+{
+	std::cout << value << std::endl;
+
+	uri = value;
+	cgi = NONE;
+	location = NULL;
+	std::string key_words[8] = {
+	"error_page", "location", "autoindex", "root", "index", "cgi"};
+	for (std::string buffer; !confFile.eof(); std::getline(confFile, buffer))
+	{
+		buffer = trim(buffer);
+		if (buffer.empty())
+			continue;
+		if (buffer == "}")
+			return ;
+		int key;
+		for (key = 0; key < 8; key++)
+			if (buffer.substr(0, buffer.find_first_of(' ')) == key_words[key])
+				break;
+		value = buffer.substr(key_words[key].size(), buffer.find_first_of(';'));
+		switch (key)
+		{
+			case 0:
+				error_pages.push_back(parseErrorPage(value));
+				break;
+			case 1:
+				location = new Location(value, confFile);
+				break;
+			case 2:
+				autoindex = parseAutoindex(value);
+				break;
+			case 3:
+				root = parseRoot(value);
+				break;
+			case 4:
+				index = parseIndex(value);
+				break;
+			case 5:
+				cgi = parseCgi(value);
+				break;
+			default:
+				break;
+		}		
+	}
+}
+
+/* location parseLocation(std::string value, std::ifstream &confFile) {
 	std::cout << value << std::endl;
 	location newLocation;
 
@@ -63,19 +119,19 @@ location Server::parseLocation(std::string value, std::ifstream &confFile) {
 		}		
 	}
 	return newLocation;
-}
+} */
 
-std::string	Server::parseServerName(std::string value) {
+std::string	parseServerName(std::string value) {
 	std::cout << value << std::endl;
 	return("NO NAME");
 }
 
-hostport Server::parseHostPort(std::string value) {
+hostport parseHostPort(std::string value) {
 	std::cout << value << std::endl;
 	return std::make_pair("default", 8080);
 }
 
-error_page	Server::parseErrorPage(std::string value) {
+error_page	parseErrorPage(std::string value) {
 	std::cout << value << std::endl;
 	error_page example;
 
@@ -89,27 +145,27 @@ error_page	Server::parseErrorPage(std::string value) {
 	return(example);
 }
 
-cgi_options	Server::parseCgi(std::string value) {
+cgi_options	parseCgi(std::string value) {
 	std::cout << value << std::endl;
 	return(PHP);
 }
 
-int	Server::parseBodySize(std::string value) {
+int	parseBodySize(std::string value) {
 	std::cout << value << std::endl;
 	return (32);
 }
 
-bool	Server::parseAutoindex(std::string value) {
+bool	parseAutoindex(std::string value) {
 	std::cout << value << std::endl;
 	return(false);
 }
 
-std::string	Server::parseRoot(std::string value) {
+std::string	parseRoot(std::string value) {
 	std::cout << value << std::endl;
 	return("Default");
 }
 
-std::vector<std::string>	Server::parseIndex(std::string value) {
+std::vector<std::string>	parseIndex(std::string value) {
 	std::cout << value << std::endl;
 	std::vector<std::string> defaultIndex;
 
@@ -152,7 +208,7 @@ Server::Server(std::ifstream &confFile)
 				max_body_size = parseBodySize(value);
 				break;
 			case 4:
-				locations.push_back(parseLocation(value, confFile));
+				locations.push_back(Location(value, confFile));
 				break;
 			case 5:
 				autoindex = parseAutoindex(value);
@@ -223,8 +279,8 @@ std::string	Server::displayConf() const {
 	else
 	{
 		strConf << HGRE << std::setw(30) << std::setfill('+') << "\n";
-		for (std::vector<location>::const_iterator it = locations.begin(); it != locations.end(); it++)
-			strConf << *it << std::setw(30) << std::setfill('+') << "\n";
+		for (std::vector<Location>::const_iterator it = locations.begin(); it != locations.end(); it++)
+			strConf << *it << HGRE << std::setw(30) << std::setfill('+') << "\n";
 	}
 	strConf << HBLU << std::setw(30) << std::setfill('-') << "\n";
 	return(strConf.str());
@@ -235,49 +291,55 @@ std::ostream &operator<<(std::ostream &stream, const Server server) {
 	return (stream); 
 }
 
-
-std::ostream &operator<<(std::ostream &stream, const location location) {
+std::string Location::displayConf() const {
+	std::stringstream strConf;
 	std::string	cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
 
-	stream << "-| URI\t\t: " << location.uri << "\n";
+	strConf << "-| URI\t\t: " << uri << "\n";
 
-	stream << "-| ROOT\t\t: " << location.root << "\n";
+	strConf << "-| ROOT\t\t: " << root << "\n";
 
-	stream << "-| AUTOINDEX\t: " << (location.autoindex ? "TRUE" : "FALSE") << "\n";
+	strConf << "-| AUTOINDEX\t: " << (autoindex ? "TRUE" : "FALSE") << "\n";
 
-	stream << "-| CGI\t\t: " << cgiStr[location.cgi]<< "\n";
+	strConf << "-| CGI\t\t: " << cgiStr[cgi]<< "\n";
 
-	stream << "-| INDEX\t:";
-	if (location.index.empty())
-		stream << " NONE\n";
+	strConf << "-| INDEX\t:";
+	if (index.empty())
+		strConf << " NONE\n";
 	else
 	{
-		for (std::vector<std::string>::const_iterator it = location.index.begin(); it != location.index.end(); it++)
-			stream << "\n- " << " [" << *it << "]";
-		stream << "\n";
+		for (std::vector<std::string>::const_iterator it = index.begin(); it != index.end(); it++)
+			strConf << "\n- " << " [" << *it << "]";
+		strConf << "\n";
 	}
 
-	stream << "| ERROR PAGES\t:";
-	if (location.error_pages.empty())
-		stream << " NONE\n";
+	strConf << "| ERROR PAGES\t:";
+	if (error_pages.empty())
+		strConf << " NONE\n";
 	else
 	{
-		for (std::vector<error_page>::const_iterator it = location.error_pages.begin(); it != location.error_pages.end(); it++)
+		for (std::vector<error_page>::const_iterator it = error_pages.begin(); it != error_pages.end(); it++)
 		{
-			stream << "\n-  [";
+			strConf << "\n-  [";
 			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
-				stream << *it_catch << " ";
-			stream << "= " << it->to_replace;
-			stream << " \\ " << it->page;
-			stream << "]";
+				strConf << *it_catch << " ";
+			strConf << "= " << it->to_replace;
+			strConf << " \\ " << it->page;
+			strConf << "]";
 		}
-		stream << "\n";
+		strConf << "\n";
 	}
-	if (location.location)
+	if (location)
 	{
-		stream << HMAG << std::setw(30) << std::setfill('*') << "\n";
-		stream << location.location << "\n";
-		stream << std::setw(30) << std::setfill('*') << "\n";
+		strConf << HMAG << std::setw(30) << std::setfill('*') << "\n";
+		strConf << *location << "\n";
+		strConf << std::setw(30) << std::setfill('*') << "\n";
 	}
-	return (stream); 
+	return (strConf.str());
+}
+
+std::ostream &operator<<(std::ostream &stream, const Location location) {
+	stream << location.displayConf();
+	return(stream);
+	
 }
