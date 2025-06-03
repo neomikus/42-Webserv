@@ -1,4 +1,5 @@
-#include "webserv.hpp"
+#include "Webserv.hpp"
+#include "Server.hpp"
 
 int	main(int argc, char *argv[]) {
 

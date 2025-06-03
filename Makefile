@@ -6,11 +6,11 @@
 #    By: xortega <xortega@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/02/05 11:02:31 by xortega           #+#    #+#              #
-#    Updated: 2025/02/05 12:13:00 by xortega          ###   ########.fr        #
+#    Updated: 2025/06/03 12:58:36 by xortega          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME		:=	webserver
+NAME		:=	webserv
 OBJ_DIR		:=	obj/
 SRC_PATH	:=	src/
 CC			:=	c++
@@ -19,7 +19,7 @@ CPPFLAGS = -Wall -Wextra -Werror -Wshadow -std=c++98 -Iinclude
 # SRCS #
 MAIN		:= main
 PARSE		:= 
-ClASSES		:= webserv
+ClASSES		:= webserv location server
 RAYS	 	:= 
 PARSING	 	:=
 
