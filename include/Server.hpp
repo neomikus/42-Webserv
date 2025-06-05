@@ -10,7 +10,7 @@ class Server {
 		std::string					server_name;
 		std::vector<hostport>		hostports;
 		std::vector<error_page>		error_pages;
-		int							max_body_size;
+		long long					max_body_size;
 		bool						autoindex;
 		std::string					root;
 		std::vector<std::string>	index;

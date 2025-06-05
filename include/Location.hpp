@@ -13,7 +13,7 @@ class Location {
 		std::vector<error_page>		error_pages;
 		cgi_options					cgi;
 		std::vector<Location*>		locations;
-		int							level;
+		long long					level;
 
 	public:
 

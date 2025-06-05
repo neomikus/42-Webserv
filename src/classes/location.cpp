@@ -7,11 +7,21 @@ Location::~Location(){ }
 
 Location::Location(std::string value, std::ifstream &confFile, int nest)
 {
-	std::cout << value << std::endl;
+	//std::cout << "[" << value << "]" << std::endl;
+
+	if (value.empty() || value.find('{') == value.npos)
+		exit(0);
+
+	value = rtrim(value.substr(0, value.find('{')));
+
+	if (value.empty() || value.find(' ') != value.npos || value.find('\t') != value.npos)
+		exit(0);
 
 	level = nest;
 	uri = value;
 	cgi = NONE;
+	autoindex = false;
+
 	std::string key_words[8] = {
 	"error_page", "location", "autoindex", "root", "index", "cgi"};
 	for (std::string buffer; !confFile.eof(); std::getline(confFile, buffer))
@@ -21,30 +31,32 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 			continue;
 		if (buffer == "}")
 			return ;
+		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)
+			exit(0);
 		int key;
 		for (key = 0; key < 8; key++)
 			if (buffer.substr(0, buffer.find_first_of(' ')) == key_words[key])
 				break;
-		value = buffer.substr(key_words[key].size(), buffer.find_first_of(';'));
+		value = buffer.substr(key_words[key].size(), buffer.find_first_of(';') - key_words[key].size());
 		switch (key)
 		{
 			case 0:
-				error_pages.push_back(parseErrorPage(value));
+				error_pages.push_back(parseErrorPage(rtrim(trim(value))));
 				break;
 			case 1:
-			locations.push_back(new Location(value, confFile, level + 1));
+			locations.push_back(new Location(rtrim(trim(value)), confFile, level + 1));
 				break;
 			case 2:
-				autoindex = parseAutoindex(value);
+				autoindex = parseAutoindex(rtrim(trim(value)));
 				break;
 			case 3:
-				root = parseRoot(value);
+				root = parseRoot(rtrim(trim(value)));
 				break;
 			case 4:
-				index = parseIndex(value);
+				index = parseIndex(rtrim(trim(value)));
 				break;
 			case 5:
-				cgi = parseCgi(value);
+				cgi = parseCgi(rtrim(trim(value)));
 				break;
 			default:
 				break;
@@ -54,53 +66,50 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 std::string Location::displayConf() const {
 	std::stringstream strConf;
 	std::string tabs(level, '\t');
-	const char *colors[4] = {HRED, HGRE, HMAG, HBLU};
+	const char *colors[4] = {HBLU, HGRE, HMAG, HRED};
 	std::string	cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
 
 	strConf << colors[level % 4];
 
 	strConf << tabs << "| URI\t\t: " << uri << "\n";
 
-	strConf << tabs << "| ROOT\t\t: " << root << "\n";
+	if (!root.empty())
+		strConf << tabs << "| ROOT\t\t: " << root << "\n";
 
-	strConf << tabs << "| AUTOINDEX\t: " << (autoindex ? "TRUE" : "FALSE") << "\n";
+	if (autoindex)
+	strConf << tabs << "| AUTOINDEX\t: TRUE" << "\n";
 
+	if (cgi != NONE)
 	strConf << tabs << "| CGI\t\t: " << cgiStr[cgi]<< "\n";
 
-	strConf << tabs << "| INDEX\t\t:";
-	if (index.empty())
-		strConf << " NONE\n";
-	else
+	if (!index.empty())
 	{
+		strConf << tabs << "| INDEX\t\t:";
 		for (std::vector<std::string>::const_iterator it = index.begin(); it != index.end(); it++)
 			strConf << "\n" << tabs << "  - [" << *it << "]";
 		strConf << tabs << "\n";
 	}
 
-	strConf << tabs << "| ERROR PAGES\t:";
-	if (error_pages.empty())
-		strConf << " NONE\n";
-	else
+	if (!error_pages.empty())
 	{
+		strConf << tabs << "| ERROR PAGES\t:";
 		for (std::vector<error_page>::const_iterator it = error_pages.begin(); it != error_pages.end(); it++)
 		{
 			strConf << "\n" << tabs << "  - [";
 			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
 				strConf << *it_catch << " ";
-			strConf << "= " << it->to_replace;
-			strConf << " \\ " << it->page;
-			strConf << "]";
+			if (it->to_replace != -1)
+				strConf << "= " << it->to_replace;
+			strConf << " \\ " << it->page << "]";
 		}
-		strConf << tabs << "\n";
+		strConf << "\n";
 	}
-	strConf << tabs << "| LOCATION\t:";
-	if (locations.empty())
-		strConf << " NONE\n";
-	else
+	if (!locations.empty())
 	{
+		strConf << tabs << "| LOCATION\t:";
 		strConf << "\n";
 		for (std::vector<Location*>::const_iterator it = locations.begin(); it != locations.end(); it++)
-			strConf << **it << "\n";
+			strConf << **it;
 	}
 	return (strConf.str());
 }

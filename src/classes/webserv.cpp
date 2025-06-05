@@ -1,5 +1,14 @@
 #include "Webserv.hpp"
 
+bool strIsDigit(std::string const str)
+{
+	for (std::string::const_iterator it = str.begin(); it != str.end(); it++)
+		if (!std::isdigit(*it))
+			return (false);
+	return(true);
+}
+
+
 std::string trim(std::string str)
 {
 	for (std::string::iterator it = str.begin(); it != str.end(); it++)
@@ -12,61 +21,195 @@ std::string trim(std::string str)
 	}
 	return str;
 }
+std::string rtrim(std::string str)
+{
+	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; it--)
+	{
+		if (*it != ' ' && *it != '\t')
+		{
+			str.erase(it + 1, str.end());
+			return str;
+		}
+	}
+	return str;
+}
 
 
 std::string	parseServerName(std::string value) {
-	std::cout << value << std::endl;
-	return("NO NAME");
+	std::cout << "[" << value << "]" << std::endl;
+
+	if (value.empty() || value.find('\t') != value.npos || value.find(' ') != value.npos)
+		exit(0);
+	return(value);
 }
 
 hostport parseHostPort(std::string value) {
-	std::cout << value << std::endl;
-	return std::make_pair("default", 8080);
+	//std::cout << "[" << value << "]" << std::endl;
+	if (value.empty())
+		exit(0);
+
+	std::string			host = "";
+	int					port = -1;
+	std::stringstream	check;
+
+	if (value.find(':') != value.npos)
+	{
+		host = value.substr(0, value.find(':'));
+		port = atoi(value.substr(host.size() + 1, value.size()).c_str());
+		check << port;
+		if (check.str().size() == value.size() - host.size() - 1)
+			return std::make_pair(host, port);
+		exit(0);
+	}
+
+	for (std::string::iterator it = value.begin(); it != value.end(); it++)
+		if (!isdigit(*it))
+			return std::make_pair(value, -1);
+	return std::make_pair(host, atoi(value.c_str()));
+
 }
 
 error_page	parseErrorPage(std::string value) {
-	std::cout << value << std::endl;
-	error_page example;
+	//std::cout << "[" << value << "]" << std::endl;
 
-	example.to_catch.push_back(404);
-	example.to_catch.push_back(403);
-	example.to_catch.push_back(402);
-	example.to_replace = 200;
-	example.page = "error.html";
+	if (value.empty() || value.find('/') == value.npos)
+		exit(0);
+	
+	error_page	error_page;
+	error_page.page = "";
+	error_page.to_replace = 0;
 
+	std::string	strPage;
+	std::string	redirect;
+	std::string	error_codes;
 
-	return(example);
+	strPage = trim(value.substr(value.find('/') + 1));
+
+	value = rtrim(value.substr(0, value.find('/')));
+
+	if (strPage.find(' ') != strPage.npos)
+		exit(0);
+
+	if (value.find('=') != value.npos)
+	{
+		error_codes = rtrim(value.substr(0, value.find('=')));
+		redirect = trim(value.substr(value.find('=') + 1));	}
+	else
+	{
+		error_codes = value;
+		error_page.to_replace = -1;
+	}
+
+	if (error_codes.empty() || (!redirect.empty() && !strIsDigit(redirect)))
+		exit(0);
+
+	if (error_codes.find(' ') != error_codes.npos)
+	{
+		std::stringstream	split(error_codes);
+		while (split)
+		{
+			std::string			error_c;
+			split >> error_c;
+			if(error_c.empty())
+				break ;
+			if (!strIsDigit(error_c))
+				exit (0);
+			error_page.to_catch.push_back(atoi(error_c.c_str()));
+		}
+		
+	}
+	else if (strIsDigit(error_codes))
+		error_page.to_catch.push_back(atoi(error_codes.c_str()));
+	else
+		exit (0);
+
+	error_page.page = strPage;
+	if (error_page.to_replace != -1)
+		error_page.to_replace = atoi(redirect.c_str());
+
+	return(error_page);
 }
 
 cgi_options	parseCgi(std::string value) {
-	std::cout << value << std::endl;
-	return(PHP);
+	//std::cout << "[" << value << "]" << std::endl;
+	std::string	cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
+
+	for (size_t i = 0; i < 5; i++)
+	{
+		if (value == cgiStr[i])
+			return (static_cast<cgi_options>(i));
+	}
+	exit (0);
 }
 
-int	parseBodySize(std::string value) {
-	std::cout << value << std::endl;
-	return (32);
+long long parseBodySize(const std::string value) {
+	//std::cout << "[" << value << "]" << std::endl;
+	size_t i = 0;
+
+	std::map<std::string, int> unitMap;
+	unitMap["b"] = 0;
+	unitMap["k"] = 1;
+	unitMap["kb"] = 1;
+	unitMap["m"] = 2;
+	unitMap["mb"] = 2;
+	unitMap["g"] = 3;
+	unitMap["gb"] = 3;
+
+	long long multipliers[] = {
+		1LL, 1024LL, 1024LL * 1024, 1024LL * 1024 * 1024
+	};
+
+	while (i < value.size() && std::isdigit(value[i]))
+		++i;
+
+	std::string unit = value.substr(i);
+
+	long long size = atoll(value.substr(0, i).c_str());
+
+	if (i == 0)
+		exit (0);
+	
+	for (i = 0; i < unit.size(); ++i) {
+		unit[i] = std::tolower(unit[i]);
+	}
+
+	if (unitMap.find(unit) == unitMap.end())
+		exit (0);
+
+
+	return (size * multipliers[unitMap.find(unit)->second]);
 }
 
 bool	parseAutoindex(std::string value) {
-	std::cout << value << std::endl;
-	return(false);
+	//std::cout << "[" << value << "]" << std::endl;
+	if (value == "on")
+		return (true);
+	if (value == "off")
+		return(false);
+	exit (0);
 }
 
 std::string	parseRoot(std::string value) {
-	std::cout << value << std::endl;
-	return("Default");
+	//std::cout << "[" << value << "]" << std::endl;
+	if (value.find(' ') != value.npos || value.find('\t') != value.npos)
+		exit (0);
+	return(value);
 }
 
 std::vector<std::string>	parseIndex(std::string value) {
-	std::cout << value << std::endl;
-	std::vector<std::string> defaultIndex;
+	//std::cout << "[" << value << "]" << std::endl;
+	std::vector<std::string> indexVector;
 
-	defaultIndex.push_back("index1");
-	defaultIndex.push_back("index2");
-	defaultIndex.push_back("index3");
+	std::stringstream	split(value);
+	while (split)
+	{
+		std::string			index;
+		split >> index;
+		if(index.empty())
+			break ;
+		indexVector.push_back(index);
+	}
 
-	return(defaultIndex);
-
+	return(indexVector);
 }
 

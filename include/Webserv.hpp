@@ -11,6 +11,10 @@
 #include <fstream>
 #include <utility>
 #include <map>
+#include <cstdlib>
+#include <iostream>
+#include <cmath>
+
 
 #define HMAG		"\033[95m"
 #define HCYA		"\033[96m"
@@ -42,12 +46,13 @@ typedef std::pair<std::string, int> hostport;
 std::string					parseServerName(std::string value);
 hostport					parseHostPort(std::string value);
 error_page					parseErrorPage(std::string value);
-int							parseBodySize(std::string value);
+long long					parseBodySize(std::string value);
 bool						parseAutoindex(std::string value);
 std::string					parseRoot(std::string value);
 std::vector<std::string>	parseIndex(std::string value);
 cgi_options					parseCgi(std::string value);
 
 std::string trim(std::string str);
+std::string rtrim(std::string str);
 
 #endif
