@@ -1,52 +1,23 @@
 #include "Webserv.hpp"
 
-bool strIsDigit(std::string const str)
-{
-	for (std::string::const_iterator it = str.begin(); it != str.end(); it++)
-		if (!std::isdigit(*it))
-			return (false);
-	return(true);
-}
-
-
-std::string trim(std::string str)
-{
-	for (std::string::iterator it = str.begin(); it != str.end(); it++)
-	{
-		if (*it != ' ' && *it != '\t')
-		{
-			str.erase(str.begin(), it);
-			return str;
-		}
-	}
-	return str;
-}
-std::string rtrim(std::string str)
-{
-	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; it--)
-	{
-		if (*it != ' ' && *it != '\t')
-		{
-			str.erase(it + 1, str.end());
-			return str;
-		}
-	}
-	return str;
-}
-
-
 std::string	parseServerName(std::string value) {
-	std::cout << "[" << value << "]" << std::endl;
+	//std::cout << "[" << value << "]" << std::endl;
 
 	if (value.empty() || value.find('\t') != value.npos || value.find(' ') != value.npos)
+	{
+		std::cout << "ERROR" << std::endl;
 		exit(0);
+	}
 	return(value);
 }
 
 hostport parseHostPort(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
 	if (value.empty())
+	{
+		std::cout << "ERROR" << std::endl;
 		exit(0);
+	}
 
 	std::string			host = "";
 	int					port = -1;
@@ -59,7 +30,10 @@ hostport parseHostPort(std::string value) {
 		check << port;
 		if (check.str().size() == value.size() - host.size() - 1)
 			return std::make_pair(host, port);
+	{
+		std::cout << "ERROR" << std::endl;
 		exit(0);
+	}
 	}
 
 	for (std::string::iterator it = value.begin(); it != value.end(); it++)
@@ -73,7 +47,10 @@ error_page	parseErrorPage(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
 
 	if (value.empty() || value.find('/') == value.npos)
+	{
+		std::cout << "ERROR" << std::endl;
 		exit(0);
+	}
 	
 	error_page	error_page;
 	error_page.page = "";
@@ -83,17 +60,20 @@ error_page	parseErrorPage(std::string value) {
 	std::string	redirect;
 	std::string	error_codes;
 
-	strPage = trim(value.substr(value.find('/') + 1));
+	strPage = strTrim(value.substr(value.find('/') + 1));
 
-	value = rtrim(value.substr(0, value.find('/')));
+	value = strTrim(value.substr(0, value.find('/')));
 
 	if (strPage.find(' ') != strPage.npos)
+	{
+		std::cout << "ERROR" << std::endl;
 		exit(0);
+	}
 
 	if (value.find('=') != value.npos)
 	{
-		error_codes = rtrim(value.substr(0, value.find('=')));
-		redirect = trim(value.substr(value.find('=') + 1));	}
+		error_codes = strTrim(value.substr(0, value.find('=')));
+		redirect = strTrim(value.substr(value.find('=') + 1));	}
 	else
 	{
 		error_codes = value;
@@ -101,7 +81,10 @@ error_page	parseErrorPage(std::string value) {
 	}
 
 	if (error_codes.empty() || (!redirect.empty() && !strIsDigit(redirect)))
+	{
+		std::cout << "ERROR" << std::endl;
 		exit(0);
+	}
 
 	if (error_codes.find(' ') != error_codes.npos)
 	{
@@ -156,7 +139,7 @@ long long parseBodySize(const std::string value) {
 	unitMap["gb"] = 3;
 
 	long long multipliers[] = {
-		1LL, 1024LL, 1024LL * 1024, 1024LL * 1024 * 1024
+		BYTE, KB, MB, GB
 	};
 
 	while (i < value.size() && std::isdigit(value[i]))

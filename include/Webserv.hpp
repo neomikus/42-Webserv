@@ -27,6 +27,11 @@
 #define TULN		"\033[4m"
 #define RST			"\033[0m"
 
+const long long BYTE = 1LL;
+const long long KB = BYTE * 1024;
+const long long MB = KB * 1024;
+const long long GB = MB * 1024;
+
 struct error_page {
 	std::vector<int>			to_catch;
 	int							to_replace;
@@ -52,7 +57,7 @@ std::string					parseRoot(std::string value);
 std::vector<std::string>	parseIndex(std::string value);
 cgi_options					parseCgi(std::string value);
 
-std::string trim(std::string str);
-std::string rtrim(std::string str);
+std::string strTrim(std::string str);
+bool strIsDigit(std::string const str);
 
 #endif

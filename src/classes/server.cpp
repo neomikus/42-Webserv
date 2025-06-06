@@ -9,45 +9,50 @@ Server::Server(std::ifstream &confFile)
 {	
 	std::string key_words[9] = {
 	"server_name", "listen", "error_page", "client_max_body_size", "location", "autoindex", "root", "index", "error" };
+	max_body_size = MB;
 	for (std::string buffer; !confFile.eof(); std::getline(confFile, buffer))
 	{
-		buffer = trim(buffer);
-		if (buffer.empty())
+		buffer = strTrim(buffer);
+		if (buffer.empty() || buffer == ";" || buffer[0] == '#')
 			continue;
 		if (buffer == "}")
 			return ;
 		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)
+		{
+			std::cout << "ERROR" << std::endl;
 			exit(0);
+		}
 		int key;
 		for (key = 0; key < 8; key++)
 			if (buffer.substr(0, buffer.find_first_of(' ')) == key_words[key])
 				break;
 		std::string value = buffer.substr(key_words[key].size(), buffer.find_first_of(';') - key_words[key].size());
+		value = strTrim(value);
 		switch (key)
 		{
 			case 0:
-				server_name = parseServerName(rtrim(trim(value)));
+				server_name = parseServerName(value);
 				break;
 			case 1:
-				hostports.push_back(parseHostPort(rtrim(trim(value))));
+				hostports.push_back(parseHostPort(value));
 				break;
 			case 2:
-				error_pages.push_back(parseErrorPage(rtrim(trim(value))));
+				error_pages.push_back(parseErrorPage(value));
 				break;
 			case 3:
-				max_body_size = parseBodySize(rtrim(trim(value)));
+				max_body_size = parseBodySize(value);
 				break;
 			case 4:
-				locations.push_back(Location(rtrim(trim(value)), confFile, 1));
+				locations.push_back(Location(value, confFile, 1));
 				break;
 			case 5:
-				autoindex = parseAutoindex(rtrim(trim(value)));
+				autoindex = parseAutoindex(value);
 				break;
 			case 6:
-				root = parseRoot(rtrim(trim(value)));
+				root = parseRoot(value);
 				break;
 			case 7:
-				index = parseIndex(rtrim(trim(value)));
+				index = parseIndex(value);
 				break;
 			default:
 				break;
@@ -57,16 +62,21 @@ Server::Server(std::ifstream &confFile)
 
 std::string	Server::displayConf() const {
 	std::stringstream strConf;
-	strConf << HBLU"\n";
-	strConf << "| SERVER NAME\t: " << server_name <<  + "\n";
-	strConf << "| MAX BODY SIZE\t: " << max_body_size <<  + "\n";
-	strConf << "| AUTO INDEX\t: " << (autoindex ? "TRUE" : "FALSE") <<  + "\n";
-	strConf << "| ROOT\t\t: " << root << "\n";
-	strConf << "| INDEX\t\t:";
-	if (index.empty())
-		strConf << " NONE\n";
-	else
+	strConf << HBLU;
+	if (!server_name.empty())
+		strConf << "| SERVER NAME\t: " << server_name <<  + "\n";
+	if (max_body_size != MB)
+		strConf << "| MAX BODY SIZE\t: " << max_body_size <<  + "\n";
+
+	if (autoindex)
+	strConf << "| AUTOINDEX\t: ON" << "\n";
+	
+	if (!root.empty())
+		strConf << "| ROOT\t\t: " << root << "\n";
+
+	if (!index.empty())
 	{
+		strConf << "| INDEX\t\t:";
 		for (std::vector<std::string>::const_iterator it = index.begin(); it != index.end(); it++)
 			strConf << "\n  - [" << *it << "]";
 		strConf << "\n";
@@ -98,8 +108,7 @@ std::string	Server::displayConf() const {
 
 	if (!locations.empty())
 	{
-		strConf << "| LOCATION\t:";
-		strConf << "\n";
+		strConf << "| LOCATIONS\t:\n";
 		for (std::vector<Location>::const_iterator it = locations.begin(); it != locations.end(); it++)
 			strConf << *it;
 	}

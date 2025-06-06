@@ -10,12 +10,18 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 	//std::cout << "[" << value << "]" << std::endl;
 
 	if (value.empty() || value.find('{') == value.npos)
+	{
+		std::cout << "ERROR" << std::endl;
 		exit(0);
+	}
 
-	value = rtrim(value.substr(0, value.find('{')));
+	value = strTrim(value.substr(0, value.find('{')));
 
 	if (value.empty() || value.find(' ') != value.npos || value.find('\t') != value.npos)
+	{
+		std::cout << "ERROR" << std::endl;
 		exit(0);
+	}
 
 	level = nest;
 	uri = value;
@@ -26,37 +32,41 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 	"error_page", "location", "autoindex", "root", "index", "cgi"};
 	for (std::string buffer; !confFile.eof(); std::getline(confFile, buffer))
 	{
-		buffer = trim(buffer);
-		if (buffer.empty())
+		buffer = strTrim(buffer);
+		if (buffer.empty() || buffer == ";" || buffer[0] == '#')
 			continue;
 		if (buffer == "}")
 			return ;
 		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)
+		{
+			std::cout << "ERROR" << std::endl;
 			exit(0);
+		}
 		int key;
 		for (key = 0; key < 8; key++)
 			if (buffer.substr(0, buffer.find_first_of(' ')) == key_words[key])
 				break;
 		value = buffer.substr(key_words[key].size(), buffer.find_first_of(';') - key_words[key].size());
+		value = strTrim(value);
 		switch (key)
 		{
 			case 0:
-				error_pages.push_back(parseErrorPage(rtrim(trim(value))));
+				error_pages.push_back(parseErrorPage(value));
 				break;
 			case 1:
-			locations.push_back(new Location(rtrim(trim(value)), confFile, level + 1));
+			locations.push_back(new Location(value, confFile, level + 1));
 				break;
 			case 2:
-				autoindex = parseAutoindex(rtrim(trim(value)));
+				autoindex = parseAutoindex((value));
 				break;
 			case 3:
-				root = parseRoot(rtrim(trim(value)));
+				root = parseRoot(value);
 				break;
 			case 4:
-				index = parseIndex(rtrim(trim(value)));
+				index = parseIndex(value);
 				break;
 			case 5:
-				cgi = parseCgi(rtrim(trim(value)));
+				cgi = parseCgi(value);
 				break;
 			default:
 				break;
@@ -71,13 +81,15 @@ std::string Location::displayConf() const {
 
 	strConf << colors[level % 4];
 
+	strConf << std::string(level - 1, '\t') << "LOCATION:" << std::endl;
+
 	strConf << tabs << "| URI\t\t: " << uri << "\n";
 
 	if (!root.empty())
 		strConf << tabs << "| ROOT\t\t: " << root << "\n";
 
 	if (autoindex)
-	strConf << tabs << "| AUTOINDEX\t: TRUE" << "\n";
+	strConf << tabs << "| AUTOINDEX\t: ON" << "\n";
 
 	if (cgi != NONE)
 	strConf << tabs << "| CGI\t\t: " << cgiStr[cgi]<< "\n";
@@ -106,7 +118,7 @@ std::string Location::displayConf() const {
 	}
 	if (!locations.empty())
 	{
-		strConf << tabs << "| LOCATION\t:";
+		strConf << tabs << "| LOCATIONS\t:";
 		strConf << "\n";
 		for (std::vector<Location*>::const_iterator it = locations.begin(); it != locations.end(); it++)
 			strConf << **it;
