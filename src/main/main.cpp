@@ -1,28 +1,73 @@
 #include "webserv.hpp"
 
-int	main(int argc, char *argv[]) {
+#define PORT 8000
 
-	if (argc < 2)
-	{
-		std::cout << "file not given" << std::endl;
-		return (1);
+static bool	sigstop = false;
+
+void stop(int sig) {
+	if (sig == SIGINT) {
+		sigstop = true;
+	}
+}
+
+int	main(/*int argc, char **argv*/) {
+	signal(SIGINT, stop);
+
+	int socketfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0); 
+
+	sockaddr_in	sockaddress;
+
+	sockaddress.sin_family = AF_INET;
+	sockaddress.sin_port = htons(PORT);
+	sockaddress.sin_addr.s_addr = INADDR_LOOPBACK;
+
+	if (bind(socketfd, (sockaddr *)&sockaddress, sizeof(sockaddr)) < 0) {
+		std::cerr << "Binding failed!" << std::endl;
+		close(socketfd);
+		return (0);
 	}
 
-	std::vector<Server> servers;
+	int	epfd = epoll_create(1);
+	epoll_event	config;
 
-	std::ifstream		confFile(argv[1]);
+	config.events = EPOLLIN;
+	config.data.fd = socketfd;
 
-	if (!confFile.is_open())
+	// Should I actually use listen???
+	listen(socketfd, 5);
+
+	struct epoll_event events[5];
+	while (!sigstop)
 	{
-		std::cout << "file not found" << std::endl;
-		return (1);
+		char buffer[1024];
+		
+		int evt_count = epoll_wait(epfd, events, 5, 3000);
+		socklen_t	len;
+		for (int i = 0; i < evt_count; i++) {
+			if (events[i].data.fd == socketfd) {
+				int clientfd = accept(socketfd, (sockaddr *)&sockaddress, &len);
+				if (clientfd == -1) {
+					std::cout << "Connection refused" << std::endl;
+				} else {
+					std::cout << "Connection accepted!" << std::endl;
+					epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, NULL);
+					send(clientfd, "Connection established", strlen("Connection established"), 0);
+					int rd = recv(clientfd, buffer, 1024, 0);
+					if (rd == -1) {
+						std::cerr << "Read failed!" << std::endl;
+					}
+					buffer[rd] = '\0';
+					while (rd > 0) {
+						std::cout << buffer << std::endl;
+						rd = recv(clientfd, buffer, 1024, 0);
+						buffer[rd] = '\0';
+					}
+				}
+			}
+		}
 	}
+	
 
-	for (std::string buffer; !confFile.eof(); std::getline(confFile, buffer))
-	{
-		if (buffer == "server {")
-			servers.push_back(Server(confFile));
-	}
-	std::cout << servers.front().displayConf() << std::endl;
-	return (0);
+	std::cout << "Exited cleanly!" << std::endl;
+	close(socketfd);
 }
