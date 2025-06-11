@@ -15,6 +15,10 @@ int	main(/*int argc, char **argv*/) {
 
 	int socketfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0); 
 
+	int	option = 1;
+
+	setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR | SO_KEEPALIVE, &option, sizeof(option));
+
 	sockaddr_in	sockaddress;
 
 	sockaddress.sin_family = AF_INET;

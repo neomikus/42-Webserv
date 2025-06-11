@@ -8,6 +8,9 @@
 #include <fstream>
 #include <utility>
 #include <map>
+#include <csignal>
+#include <cstring>
+#include <netinet/in.h>
 
 #define HMAG		"\033[95m"
 #define HCYA		"\033[96m"
