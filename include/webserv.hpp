@@ -10,6 +10,8 @@
 #include <map>
 #include <csignal>
 #include <cstring>
+#include <cstdio>
+#include <cerrno>
 #include <netinet/in.h>
 
 #define HMAG		"\033[95m"

@@ -1,6 +1,6 @@
 #include "webserv.hpp"
 
-#define PORT 8000
+#define PORT 8080
 
 static bool	sigstop = false;
 
@@ -26,7 +26,7 @@ int	main(/*int argc, char **argv*/) {
 	sockaddress.sin_addr.s_addr = INADDR_LOOPBACK;
 
 	if (bind(socketfd, (sockaddr *)&sockaddress, sizeof(sockaddr)) < 0) {
-		std::cerr << "Binding failed!" << std::endl;
+		perror(strerror(errno));
 		close(socketfd);
 		return (0);
 	}
