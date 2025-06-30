@@ -23,10 +23,10 @@ int	main(/*int argc, char **argv*/) {
 
 	sockaddress.sin_family = AF_INET;
 	sockaddress.sin_port = htons(PORT);
-	sockaddress.sin_addr.s_addr = INADDR_LOOPBACK;
+	sockaddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
 	if (bind(socketfd, (sockaddr *)&sockaddress, sizeof(sockaddr)) < 0) {
-		perror(strerror(errno));
+		std::cerr << strerror(errno) << std::endl;
 		close(socketfd);
 		return (0);
 	}
@@ -38,14 +38,20 @@ int	main(/*int argc, char **argv*/) {
 	config.data.fd = socketfd;
 
 	// Should I actually use listen???
-	listen(socketfd, 5);
+	if (listen(socketfd, 5) < 0) {
+		std::cerr << strerror(errno) << std::endl;
+		close(socketfd);
+		return (0);
+	}
+
+	epoll_ctl(epfd, EPOLL_CTL_ADD, socketfd, &config);
 
 	struct epoll_event events[5];
 	while (!sigstop)
 	{
 		char buffer[1024];
-		
-		int evt_count = epoll_wait(epfd, events, 5, 3000);
+	
+		int evt_count = epoll_wait(epfd, events, 5, -1);
 		socklen_t	len;
 		for (int i = 0; i < evt_count; i++) {
 			if (events[i].data.fd == socketfd) {
@@ -60,6 +66,9 @@ int	main(/*int argc, char **argv*/) {
 					if (rd == -1) {
 						std::cerr << "Read failed!" << std::endl;
 					}
+					if (sigstop) {
+						close(clientfd);
+					}
 					buffer[rd] = '\0';
 					while (rd > 0) {
 						std::cout << buffer << std::endl;
@@ -70,7 +79,6 @@ int	main(/*int argc, char **argv*/) {
 			}
 		}
 	}
-	
 
 	std::cout << "Exited cleanly!" << std::endl;
 	close(socketfd);
