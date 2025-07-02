@@ -106,16 +106,26 @@ int	main(/*int argc, char **argv*/) {
 					rd = recv(events[i].data.fd, buffer, 1024, 0);
 					buffer[rd] = '\0';
 				}
-				std::string reply = 
-					"HTTP/1.1 404 Not Found\r\n"
-					"Content-Length: 14\r\n"
-					"\r\n"
-					"<h1>Hello</h1>"
-					"\r\n";
+				std::ifstream	webpage("www/error.html");
 
-				std::cout << "Sent: " <<
-				send(events[i].data.fd, reply.c_str(), reply.length(), 0) <<
-				" bytes" << std::endl;
+				std::streampos pagePos = webpage.tellg();
+				webpage.seekg(0, std::ios::end);
+				pagePos = webpage.tellg() - pagePos;
+				std::stringstream contentLenght;
+				contentLenght << static_cast<long>(pagePos);
+				webpage.seekg(std::ios::beg);
+
+				std::cout << contentLenght.str() << std::endl;
+				std::string reply =  "HTTP/1.1 404 Not Found\r\n";
+				reply += "Content-Length: " + contentLenght.str() + "\r\n";
+				reply += "\r\n";
+
+				for (std::string line; std::getline(webpage, line);) {
+					reply += line;
+				}
+
+				send(events[i].data.fd, reply.c_str(), reply.length(), 0);
+				webpage.close();
 				close(events[i].data.fd);
 				clients.erase(std::find(clients.begin(), clients.end(), events[i].data.fd));
 			}

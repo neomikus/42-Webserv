@@ -1,6 +1,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <string>
+#include <sstream>
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -14,6 +15,7 @@
 #include <cstdio>
 #include <cerrno>
 #include <fcntl.h>
+#include <cstdlib>
 #include <list>
 #include <algorithm>
 #include <netinet/in.h>
