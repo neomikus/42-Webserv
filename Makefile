@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: xortega <xortega@student.42.fr>            +#+  +:+       +#+         #
+#    By: fcasaubo <fcasaubo@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/02/05 11:02:31 by xortega           #+#    #+#              #
-#    Updated: 2025/02/05 12:13:00 by xortega          ###   ########.fr        #
+#    Updated: 2025/06/30 11:28:07 by fcasaubo         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,7 +14,7 @@ NAME		:=	webserver
 OBJ_DIR		:=	obj/
 SRC_PATH	:=	src/
 CC			:=	c++
-CPPFLAGS = -Wall -Wextra -Werror -Wshadow -std=c++98 -Iinclude
+CPPFLAGS = -Wall -Wextra -Werror -Wshadow -g -std=c++98 -Iinclude
 
 # SRCS #
 MAIN		:= main

@@ -1,5 +1,6 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <string>
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -12,6 +13,9 @@
 #include <cstring>
 #include <cstdio>
 #include <cerrno>
+#include <fcntl.h>
+#include <list>
+#include <algorithm>
 #include <netinet/in.h>
 
 #define HMAG		"\033[95m"

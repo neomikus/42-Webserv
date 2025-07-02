@@ -1,6 +1,6 @@
 #include "webserv.hpp"
 
-#define PORT 8080
+#define PORT 8081
 
 static bool	sigstop = false;
 
@@ -10,14 +10,36 @@ void stop(int sig) {
 	}
 }
 
+bool	checkClients(int fd, std::list<int> clients) {
+	if (clients.empty())
+		return (false);
+	for (std::list<int>::iterator it = clients.begin(); it != clients.end(); it++)
+	{
+		if (fd == *it)
+			return (true);
+	}
+	return (false);
+}
+
 int	main(/*int argc, char **argv*/) {
 	signal(SIGINT, stop);
 
-	int socketfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0); 
+	int socketfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	if (!socketfd) {
+		std::cerr << strerror(errno) << std::endl;
+		return (0);
+	}
+
+	std::cout << "Socketfd: " << socketfd << std::endl;
 
 	int	option = 1;
+	struct timeval tv;
+	tv.tv_sec = 200;
+	tv.tv_usec = 0;
 
-	setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR | SO_KEEPALIVE, &option, sizeof(option));
+	setsockopt(socketfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+	setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+	setsockopt(socketfd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
 
 	sockaddr_in	sockaddress;
 
@@ -46,40 +68,67 @@ int	main(/*int argc, char **argv*/) {
 
 	epoll_ctl(epfd, EPOLL_CTL_ADD, socketfd, &config);
 
+	std::list<int>	clients;
+
 	struct epoll_event events[5];
 	while (!sigstop)
 	{
 		char buffer[1024];
 	
-		int evt_count = epoll_wait(epfd, events, 5, -1);
+		int evt_count = epoll_wait(epfd, events, 5, 200);
 		socklen_t	len;
 		for (int i = 0; i < evt_count; i++) {
+			//std::cout << evt_count << std::endl;
 			if (events[i].data.fd == socketfd) {
 				int clientfd = accept(socketfd, (sockaddr *)&sockaddress, &len);
+				epoll_event	clientConfig;
+				clientConfig.events = EPOLLOUT;
+				clientConfig.data.fd = clientfd;
 				if (clientfd == -1) {
 					std::cout << "Connection refused" << std::endl;
 				} else {
 					std::cout << "Connection accepted!" << std::endl;
-					epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, NULL);
-					send(clientfd, "Connection established", strlen("Connection established"), 0);
-					int rd = recv(clientfd, buffer, 1024, 0);
-					if (rd == -1) {
-						std::cerr << "Read failed!" << std::endl;
-					}
-					if (sigstop) {
-						close(clientfd);
-					}
-					buffer[rd] = '\0';
-					while (rd > 0) {
-						std::cout << buffer << std::endl;
-						rd = recv(clientfd, buffer, 1024, 0);
-						buffer[rd] = '\0';
-					}
+					clients.push_back(clientfd);
+					epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &clientConfig);
+					//send(clientfd, "Connection established\n", strlen("Connection established\n"), 0);
 				}
 			}
+			if (checkClients(events[i].data.fd, clients)) {				
+				int rd = recv(events[i].data.fd, buffer, 1024, 0);
+				if (rd == -1) {
+					std::cerr << "Read failed!" << std::endl;
+				}
+				buffer[rd] = '\0';
+				while (rd > 0) {
+					std::cout << buffer;
+					if (rd < 1024)
+						break;
+					rd = recv(events[i].data.fd, buffer, 1024, 0);
+					buffer[rd] = '\0';
+				}
+				std::string reply = 
+					"HTTP/1.1 404 Not Found\r\n"
+					"Content-Length: 14\r\n"
+					"\r\n"
+					"<h1>Hello</h1>"
+					"\r\n";
+
+				std::cout << "Sent: " <<
+				send(events[i].data.fd, reply.c_str(), reply.length(), 0) <<
+				" bytes" << std::endl;
+				close(events[i].data.fd);
+				clients.erase(std::find(clients.begin(), clients.end(), events[i].data.fd));
+			}
+			
 		}
 	}
 
-	std::cout << "Exited cleanly!" << std::endl;
+	for (std::list<int>::iterator it = clients.begin(); it != clients.end(); it++)
+	{
+		send(*it, "Connection closed by server\n", strlen("Connection closed by server\n"), 0);
+		close(*it);
+	}
+
+	std::cout << std::endl << "Exited cleanly!" << std::endl;
 	close(socketfd);
 }
