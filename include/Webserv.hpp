@@ -38,6 +38,12 @@ struct error_page {
 	std::string					page;
 };
 
+struct allowed_methods {
+	bool						_get;
+	bool						_post;
+	bool						_delete;
+};
+
 enum cgi_options {
 	BASH,
 	PHP,
@@ -56,6 +62,7 @@ bool						parseAutoindex(std::string value);
 std::string					parseRoot(std::string value);
 std::vector<std::string>	parseIndex(std::string value);
 cgi_options					parseCgi(std::string value);
+allowed_methods				parseAlowedMethods(std::string value);
 
 std::string strTrim(std::string str);
 bool strIsDigit(std::string const str);

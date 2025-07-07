@@ -99,7 +99,6 @@ error_page	parseErrorPage(std::string value) {
 				exit (0);
 			error_page.to_catch.push_back(atoi(error_c.c_str()));
 		}
-		
 	}
 	else if (strIsDigit(error_codes))
 		error_page.to_catch.push_back(atoi(error_codes.c_str()));
@@ -196,3 +195,29 @@ std::vector<std::string>	parseIndex(std::string value) {
 	return(indexVector);
 }
 
+allowed_methods parseAlowedMethods(std::string value){
+	//std::cout << "[" << value << "]" << std::endl;
+	allowed_methods methods = {false, false, false};
+	std::stringstream	split(value);
+	while (split)
+	{
+		std::string			word;
+		split >> word;
+
+		if (word.empty())
+			break;
+
+		if (word == "GET")
+			methods._get = true;
+		else if (word == "POST")
+			methods._post = true;
+		else if (word == "DELETE")
+			methods._delete = true;
+		else
+			exit(0);
+	}
+
+	
+	return(methods);
+
+}

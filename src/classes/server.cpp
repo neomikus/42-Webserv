@@ -3,14 +3,60 @@
 
 Server::Server() {}
 
-Server::~Server() { }
+Server::Server(const Server& model) {
+
+	server_name = model.server_name;
+	hostports = model.hostports;
+	error_pages = model.error_pages;
+	max_body_size = model.max_body_size;
+	autoindex = model.autoindex;
+	root = model.root;
+	index = model.index;
+    for (size_t i = 0; i < model.locations.size(); i++) {
+        locations.push_back(new Location(*model.locations[i]));
+    }
+	methods = model.methods;
+}
+
+Server &Server::operator=(const Server &model) {
+
+	server_name = model.server_name;
+	hostports = model.hostports;
+	error_pages = model.error_pages;
+	max_body_size = model.max_body_size;
+	autoindex = model.autoindex;
+	root = model.root;
+	index = model.index;
+    for (size_t i = 0; i < model.locations.size(); i++) {
+        locations.push_back(new Location(*model.locations[i]));
+    }
+	methods = model.methods;
+
+	return(*this);
+}
+
+Server::~Server() {
+	//std::cout << "I'm " << this << " server and I'm going the way of the Dodo" << std::endl;
+	if (locations.empty())
+		return;
+	for (std::vector<Location*>::iterator it = locations.begin(); it != locations.end(); it++) {
+		//std::cout << "I'm (in Server): " << *it << std::endl;
+		//(*it)->~Location();
+		delete *it;
+	}
+	locations.clear();
+}
 
 Server::Server(std::ifstream &confFile)
 {	
-	std::string key_words[9] = {
-	"server_name", "listen", "error_page", "client_max_body_size", "location", "autoindex", "root", "index", "error" };
+	methods._delete = false;
+	methods._get = false;
+	methods._post = false;
+
+	std::string key_words[10] = {
+	"server_name", "listen", "error_page", "client_max_body_size", "location", "autoindex", "root", "index", "allow_methods", "error" };
 	max_body_size = MB;
-	for (std::string buffer; !confFile.eof(); std::getline(confFile, buffer))
+	for (std::string buffer; std::getline(confFile, buffer);)
 	{
 		buffer = strTrim(buffer);
 		if (buffer.empty() || buffer == ";" || buffer[0] == '#')
@@ -43,7 +89,7 @@ Server::Server(std::ifstream &confFile)
 				max_body_size = parseBodySize(value);
 				break;
 			case 4:
-				locations.push_back(Location(value, confFile, 1));
+				locations.push_back(new Location(value, confFile, 1));
 				break;
 			case 5:
 				autoindex = parseAutoindex(value);
@@ -53,6 +99,9 @@ Server::Server(std::ifstream &confFile)
 				break;
 			case 7:
 				index = parseIndex(value);
+				break;
+			case 8:
+				methods = parseAlowedMethods(value);
 				break;
 			default:
 				break;
@@ -80,18 +129,26 @@ std::string	Server::displayConf() const {
 		for (std::vector<std::string>::const_iterator it = index.begin(); it != index.end(); it++)
 			strConf << "\n  - [" << *it << "]";
 		strConf << "\n";
-	
 	}
+
 	if (!hostports.empty())
 	{
 		strConf << "| HOST PORTS\t:";
 		for (std::vector<hostport>::const_iterator it = hostports.begin(); it != hostports.end(); it++)	
 			strConf << "\n  - [" << (!it->first.empty() ? it->first + ":" : "") << it->second << "]";
 		strConf << "\n";
-	
 	}
 
-	if (!hostports.empty())
+	if (methods._delete || methods._get || methods._post)
+	{
+		strConf << "| METHODS\t:";
+		strConf << (methods._get ? " GET" : "");
+		strConf << (methods._post ? " POST" : "");
+		strConf << (methods._delete ? " DELETE" : "");
+		strConf << "\n";
+	}
+
+	if (!error_pages.empty())
 	{
 		strConf << "| ERROR PAGES\t:";
 		for (std::vector<error_page>::const_iterator it = error_pages.begin(); it != error_pages.end(); it++)
@@ -109,8 +166,8 @@ std::string	Server::displayConf() const {
 	if (!locations.empty())
 	{
 		strConf << "| LOCATIONS\t:\n";
-		for (std::vector<Location>::const_iterator it = locations.begin(); it != locations.end(); it++)
-			strConf << *it;
+		for (std::vector<Location*>::const_iterator it = locations.begin(); it != locations.end(); it++)
+			strConf << (*it)->displayConf();
 	}
 	return(strConf.str());
 }

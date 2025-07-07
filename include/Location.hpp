@@ -14,11 +14,14 @@ class Location {
 		cgi_options					cgi;
 		std::vector<Location*>		locations;
 		long long					level;
+		allowed_methods				methods;
 
 	public:
 
 		Location();
 		Location(std::string value, std::ifstream &confFile, int nest);
+		Location(const Location &model);
+		Location &operator=(const Location &model);
 		~Location();
 		std::string	displayConf() const;
 

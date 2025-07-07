@@ -19,11 +19,18 @@ int	main(int argc, char *argv[]) {
 		return (1);
 	}
 
-	for (std::string buffer; !confFile.eof(); std::getline(confFile, buffer))
+	for (std::string buffer; std::getline(confFile, buffer);)
 	{
-		if (buffer == "server {")
+		if (buffer.empty())
+			continue;
+		if (buffer == "server {") {}
 			servers.push_back(Server(confFile));
 	}
+	
+	std::cout << servers.size() << std::endl;
+
 	std::cout << servers.front().displayConf() << std::endl;
+	
+
 	return (0);
-}
+}  

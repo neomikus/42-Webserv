@@ -14,12 +14,15 @@ class Server {
 		bool						autoindex;
 		std::string					root;
 		std::vector<std::string>	index;
-		std::vector<Location>		locations;
+		std::vector<Location*>		locations;
+		allowed_methods				methods;
 	
 	public:
 	
 		Server();
 		Server(std::ifstream &confFile);
+		Server(const Server &model);
+		Server&operator=(const Server&model);
 		~Server();
 		std::string	displayConf() const;
 

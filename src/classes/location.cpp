@@ -2,11 +2,53 @@
 
 Location::Location() { }
 
-Location::~Location(){ }
+Location::~Location(){
+	if (locations.empty())
+		return;
+	for (std::vector<Location*>::iterator it = locations.begin(); it != locations.end(); it++) {
+		//std::cout << "I'm (in Location): " << *it << std::endl;
+		//(*it)->~Location();
+		delete *it;
+	}
+	locations.clear();
+}
 
+Location::Location(const Location& model) {
+    uri = model.uri;
+    root = model.root;
+    index = model.index;
+    autoindex = model.autoindex;
+    error_pages = model.error_pages;
+    cgi = model.cgi;
+    level = model.level;
+    methods = model.methods;
+    for (size_t i = 0; i < model.locations.size(); i++) {
+        locations.push_back(new Location(*model.locations[i]));
+    }
+}
+
+Location &Location::operator=(const Location &model) {
+
+	uri = model.uri;
+	root = model.root;
+	index = model.index;
+	autoindex = model.autoindex;
+	error_pages = model.error_pages;
+	cgi = model.cgi;
+    for (size_t i = 0; i < model.locations.size(); i++) {
+        locations.push_back(new Location(*model.locations[i]));
+    }
+	level = model.level;
+	methods = model.methods;
+
+	return(*this);
+}
 
 Location::Location(std::string value, std::ifstream &confFile, int nest)
 {
+	methods._delete = false;
+	methods._get = false;
+	methods._post = false;
 	//std::cout << "[" << value << "]" << std::endl;
 
 	if (value.empty() || value.find('{') == value.npos)
@@ -29,8 +71,8 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 	autoindex = false;
 
 	std::string key_words[8] = {
-	"error_page", "location", "autoindex", "root", "index", "cgi"};
-	for (std::string buffer; !confFile.eof(); std::getline(confFile, buffer))
+	"error_page", "location", "autoindex", "root", "index", "cgi", "allow_methods"};
+	for (std::string buffer; std::getline(confFile, buffer);)
 	{
 		buffer = strTrim(buffer);
 		if (buffer.empty() || buffer == ";" || buffer[0] == '#')
@@ -68,9 +110,12 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 			case 5:
 				cgi = parseCgi(value);
 				break;
+			case 6:
+				methods = parseAlowedMethods(value);
+				break;
 			default:
 				break;
-		}		
+		}
 	}
 }
 std::string Location::displayConf() const {
@@ -116,6 +161,16 @@ std::string Location::displayConf() const {
 		}
 		strConf << "\n";
 	}
+
+	if (methods._delete || methods._get || methods._post)
+	{
+		strConf << tabs << "| METHODS\t:";
+		strConf << (methods._get ? " GET" : "");
+		strConf << (methods._post ? " POST" : "");
+		strConf << (methods._delete ? " DELETE" : "");
+		strConf << "\n";
+	}
+
 	if (!locations.empty())
 	{
 		strConf << tabs << "| LOCATIONS\t:";
