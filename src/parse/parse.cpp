@@ -5,7 +5,7 @@ std::string	parseServerName(std::string value) {
 
 	if (value.empty() || value.find('\t') != value.npos || value.find(' ') != value.npos)
 	{
-		std::cout << "ERROR" << std::endl;
+		std::cout << "ERROR SERVER NAME" << std::endl;
 		exit(0);
 	}
 	return(value);
@@ -15,7 +15,7 @@ hostport parseHostPort(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
 	if (value.empty())
 	{
-		std::cout << "ERROR" << std::endl;
+		std::cout << "ERROR HOST PORT1" << std::endl;
 		exit(0);
 	}
 
@@ -31,7 +31,7 @@ hostport parseHostPort(std::string value) {
 		if (check.str().size() == value.size() - host.size() - 1)
 			return std::make_pair(host, port);
 	{
-		std::cout << "ERROR" << std::endl;
+		std::cout << "ERROR HOST PORT2" << std::endl;
 		exit(0);
 	}
 	}
@@ -48,7 +48,7 @@ error_page	parseErrorPage(std::string value) {
 
 	if (value.empty() || value.find('/') == value.npos)
 	{
-		std::cout << "ERROR" << std::endl;
+		std::cout << "ERROR ERROR PAGE1" << std::endl;
 		exit(0);
 	}
 	
@@ -66,7 +66,7 @@ error_page	parseErrorPage(std::string value) {
 
 	if (strPage.find(' ') != strPage.npos)
 	{
-		std::cout << "ERROR" << std::endl;
+		std::cout << "ERROR ERROR PAGE2" << std::endl;
 		exit(0);
 	}
 
@@ -82,7 +82,7 @@ error_page	parseErrorPage(std::string value) {
 
 	if (error_codes.empty() || (!redirect.empty() && !strIsDigit(redirect)))
 	{
-		std::cout << "ERROR" << std::endl;
+		std::cout << "ERROR ERROR PAGE3" << std::endl;
 		exit(0);
 	}
 

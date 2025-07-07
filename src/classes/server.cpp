@@ -13,7 +13,7 @@ Server::Server(const Server& model) {
 	root = model.root;
 	index = model.index;
     for (size_t i = 0; i < model.locations.size(); i++) {
-        locations.push_back(new Location(*model.locations[i]));
+        locations.push_back(Location(model.locations[i]));
     }
 	methods = model.methods;
 }
@@ -28,7 +28,7 @@ Server &Server::operator=(const Server &model) {
 	root = model.root;
 	index = model.index;
     for (size_t i = 0; i < model.locations.size(); i++) {
-        locations.push_back(new Location(*model.locations[i]));
+        locations.push_back(Location(model.locations[i]));
     }
 	methods = model.methods;
 
@@ -36,15 +36,7 @@ Server &Server::operator=(const Server &model) {
 }
 
 Server::~Server() {
-	//std::cout << "I'm " << this << " server and I'm going the way of the Dodo" << std::endl;
-	if (locations.empty())
-		return;
-	for (std::vector<Location*>::iterator it = locations.begin(); it != locations.end(); it++) {
-		//std::cout << "I'm (in Server): " << *it << std::endl;
-		//(*it)->~Location();
-		delete *it;
-	}
-	locations.clear();
+
 }
 
 Server::Server(std::ifstream &confFile)
@@ -65,7 +57,7 @@ Server::Server(std::ifstream &confFile)
 			return ;
 		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)
 		{
-			std::cout << "ERROR" << std::endl;
+			std::cout << "ERROR4" << std::endl;
 			exit(0);
 		}
 		int key;
@@ -89,7 +81,7 @@ Server::Server(std::ifstream &confFile)
 				max_body_size = parseBodySize(value);
 				break;
 			case 4:
-				locations.push_back(new Location(value, confFile, 1));
+				locations.push_back(Location(value, confFile, 1));
 				break;
 			case 5:
 				autoindex = parseAutoindex(value);
@@ -166,8 +158,8 @@ std::string	Server::displayConf() const {
 	if (!locations.empty())
 	{
 		strConf << "| LOCATIONS\t:\n";
-		for (std::vector<Location*>::const_iterator it = locations.begin(); it != locations.end(); it++)
-			strConf << (*it)->displayConf();
+		for (std::vector<Location>::const_iterator it = locations.begin(); it != locations.end(); it++)
+			strConf << it->displayConf();
 	}
 	return(strConf.str());
 }

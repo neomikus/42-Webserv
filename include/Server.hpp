@@ -14,7 +14,7 @@ class Server {
 		bool						autoindex;
 		std::string					root;
 		std::vector<std::string>	index;
-		std::vector<Location*>		locations;
+		std::vector<Location>		locations;
 		allowed_methods				methods;
 	
 	public:

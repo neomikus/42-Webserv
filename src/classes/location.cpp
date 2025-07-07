@@ -3,14 +3,7 @@
 Location::Location() { }
 
 Location::~Location(){
-	if (locations.empty())
-		return;
-	for (std::vector<Location*>::iterator it = locations.begin(); it != locations.end(); it++) {
-		//std::cout << "I'm (in Location): " << *it << std::endl;
-		//(*it)->~Location();
-		delete *it;
-	}
-	locations.clear();
+
 }
 
 Location::Location(const Location& model) {
@@ -23,7 +16,7 @@ Location::Location(const Location& model) {
     level = model.level;
     methods = model.methods;
     for (size_t i = 0; i < model.locations.size(); i++) {
-        locations.push_back(new Location(*model.locations[i]));
+        locations.push_back(Location(model.locations[i]));
     }
 }
 
@@ -36,7 +29,7 @@ Location &Location::operator=(const Location &model) {
 	error_pages = model.error_pages;
 	cgi = model.cgi;
     for (size_t i = 0; i < model.locations.size(); i++) {
-        locations.push_back(new Location(*model.locations[i]));
+        locations.push_back(Location(model.locations[i]));
     }
 	level = model.level;
 	methods = model.methods;
@@ -53,7 +46,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 
 	if (value.empty() || value.find('{') == value.npos)
 	{
-		std::cout << "ERROR" << std::endl;
+		std::cout << "ERROR1" << std::endl;
 		exit(0);
 	}
 
@@ -61,7 +54,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 
 	if (value.empty() || value.find(' ') != value.npos || value.find('\t') != value.npos)
 	{
-		std::cout << "ERROR" << std::endl;
+		std::cout << "ERROR2" << std::endl;
 		exit(0);
 	}
 
@@ -81,7 +74,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 			return ;
 		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)
 		{
-			std::cout << "ERROR" << std::endl;
+			std::cout << "ERROR3" << std::endl;
 			exit(0);
 		}
 		int key;
@@ -96,7 +89,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 				error_pages.push_back(parseErrorPage(value));
 				break;
 			case 1:
-			locations.push_back(new Location(value, confFile, level + 1));
+			locations.push_back(Location(value, confFile, level + 1));
 				break;
 			case 2:
 				autoindex = parseAutoindex((value));
@@ -175,8 +168,8 @@ std::string Location::displayConf() const {
 	{
 		strConf << tabs << "| LOCATIONS\t:";
 		strConf << "\n";
-		for (std::vector<Location*>::const_iterator it = locations.begin(); it != locations.end(); it++)
-			strConf << **it;
+		for (std::vector<Location>::const_iterator it = locations.begin(); it != locations.end(); it++)
+			strConf << *it;
 	}
 	return (strConf.str());
 }

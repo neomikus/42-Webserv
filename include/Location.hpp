@@ -12,7 +12,7 @@ class Location {
 		bool						autoindex;
 		std::vector<error_page>		error_pages;
 		cgi_options					cgi;
-		std::vector<Location*>		locations;
+		std::vector<Location>		locations;
 		long long					level;
 		allowed_methods				methods;
 
