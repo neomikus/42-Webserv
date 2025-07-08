@@ -37,12 +37,24 @@ Location &Location::operator=(const Location &model) {
 	return(*this);
 }
 
+void	Location::parseCgi(std::string value) {
+	//std::cout << "[" << value << "]" << std::endl;
+	std::string	cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
+
+	for (size_t i = 0; i < 5; i++)
+	{
+		if (value == cgiStr[i])
+		{
+			cgi = (static_cast<cgi_options>(i));
+			return;
+		}
+	}
+	exit (0);
+}
+
 Location::Location(std::string value, std::ifstream &confFile, int nest)
 {
-	methods._delete = false;
-	methods._get = false;
-	methods._post = false;
-	//std::cout << "[" << value << "]" << std::endl;
+	std::cout << "[" << value << "]" << std::endl;
 
 	if (value.empty() || value.find('{') == value.npos)
 	{
@@ -86,28 +98,29 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 		switch (key)
 		{
 			case 0:
-				error_pages.push_back(parseErrorPage(value));
+				parseErrorPage(value);
 				break;
 			case 1:
-			locations.push_back(Location(value, confFile, level + 1));
+				locations.push_back(Location(value, confFile, level + 1));
 				break;
 			case 2:
-				autoindex = parseAutoindex((value));
+				parseAutoindex((value));
 				break;
 			case 3:
-				root = parseRoot(value);
+				parseRoot(value);
 				break;
 			case 4:
-				index = parseIndex(value);
+				parseIndex(value);
 				break;
 			case 5:
-				cgi = parseCgi(value);
+				parseCgi(value);
 				break;
 			case 6:
-				methods = parseAlowedMethods(value);
+				parseAlowedMethods(value);
 				break;
 			default:
 				break;
+				
 		}
 	}
 }

@@ -39,12 +39,97 @@ Server::~Server() {
 
 }
 
+void Server::parseBodySize(const std::string value) {
+	//std::cout << "[" << value << "]" << std::endl;
+	size_t i = 0;
+
+	std::map<std::string, int> unitMap;
+	unitMap["b"] = 0;
+	unitMap["k"] = 1;
+	unitMap["kb"] = 1;
+	unitMap["m"] = 2;
+	unitMap["mb"] = 2;
+	unitMap["g"] = 3;
+	unitMap["gb"] = 3;
+
+	long long multipliers[] = {
+		BYTE, KB, MB, GB
+	};
+
+	while (i < value.size() && std::isdigit(value[i]))
+		++i;
+
+	std::string unit = value.substr(i);
+
+	long long size = atoll(value.substr(0, i).c_str());
+
+	if (i == 0)
+		exit (0);
+	
+	for (i = 0; i < unit.size(); ++i) {
+		unit[i] = std::tolower(unit[i]);
+	}
+
+	if (unitMap.find(unit) == unitMap.end())
+		exit (0);
+
+
+	this->max_body_size = (size * multipliers[unitMap.find(unit)->second]);
+}
+
+
+void Server::parseHostPort(std::string value) {
+	//std::cout << "[" << value << "]" << std::endl;
+	if (value.empty())
+	{
+		std::cout << "ERROR HOST PORT1" << std::endl;
+		exit(0);
+	}
+
+	std::string			host = "";
+	int					port = -1;
+	std::stringstream	check;
+
+	if (value.find(':') != value.npos)
+	{
+		host = value.substr(0, value.find(':'));
+		port = atoi(value.substr(host.size() + 1, value.size()).c_str());
+		check << port;
+		if (check.str().size() == value.size() - host.size() - 1)
+			{
+				hostports.push_back(std::make_pair(host, port));
+				return;
+			}
+	{
+		std::cout << "ERROR HOST PORT2" << std::endl;
+		exit(0);
+	}
+	}
+
+	for (std::string::iterator it = value.begin(); it != value.end(); it++)
+	{
+		if (!isdigit(*it))
+		{
+			hostports.push_back(std::make_pair(value, -1));
+			return;
+		}
+		hostports.push_back(std::make_pair(host, atoi(value.c_str())));
+	}
+}
+
+void	Server::parseServerName(std::string value) {
+	//std::cout << "[" << value << "]" << std::endl;
+
+	if (value.empty() || value.find('\t') != value.npos || value.find(' ') != value.npos)
+	{
+		std::cout << "ERROR SERVER NAME" << std::endl;
+		exit(0);
+	}
+	server_name = value;
+}
+
 Server::Server(std::ifstream &confFile)
 {	
-	methods._delete = false;
-	methods._get = false;
-	methods._post = false;
-
 	std::string key_words[10] = {
 	"server_name", "listen", "error_page", "client_max_body_size", "location", "autoindex", "root", "index", "allow_methods", "error" };
 	max_body_size = MB;
@@ -69,31 +154,31 @@ Server::Server(std::ifstream &confFile)
 		switch (key)
 		{
 			case 0:
-				server_name = parseServerName(value);
+				parseServerName(value);
 				break;
 			case 1:
-				hostports.push_back(parseHostPort(value));
+				parseHostPort(value);
 				break;
 			case 2:
-				error_pages.push_back(parseErrorPage(value));
+				parseErrorPage(value);
 				break;
 			case 3:
-				max_body_size = parseBodySize(value);
+				parseBodySize(value);
 				break;
 			case 4:
 				locations.push_back(Location(value, confFile, 1));
 				break;
 			case 5:
-				autoindex = parseAutoindex(value);
+				parseAutoindex(value);
 				break;
 			case 6:
-				root = parseRoot(value);
+				parseRoot(value);
 				break;
 			case 7:
-				index = parseIndex(value);
+				parseIndex(value);
 				break;
 			case 8:
-				methods = parseAlowedMethods(value);
+				parseAlowedMethods(value);
 				break;
 			default:
 				break;

@@ -2,12 +2,12 @@ NAME		:=	webserv
 OBJ_DIR		:=	obj/
 SRC_PATH	:=	src/
 CC			:=	c++
-CPPFLAGS = -Wall -Wextra -Werror -Wshadow -g -std=c++98 -Iinclude
+CPPFLAGS = -Wall -Wextra -Werror -Wshadow -g3 -std=c++98 -Iinclude
 
 # SRCS #
 MAIN		:= main
-PARSE		:= parse
-ClASSES		:= Location Server
+PARSE		:= 
+ClASSES		:= Location Server AContext
 UTILS	 	:= strUtils
 
 PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \

@@ -2,20 +2,20 @@
 #define SERVER_HPP
 
 #include "webserv.hpp"
+#include "AContext.hpp"
 #include "Location.hpp"
 
-class Server {
+class Server: public Context {
 	private:
 		
 		std::string					server_name;
 		std::vector<hostport>		hostports;
-		std::vector<error_page>		error_pages;
 		long long					max_body_size;
-		bool						autoindex;
-		std::string					root;
-		std::vector<std::string>	index;
-		std::vector<Location>		locations;
-		allowed_methods				methods;
+		std::vector<Location>		locations;	
+
+		void						parseServerName(std::string value);
+		void						parseHostPort(std::string value);
+		void						parseBodySize(std::string value);
 	
 	public:
 	

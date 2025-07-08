@@ -23,14 +23,12 @@ int	main(int argc, char *argv[]) {
 	{
 		if (buffer.empty())
 			continue;
-		if (buffer == "server {") {}
-			servers.push_back(Server(confFile));
+		if (buffer == "server {")
+			servers.push_back(Server(confFile));		
 	}
 	
-	std::cout << servers.size() << std::endl;
 
 	std::cout << servers.front().displayConf() << std::endl;
-	
 
 	return (0);
 }  

@@ -63,16 +63,6 @@ enum cgi_options {
 
 typedef std::pair<std::string, int> hostport;
 
-std::string					parseServerName(std::string value);
-hostport					parseHostPort(std::string value);
-error_page					parseErrorPage(std::string value);
-long long					parseBodySize(std::string value);
-bool						parseAutoindex(std::string value);
-std::string					parseRoot(std::string value);
-std::vector<std::string>	parseIndex(std::string value);
-cgi_options					parseCgi(std::string value);
-allowed_methods				parseAlowedMethods(std::string value);
-
 std::string strTrim(std::string str);
 bool		strIsDigit(std::string const str);
 
