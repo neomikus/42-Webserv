@@ -2,9 +2,8 @@
 #include "Request.hpp"
 
 Request::Request(std::string &raw) {
-	method = "GET";	
+	method = raw.substr(0, raw.find(" "));
 	resource = raw.substr(raw.find("/") + 1, raw.find(" HTTP") - raw.find("/") - 1);
-	std::cout << resource << std::endl;
 }
 
 Request::~Request() {
@@ -35,6 +34,11 @@ std::string	getStatusText(int status) {
 void	Request::response(int fd, std::list<int> &clients) {
 	std::ifstream	webpage(resource.c_str());
 	std::string		status;
+
+	if (method != "GET") {
+		std::cout << method << " not implemented" << std::endl;
+		return;
+	}
 
 	if (!webpage) {
 		status = "404";

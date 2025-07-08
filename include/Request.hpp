@@ -3,6 +3,7 @@
 
 #include "webserv.hpp"
 
+// MAYBE we can make it abstract and make a class for method?
 class Request
 {
 	private:

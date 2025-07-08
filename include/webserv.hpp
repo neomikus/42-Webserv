@@ -77,8 +77,4 @@ allowed_methods				parseAlowedMethods(std::string value);
 std::string strTrim(std::string str);
 bool		strIsDigit(std::string const str);
 
-#include "Server.hpp"
-
-void		acceptConnections(int epfd, std::vector<Server> &servers);
-
 #endif

@@ -29,4 +29,6 @@ class Server {
 
 std::ostream &operator<<(std::ostream &stream, const Server server);
 
+void		acceptConnections(int epfd, std::vector<Server> &servers);
+
 #endif
