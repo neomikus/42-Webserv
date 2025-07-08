@@ -42,15 +42,21 @@ const long long MB = KB * 1024;
 const long long GB = MB * 1024;
 
 struct error_page {
-	std::vector<int>			to_catch;
-	int							to_replace;
-	std::string					page;
+	std::vector<int>		to_catch;
+	int						to_replace;
+	std::string				page;
 };
 
 struct allowed_methods {
-	bool						_get;
-	bool						_post;
-	bool						_delete;
+	bool					_get;
+	bool					_post;
+	bool					_delete;
+};
+
+struct hostport {
+	std::string				host;
+	int						port;
+	bool					default_server;	
 };
 
 enum cgi_options {
@@ -61,9 +67,10 @@ enum cgi_options {
 	NONE
 };
 
-typedef std::pair<std::string, int> hostport;
-
 std::string strTrim(std::string str);
 bool		strIsDigit(std::string const str);
+size_t		countWords(std::stringstream& ss);
+size_t		countWords(std::string const str);
+
 
 #endif

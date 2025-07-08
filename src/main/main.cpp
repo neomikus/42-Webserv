@@ -11,6 +11,7 @@ int	main(int argc, char *argv[]) {
 
 	std::vector<Server> servers;
 
+
 	std::ifstream		confFile(argv[1]);
 
 	if (!confFile.is_open())
@@ -21,6 +22,7 @@ int	main(int argc, char *argv[]) {
 
 	for (std::string buffer; std::getline(confFile, buffer);)
 	{
+		buffer = strTrim(buffer);
 		if (buffer.empty())
 			continue;
 		if (buffer == "server {")
@@ -31,4 +33,4 @@ int	main(int argc, char *argv[]) {
 	std::cout << servers.front().displayConf() << std::endl;
 
 	return (0);
-}  
+}

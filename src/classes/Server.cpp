@@ -72,8 +72,7 @@ void Server::parseBodySize(const std::string value) {
 
 	if (unitMap.find(unit) == unitMap.end())
 		exit (0);
-
-
+	
 	this->max_body_size = (size * multipliers[unitMap.find(unit)->second]);
 }
 
@@ -86,35 +85,47 @@ void Server::parseHostPort(std::string value) {
 		exit(0);
 	}
 
-	std::string			host = "";
-	int					port = -1;
-	std::stringstream	check;
+	hostport hostport;
 
-	if (value.find(':') != value.npos)
-	{
-		host = value.substr(0, value.find(':'));
-		port = atoi(value.substr(host.size() + 1, value.size()).c_str());
-		check << port;
-		if (check.str().size() == value.size() - host.size() - 1)
-			{
-				hostports.push_back(std::make_pair(host, port));
-				return;
-			}
-	{
-		std::cout << "ERROR HOST PORT2" << std::endl;
+	hostport.host = "0.0.0.0";
+	hostport.port = 80;
+	hostport.default_server = false;
+
+	std::stringstream	split(value);
+	size_t nOfWords = countWords(split);
+
+	if (nOfWords > 2)
 		exit(0);
-	}
-	}
 
-	for (std::string::iterator it = value.begin(); it != value.end(); it++)
+	std::string firstWord;
+	std::string secondWord;
+	split >> firstWord;
+	split >> secondWord;
+
+
+	if (firstWord.find(':') != value.npos)
 	{
-		if (!isdigit(*it))
+		hostport.host = firstWord.substr(0, firstWord.find(':'));
+		hostport.port = atoi(firstWord.substr(hostport.host.size() + 1, firstWord.size()).c_str());
+	
+		std::stringstream	check;
+		check << hostport.port;
+	
+		if (check.str().size() != firstWord.size() - hostport.host.size() - 1)
 		{
-			hostports.push_back(std::make_pair(value, -1));
-			return;
+			std::cout << "ERROR HOST PORT2" << std::endl;
+			exit(0);
 		}
-		hostports.push_back(std::make_pair(host, atoi(value.c_str())));
 	}
+	else if (strIsDigit(firstWord))
+		hostport.port = atoi(firstWord.c_str());
+	else if (firstWord == "default_server")
+		exit(0);
+	else
+		hostport.host = firstWord;
+	if (secondWord == "default_server")
+		hostport.default_server = true;
+	hostports.push_back(hostport);
 }
 
 void	Server::parseServerName(std::string value) {
@@ -212,7 +223,7 @@ std::string	Server::displayConf() const {
 	{
 		strConf << "| HOST PORTS\t:";
 		for (std::vector<hostport>::const_iterator it = hostports.begin(); it != hostports.end(); it++)	
-			strConf << "\n  - [" << (!it->first.empty() ? it->first + ":" : "") << it->second << "]";
+			strConf << "\n  - [" << (!it->host.empty() ? it->host + ":" : "") << it->port << "]" << (it->default_server ? " defaul_server" : "");
 		strConf << "\n";
 	}
 
