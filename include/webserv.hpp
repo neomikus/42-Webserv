@@ -1,3 +1,8 @@
+#ifndef WEBSERV_HPP
+#define WEBSERV_HPP
+
+#define PORT 8080
+
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <string>
@@ -31,10 +36,21 @@
 #define TULN		"\033[4m"
 #define RST			"\033[0m"
 
+const long long BYTE = 1LL;
+const long long KB = BYTE * 1024;
+const long long MB = KB * 1024;
+const long long GB = MB * 1024;
+
 struct error_page {
 	std::vector<int>			to_catch;
 	int							to_replace;
 	std::string					page;
+};
+
+struct allowed_methods {
+	bool						_get;
+	bool						_post;
+	bool						_delete;
 };
 
 enum cgi_options {
@@ -45,51 +61,19 @@ enum cgi_options {
 	NONE
 };
 
-struct location
-{
-	std::string					uri;
-	std::string					root;
-	std::vector<std::string>	index;
-	bool						autoindex;
-	std::vector<error_page>		error_pages;
-	cgi_options					cgi;
-	location					*location;
-};
-
 typedef std::pair<std::string, int> hostport;
 
-class Server {
-private:
-	
-	std::string					server_name;
-	//std::vector<std::string>	host;
-	//std::vector<int>			port;
-	std::vector<hostport>		hostports;
-	std::vector<error_page>		error_pages;
-	int							max_body_size;
-	bool						autoindex;
-	std::string					root;
-	std::vector<std::string>	index;
-	std::vector<location>		locations;
+std::string					parseServerName(std::string value);
+hostport					parseHostPort(std::string value);
+error_page					parseErrorPage(std::string value);
+long long					parseBodySize(std::string value);
+bool						parseAutoindex(std::string value);
+std::string					parseRoot(std::string value);
+std::vector<std::string>	parseIndex(std::string value);
+cgi_options					parseCgi(std::string value);
+allowed_methods				parseAlowedMethods(std::string value);
 
-	std::string					parseServerName(std::string value);
-	hostport					parseHostPort(std::string value);
-	error_page					parseErrorPage(std::string value);
-	int							parseBodySize(std::string value);
-	location					parseLocation(std::string value, std::ifstream &confFile);
-	bool						parseAutoindex(std::string value);
-	std::string					parseRoot(std::string value);
-	std::vector<std::string>	parseIndex(std::string value);
-	cgi_options					parseCgi(std::string value);
+std::string strTrim(std::string str);
+bool		strIsDigit(std::string const str);
 
-public:
-
-	Server();
-	Server(std::ifstream &confFile);
-	~Server();
-	std::string	displayConf() const;
-};
-
-std::ostream &operator<<(std::ostream &stream, const Server server);
-std::ostream &operator<<(std::ostream &stream, const location location);
-
+#endif

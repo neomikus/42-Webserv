@@ -63,6 +63,4 @@ server { ("")
 		cgi go; (string)
 
 	}
-
-
 }

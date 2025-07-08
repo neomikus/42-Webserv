@@ -7,7 +7,7 @@ CPPFLAGS = -Wall -Wextra -Werror -Wshadow -g -std=c++98 -Iinclude
 # SRCS #
 MAIN		:= main
 PARSE		:= parse
-ClASSES		:= location server
+ClASSES		:= Location Server
 UTILS	 	:= strUtils
 
 PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \

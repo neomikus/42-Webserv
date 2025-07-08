@@ -1,7 +1,5 @@
 #include "webserv.hpp"
 
-#define PORT 8081
-
 static bool	sigstop = false;
 
 void stop(int sig) {
@@ -30,14 +28,12 @@ int	main(/*int argc, char **argv*/) {
 		return (0);
 	}
 
-	std::cout << "Socketfd: " << socketfd << std::endl;
-
-	int	option = 1;
+	int	option = true;
 	struct timeval tv;
 	tv.tv_sec = 200;
 	tv.tv_usec = 0;
 
-	setsockopt(socketfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+	setsockopt(socketfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 	setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 	setsockopt(socketfd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
 
@@ -53,13 +49,12 @@ int	main(/*int argc, char **argv*/) {
 		return (0);
 	}
 
-	int	epfd = epoll_create(1);
+	int	epfd = epoll_create(42);
 	epoll_event	config;
 
 	config.events = EPOLLIN;
 	config.data.fd = socketfd;
 
-	// Should I actually use listen???
 	if (listen(socketfd, 5) < 0) {
 		std::cerr << strerror(errno) << std::endl;
 		close(socketfd);
@@ -78,7 +73,6 @@ int	main(/*int argc, char **argv*/) {
 		int evt_count = epoll_wait(epfd, events, 5, 200);
 		socklen_t	len;
 		for (int i = 0; i < evt_count; i++) {
-			//std::cout << evt_count << std::endl;
 			if (events[i].data.fd == socketfd) {
 				int clientfd = accept(socketfd, (sockaddr *)&sockaddress, &len);
 				epoll_event	clientConfig;

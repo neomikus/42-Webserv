@@ -1,4 +1,4 @@
-#include "Webserv.hpp"
+#include "webserv.hpp"
 
 bool strIsDigit(std::string const str)
 {

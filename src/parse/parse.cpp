@@ -1,4 +1,4 @@
-#include "Webserv.hpp"
+#include "webserv.hpp"
 
 std::string	parseServerName(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
