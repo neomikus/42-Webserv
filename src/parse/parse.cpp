@@ -19,8 +19,8 @@ hostport parseHostPort(std::string value) {
 		exit(0);
 	}
 
-	std::string			host = "";
-	int					port = -1;
+	std::string			host = "0.0.0.0";
+	int					port = 80;
 	std::stringstream	check;
 
 	if (value.find(':') != value.npos)
@@ -38,7 +38,7 @@ hostport parseHostPort(std::string value) {
 
 	for (std::string::iterator it = value.begin(); it != value.end(); it++)
 		if (!isdigit(*it))
-			return std::make_pair(value, -1);
+			return std::make_pair(value, 80);
 	return std::make_pair(host, atoi(value.c_str()));
 
 }

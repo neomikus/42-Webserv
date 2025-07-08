@@ -1,8 +1,6 @@
 #ifndef WEBSERV_HPP
 #define WEBSERV_HPP
 
-#define PORT 8080
-
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <string>
@@ -24,6 +22,7 @@
 #include <list>
 #include <algorithm>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #define HMAG		"\033[95m"
 #define HCYA		"\033[96m"
@@ -40,6 +39,8 @@ const long long BYTE = 1LL;
 const long long KB = BYTE * 1024;
 const long long MB = KB * 1024;
 const long long GB = MB * 1024;
+
+#include "Socket.hpp"
 
 struct error_page {
 	std::vector<int>			to_catch;
@@ -75,5 +76,9 @@ allowed_methods				parseAlowedMethods(std::string value);
 
 std::string strTrim(std::string str);
 bool		strIsDigit(std::string const str);
+
+#include "Server.hpp"
+
+void		acceptConnections(int epfd, std::vector<Server> &servers);
 
 #endif

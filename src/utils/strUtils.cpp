@@ -19,7 +19,7 @@ std::string ltrim(std::string str)
 			return str;
 		}
 	}
-	return str;
+	return std::string("");
 }
 std::string rtrim(std::string str)
 {
@@ -31,7 +31,8 @@ std::string rtrim(std::string str)
 			return str;
 		}
 	}
-	return str;
+	return std::string("");
 }
 
-std::string strTrim(std::string str) { return(rtrim(ltrim(str))); }
+std::string strTrim(std::string str) {return(rtrim(ltrim(str))); 
+}

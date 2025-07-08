@@ -7,6 +7,8 @@
 class Server {
 	private:
 		
+	public:
+		std::list<int>				sockets;
 		std::string					server_name;
 		std::vector<hostport>		hostports;
 		std::vector<error_page>		error_pages;
@@ -16,9 +18,6 @@ class Server {
 		std::vector<std::string>	index;
 		std::vector<Location>		locations;
 		allowed_methods				methods;
-	
-	public:
-	
 		Server();
 		Server(std::ifstream &confFile);
 		Server(const Server &model);
