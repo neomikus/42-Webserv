@@ -31,5 +31,10 @@
 *.out
 *.app
 x
+webserver
 
 .vscode
+
+webserver
+obj
+vgcore*

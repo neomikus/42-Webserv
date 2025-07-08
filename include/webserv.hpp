@@ -1,5 +1,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <string>
+#include <sstream>
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -8,6 +10,15 @@
 #include <fstream>
 #include <utility>
 #include <map>
+#include <csignal>
+#include <cstring>
+#include <cstdio>
+#include <cerrno>
+#include <fcntl.h>
+#include <cstdlib>
+#include <list>
+#include <algorithm>
+#include <netinet/in.h>
 
 #define HMAG		"\033[95m"
 #define HCYA		"\033[96m"
