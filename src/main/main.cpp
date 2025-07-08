@@ -1,0 +1,36 @@
+#include "Webserv.hpp"
+#include "Server.hpp"
+
+int	main(int argc, char *argv[]) {
+
+	if (argc < 2)
+	{
+		std::cout << "file not given" << std::endl;
+		return (1);
+	}
+
+	std::vector<Server> servers;
+
+	std::ifstream		confFile(argv[1]);
+
+	if (!confFile.is_open())
+	{
+		std::cout << "file not found" << std::endl;
+		return (1);
+	}
+
+	for (std::string buffer; std::getline(confFile, buffer);)
+	{
+		if (buffer.empty())
+			continue;
+		if (buffer == "server {") {}
+			servers.push_back(Server(confFile));
+	}
+	
+	std::cout << servers.size() << std::endl;
+
+	std::cout << servers.front().displayConf() << std::endl;
+	
+
+	return (0);
+}  

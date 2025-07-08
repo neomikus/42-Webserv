@@ -1,16 +1,4 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: fcasaubo <fcasaubo@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/02/05 11:02:31 by xortega           #+#    #+#              #
-#    Updated: 2025/06/30 11:28:07 by fcasaubo         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
-NAME		:=	webserver
+NAME		:=	webserv
 OBJ_DIR		:=	obj/
 SRC_PATH	:=	src/
 CC			:=	c++
@@ -18,13 +6,14 @@ CPPFLAGS = -Wall -Wextra -Werror -Wshadow -g -std=c++98 -Iinclude
 
 # SRCS #
 MAIN		:= main
-PARSE		:= 
-ClASSES		:= webserv
-RAYS	 	:= 
-PARSING	 	:=
+PARSE		:= parse
+ClASSES		:= location server
+UTILS	 	:= strUtils
 
 PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \
-				$(addsuffix .cpp, $(addprefix classes/,	$(ClASSES)))
+				$(addsuffix .cpp, $(addprefix classes/,	$(ClASSES))) \
+				$(addsuffix .cpp, $(addprefix parse/,	$(PARSE))) \
+				$(addsuffix .cpp, $(addprefix utils/,	$(UTILS)))
 
 SRCS 		:=	$(addprefix $(SRC_PATH), $(PLAIN_SRCS))
 OBJS 		:=	$(addprefix $(OBJ_DIR), $(PLAIN_SRCS:.cpp=.o))
