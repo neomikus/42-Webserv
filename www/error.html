@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+
+<h1>404 - Not Found</h1>
+
+The requested URL <span id="URI"></span> was not found in this server
+
+<hr>
+
+<div>
+	<p id ="serverinfo"></p>
+</div>
+
+<script>
+	document.getElementById("URI").innerHTML = window.location.pathname;
+	document.getElementById("serverinfo").innerHTML = "42-Webserv/0.0.1 at " + window.location.hostname + " on port " + window.location.port;
+</script>

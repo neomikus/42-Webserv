@@ -1,20 +1,8 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: xortega <xortega@student.42.fr>            +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/02/05 11:02:31 by xortega           #+#    #+#              #
-#    Updated: 2025/07/07 12:58:28 by xortega          ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 NAME		:=	webserv
 OBJ_DIR		:=	obj/
 SRC_PATH	:=	src/
 CC			:=	c++
-CPPFLAGS = -Wall -Wextra -Werror -Wshadow -std=c++98 -Iinclude
+CPPFLAGS = -Wall -Wextra -Werror -Wshadow -g -std=c++98 -Iinclude
 
 # SRCS #
 MAIN		:= main
