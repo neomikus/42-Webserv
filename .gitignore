@@ -38,4 +38,6 @@ webserver
 
 obj
 vgcore*
+
+*.py
 post-test.txt

@@ -1,5 +1,23 @@
 #include "webserv.hpp"
 
+
+size_t countWords(std::stringstream& ss) {
+    size_t count = 0;
+    std::string word;
+    while (ss >> word) {
+        count++;
+    }
+    ss.clear();
+    ss.seekg(0);
+    return count;
+}
+
+size_t countWords(std::string const str) {
+	std::stringstream ss(str);
+    return countWords(ss);
+}
+
+
 bool strIsDigit(std::string const str)
 {
 	for (std::string::const_iterator it = str.begin(); it != str.end(); it++)

@@ -43,15 +43,21 @@ const long long GB = MB * 1024;
 #include "Socket.hpp"
 
 struct error_page {
-	std::vector<int>			to_catch;
-	int							to_replace;
-	std::string					page;
+	std::vector<int>		to_catch;
+	int						to_replace;
+	std::string				page;
 };
 
 struct allowed_methods {
-	bool						_get;
-	bool						_post;
-	bool						_delete;
+	bool					_get;
+	bool					_post;
+	bool					_delete;
+};
+
+struct hostport {
+	std::string				host;
+	int						port;
+	bool					default_server;	
 };
 
 enum cgi_options {
@@ -62,19 +68,10 @@ enum cgi_options {
 	NONE
 };
 
-typedef std::pair<std::string, int> hostport;
-
-std::string					parseServerName(std::string value);
-hostport					parseHostPort(std::string value);
-error_page					parseErrorPage(std::string value);
-long long					parseBodySize(std::string value);
-bool						parseAutoindex(std::string value);
-std::string					parseRoot(std::string value);
-std::vector<std::string>	parseIndex(std::string value);
-cgi_options					parseCgi(std::string value);
-allowed_methods				parseAlowedMethods(std::string value);
-
 std::string strTrim(std::string str);
 bool		strIsDigit(std::string const str);
+size_t		countWords(std::stringstream& ss);
+size_t		countWords(std::string const str);
+
 
 #endif

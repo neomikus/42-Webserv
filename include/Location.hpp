@@ -2,28 +2,30 @@
 #define LOCATION_HPP
 
 #include "webserv.hpp"
+#include "AContext.hpp"
 
-class Location {
+class Location: public Context {
 	private:
 
 		std::string					uri;
-		std::string					root;
-		std::vector<std::string>	index;
-		bool						autoindex;
-		std::vector<error_page>		error_pages;
+		long long					level;
 		cgi_options					cgi;
 		std::vector<Location>		locations;
-		long long					level;
-		allowed_methods				methods;
 
-	public:
+		void						parseCgi(std::string value);
+
+		public:
 
 		Location();
 		Location(std::string value, std::ifstream &confFile, int nest);
 		Location(const Location &model);
 		Location &operator=(const Location &model);
 		~Location();
-		std::string	displayConf() const;
+
+		std::string				getUri() const;
+		long long				getLevel() const;
+		cgi_options				getCgi() const;
+		std::vector<Location>	getLocations() const;
 
 };
 

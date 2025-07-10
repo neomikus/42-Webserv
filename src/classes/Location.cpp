@@ -37,11 +37,23 @@ Location &Location::operator=(const Location &model) {
 	return(*this);
 }
 
+void	Location::parseCgi(std::string value) {
+	//std::cout << "[" << value << "]" << std::endl;
+	std::string	cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
+
+	for (size_t i = 0; i < 5; i++)
+	{
+		if (value == cgiStr[i])
+		{
+			cgi = (static_cast<cgi_options>(i));
+			return;
+		}
+	}
+	exit (0);
+}
+
 Location::Location(std::string value, std::ifstream &confFile, int nest)
 {
-	methods._delete = false;
-	methods._get = false;
-	methods._post = false;
 	//std::cout << "[" << value << "]" << std::endl;
 
 	if (value.empty() || value.find('{') == value.npos)
@@ -86,96 +98,105 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 		switch (key)
 		{
 			case 0:
-				error_pages.push_back(parseErrorPage(value));
+				parseErrorPage(value);
 				break;
 			case 1:
-			locations.push_back(Location(value, confFile, level + 1));
+				locations.push_back(Location(value, confFile, level + 1));
 				break;
 			case 2:
-				autoindex = parseAutoindex((value));
+				parseAutoindex((value));
 				break;
 			case 3:
-				root = parseRoot(value);
+				parseRoot(value);
 				break;
 			case 4:
-				index = parseIndex(value);
+				parseIndex(value);
 				break;
 			case 5:
-				cgi = parseCgi(value);
+				parseCgi(value);
 				break;
 			case 6:
-				methods = parseAlowedMethods(value);
+				parseAlowedMethods(value);
 				break;
 			default:
 				break;
+				
 		}
 	}
-}
-std::string Location::displayConf() const {
-	std::stringstream strConf;
-	std::string tabs(level, '\t');
-	const char *colors[4] = {HBLU, HGRE, HMAG, HRED};
-	std::string	cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
-
-	strConf << colors[level % 4];
-
-	strConf << std::string(level - 1, '\t') << "LOCATION:" << std::endl;
-
-	strConf << tabs << "| URI\t\t: " << uri << "\n";
-
-	if (!root.empty())
-		strConf << tabs << "| ROOT\t\t: " << root << "\n";
-
-	if (autoindex)
-	strConf << tabs << "| AUTOINDEX\t: ON" << "\n";
-
-	if (cgi != NONE)
-	strConf << tabs << "| CGI\t\t: " << cgiStr[cgi]<< "\n";
-
-	if (!index.empty())
-	{
-		strConf << tabs << "| INDEX\t\t:";
-		for (std::vector<std::string>::const_iterator it = index.begin(); it != index.end(); it++)
-			strConf << "\n" << tabs << "  - [" << *it << "]";
-		strConf << tabs << "\n";
-	}
-
-	if (!error_pages.empty())
-	{
-		strConf << tabs << "| ERROR PAGES\t:";
-		for (std::vector<error_page>::const_iterator it = error_pages.begin(); it != error_pages.end(); it++)
-		{
-			strConf << "\n" << tabs << "  - [";
-			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
-				strConf << *it_catch << " ";
-			if (it->to_replace != -1)
-				strConf << "= " << it->to_replace;
-			strConf << " \\ " << it->page << "]";
-		}
-		strConf << "\n";
-	}
-
-	if (methods._delete || methods._get || methods._post)
-	{
-		strConf << tabs << "| METHODS\t:";
-		strConf << (methods._get ? " GET" : "");
-		strConf << (methods._post ? " POST" : "");
-		strConf << (methods._delete ? " DELETE" : "");
-		strConf << "\n";
-	}
-
-	if (!locations.empty())
-	{
-		strConf << tabs << "| LOCATIONS\t:";
-		strConf << "\n";
-		for (std::vector<Location>::const_iterator it = locations.begin(); it != locations.end(); it++)
-			strConf << *it;
-	}
-	return (strConf.str());
 }
 
 std::ostream &operator<<(std::ostream &stream, const Location location) {
-	stream << location.displayConf();
-	return(stream);
 	
+	std::string tabs(location.getLevel(), '\t');
+	const char *colors[4] = {HBLU, HGRE, HMAG, HRED};
+	std::string	cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
+
+	stream << colors[location.getLevel() % 4];
+
+	stream << std::string(location.getLevel() - 1, '\t') << "LOCATION:" << std::endl;
+
+	stream << tabs << "| URI\t\t: " << location.getUri() << "\n";
+
+	if (!location.getRoot().empty())
+		stream << tabs << "| ROOT\t\t: " << location.getRoot() << "\n";
+
+	if (location.getAutoindex())
+	stream << tabs << "| AUTOINDEX\t: ON" << "\n";
+
+	if (location.getCgi() != NONE)
+	stream << tabs << "| CGI\t\t: " << cgiStr[location.getCgi()]<< "\n";
+
+	std::vector<std::string> _index = location.getIndex();
+	if (!_index.empty())
+	{
+		stream << tabs << "| INDEX\t\t:";
+		for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); it++)
+			stream << "\n" << tabs << "  - [" << *it << "]";
+		stream << tabs << "\n";
+	}
+
+	std::vector<error_page> _error_pages = location.getError_pages();
+	if (!_error_pages.empty())
+	{
+		stream << tabs << "| ERROR PAGES\t:";
+		for (std::vector<error_page>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); it++)
+		{
+			stream << "\n" << tabs << "  - [";
+			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
+				stream << *it_catch << " ";
+			if (it->to_replace != -1)
+				stream << "= " << it->to_replace;
+			stream << " \\ " << it->page << "]";
+		}
+		stream << "\n";
+	}
+
+	if (location.getMethods()._delete || location.getMethods()._get || location.getMethods()._post)
+	{
+		stream << tabs << "| METHODS\t:";
+		stream << (location.getMethods()._get ? " GET" : "");
+		stream << (location.getMethods()._post ? " POST" : "");
+		stream << (location.getMethods()._delete ? " DELETE" : "");
+		stream << "\n";
+	}
+
+	std::vector<Location> _locations = location.getLocations();
+	if (!_locations.empty())
+	{
+		stream << tabs << "| LOCATIONS\t:";
+		stream << "\n";
+		for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); it++)
+			stream << *it;
+	}
+	return(stream);
 }
+
+
+/*--------------------------------------------------------------*/
+/*								GETERS							*/
+/*--------------------------------------------------------------*/
+
+std::string				Location::getUri() const {return uri;}
+long long				Location::getLevel() const {return level;}
+cgi_options				Location::getCgi() const {return cgi;}
+std::vector<Location>	Location::getLocations() const {return locations;}

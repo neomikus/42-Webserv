@@ -23,11 +23,14 @@ int	main(int argc, char *argv[]) {
 
 	for (std::string buffer; std::getline(confFile, buffer);)
 	{
+		buffer = strTrim(buffer);
 		if (buffer.empty())
 			continue;
 		if (buffer == "server {")
-			servers.push_back(Server(confFile));
+			servers.push_back(Server(confFile));		
 	}
+
+	std::cout << servers.front() << std::endl;
 
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
 		for (std::vector<hostport>::iterator it2 = it->hostports.begin(); it2 != it->hostports.end(); it2++) {
@@ -39,4 +42,4 @@ int	main(int argc, char *argv[]) {
 	acceptConnections(epfd, servers);
 
 	return (0);
-}  
+}
