@@ -57,7 +57,8 @@ struct allowed_methods {
 struct hostport {
 	std::string				host;
 	int						port;
-	bool					default_server;	
+	bool					default_server;
+	int						socket;
 };
 
 enum cgi_options {

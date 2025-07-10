@@ -7,9 +7,10 @@
 class Request
 {
 	private:
-		std::string method;
-		std::string	resource;
-		std::string protocol; // This is maybe not needed
+		bool						error; // necesary : (firstline)method resource protocol
+		std::string					method;
+		std::string					resource;
+		std::string					protocol; // This is maybe not needed
 							  // Can be checked in constructor if it's HTTP/1.1 or not
 
 		std::pair<std::string, int>	hostport;
@@ -18,9 +19,9 @@ class Request
 		// Accept-Language is horrible
 		std::vector<std::string>	acceptEncoding;
 		bool						keepAlive; // Connection: keep-alive = true, Connection: close = false
-		std::string	referer;
+		std::string					referer;
 		// Sec fetch: Do later
-		int	urgency; bool incremental; // Both part of priority, may be saved as double?
+
 		Request();
 	public:
 		Request(std::string &raw);

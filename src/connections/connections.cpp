@@ -57,7 +57,7 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 		int evt_count = epoll_wait(epfd, events, 5, 200);
 		for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
 			for (int i = 0; i < evt_count; i++) {
-				if (checkfds(events[i].data.fd, it->sockets)) {
+				if (checkfds(events[i].data.fd, it->getSockets())) {
 					connect(epfd, events[i].data.fd, clients);
 				}
 				if (checkfds(events[i].data.fd, clients)) {
