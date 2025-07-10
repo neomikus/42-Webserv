@@ -52,4 +52,5 @@ std::string rtrim(std::string str)
 	return std::string("");
 }
 
-std::string strTrim(std::string str) { return(rtrim(ltrim(str))); }
+std::string strTrim(std::string str) {return(rtrim(ltrim(str))); 
+}

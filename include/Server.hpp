@@ -7,7 +7,7 @@
 
 class Server: public Context {
 	private:
-		
+		std::list<int>				sockets;
 		std::string					server_name;
 		std::vector<hostport>		hostports;
 		long long					max_body_size;
@@ -33,5 +33,7 @@ class Server: public Context {
 };
 
 std::ostream &operator<<(std::ostream &stream, const Server server);
+
+void		acceptConnections(int epfd, std::vector<Server> &servers);
 
 #endif

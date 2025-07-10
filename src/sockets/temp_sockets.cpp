@@ -8,17 +8,6 @@ void stop(int sig) {
 	}
 }
 
-bool	checkClients(int fd, std::list<int> clients) {
-	if (clients.empty())
-		return (false);
-	for (std::list<int>::iterator it = clients.begin(); it != clients.end(); it++)
-	{
-		if (fd == *it)
-			return (true);
-	}
-	return (false);
-}
-
 int	main(/*int argc, char **argv*/) {
 	signal(SIGINT, stop);
 

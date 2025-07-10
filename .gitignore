@@ -31,12 +31,13 @@
 *.out
 *.app
 x
+webserv
 webserver
 
 .vscode
 
-webserver
 obj
 vgcore*
 
 *.py
+post-test.txt

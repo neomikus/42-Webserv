@@ -9,11 +9,15 @@ MAIN		:= main
 PARSE		:= 
 ClASSES		:= Location Server AContext
 UTILS	 	:= strUtils
+SOCKETS		:= Socket
+CONNECTIONS	:= connections Request
 
 PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \
 				$(addsuffix .cpp, $(addprefix classes/,	$(ClASSES))) \
 				$(addsuffix .cpp, $(addprefix parse/,	$(PARSE))) \
-				$(addsuffix .cpp, $(addprefix utils/,	$(UTILS)))
+				$(addsuffix .cpp, $(addprefix utils/,	$(UTILS))) \
+				$(addsuffix .cpp, $(addprefix sockets/,	$(SOCKETS))) \
+				$(addsuffix .cpp, $(addprefix connections/,	$(CONNECTIONS)))
 
 SRCS 		:=	$(addprefix $(SRC_PATH), $(PLAIN_SRCS))
 OBJS 		:=	$(addprefix $(OBJ_DIR), $(PLAIN_SRCS:.cpp=.o))
