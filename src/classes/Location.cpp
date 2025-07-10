@@ -54,7 +54,7 @@ void	Location::parseCgi(std::string value) {
 
 Location::Location(std::string value, std::ifstream &confFile, int nest)
 {
-	std::cout << "[" << value << "]" << std::endl;
+	//std::cout << "[" << value << "]" << std::endl;
 
 	if (value.empty() || value.find('{') == value.npos)
 	{
@@ -124,71 +124,79 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 		}
 	}
 }
-std::string Location::displayConf() const {
-	std::stringstream strConf;
-	std::string tabs(level, '\t');
+
+std::ostream &operator<<(std::ostream &stream, const Location location) {
+	
+	std::string tabs(location.getLevel(), '\t');
 	const char *colors[4] = {HBLU, HGRE, HMAG, HRED};
 	std::string	cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
 
-	strConf << colors[level % 4];
+	stream << colors[location.getLevel() % 4];
 
-	strConf << std::string(level - 1, '\t') << "LOCATION:" << std::endl;
+	stream << std::string(location.getLevel() - 1, '\t') << "LOCATION:" << std::endl;
 
-	strConf << tabs << "| URI\t\t: " << uri << "\n";
+	stream << tabs << "| URI\t\t: " << location.getUri() << "\n";
 
-	if (!root.empty())
-		strConf << tabs << "| ROOT\t\t: " << root << "\n";
+	if (!location.getRoot().empty())
+		stream << tabs << "| ROOT\t\t: " << location.getRoot() << "\n";
 
-	if (autoindex)
-	strConf << tabs << "| AUTOINDEX\t: ON" << "\n";
+	if (location.getAutoindex())
+	stream << tabs << "| AUTOINDEX\t: ON" << "\n";
 
-	if (cgi != NONE)
-	strConf << tabs << "| CGI\t\t: " << cgiStr[cgi]<< "\n";
+	if (location.getCgi() != NONE)
+	stream << tabs << "| CGI\t\t: " << cgiStr[location.getCgi()]<< "\n";
 
-	if (!index.empty())
+	std::vector<std::string> _index = location.getIndex();
+	if (!_index.empty())
 	{
-		strConf << tabs << "| INDEX\t\t:";
-		for (std::vector<std::string>::const_iterator it = index.begin(); it != index.end(); it++)
-			strConf << "\n" << tabs << "  - [" << *it << "]";
-		strConf << tabs << "\n";
+		stream << tabs << "| INDEX\t\t:";
+		for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); it++)
+			stream << "\n" << tabs << "  - [" << *it << "]";
+		stream << tabs << "\n";
 	}
 
-	if (!error_pages.empty())
+	std::vector<error_page> _error_pages = location.getError_pages();
+	if (!_error_pages.empty())
 	{
-		strConf << tabs << "| ERROR PAGES\t:";
-		for (std::vector<error_page>::const_iterator it = error_pages.begin(); it != error_pages.end(); it++)
+		stream << tabs << "| ERROR PAGES\t:";
+		for (std::vector<error_page>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); it++)
 		{
-			strConf << "\n" << tabs << "  - [";
+			stream << "\n" << tabs << "  - [";
 			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
-				strConf << *it_catch << " ";
+				stream << *it_catch << " ";
 			if (it->to_replace != -1)
-				strConf << "= " << it->to_replace;
-			strConf << " \\ " << it->page << "]";
+				stream << "= " << it->to_replace;
+			stream << " \\ " << it->page << "]";
 		}
-		strConf << "\n";
+		stream << "\n";
 	}
 
-	if (methods._delete || methods._get || methods._post)
+	if (location.getMethods()._delete || location.getMethods()._get || location.getMethods()._post)
 	{
-		strConf << tabs << "| METHODS\t:";
-		strConf << (methods._get ? " GET" : "");
-		strConf << (methods._post ? " POST" : "");
-		strConf << (methods._delete ? " DELETE" : "");
-		strConf << "\n";
+		stream << tabs << "| METHODS\t:";
+		stream << (location.getMethods()._get ? " GET" : "");
+		stream << (location.getMethods()._post ? " POST" : "");
+		stream << (location.getMethods()._delete ? " DELETE" : "");
+		stream << "\n";
 	}
 
-	if (!locations.empty())
+	std::vector<Location> _locations = location.getLocations();
+	if (!_locations.empty())
 	{
-		strConf << tabs << "| LOCATIONS\t:";
-		strConf << "\n";
-		for (std::vector<Location>::const_iterator it = locations.begin(); it != locations.end(); it++)
-			strConf << *it;
+		stream << tabs << "| LOCATIONS\t:";
+		stream << "\n";
+		for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); it++)
+			stream << *it;
 	}
-	return (strConf.str());
-}
-
-std::ostream &operator<<(std::ostream &stream, const Location location) {
-	stream << location.displayConf();
 	return(stream);
-	
 }
+
+
+/*--------------------------------------------------------------*/
+/*								GETERS							*/
+/*--------------------------------------------------------------*/
+
+std::string				Location::getUri() const {return uri;}
+long long				Location::getLevel() const {return level;}
+cgi_options				Location::getCgi() const {return cgi;}
+std::vector<Location>	Location::getLocations() const {return locations;}

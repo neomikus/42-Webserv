@@ -21,7 +21,11 @@ class Location: public Context {
 		Location(const Location &model);
 		Location &operator=(const Location &model);
 		~Location();
-		std::string	displayConf() const;
+
+		std::string				getUri() const;
+		long long				getLevel() const;
+		cgi_options				getCgi() const;
+		std::vector<Location>	getLocations() const;
 
 };
 

@@ -130,3 +130,8 @@ void Context::parseAlowedMethods(std::string value){
 			exit(0);
 	}
 }
+std::string					Context::getRoot() const {return root;}
+std::vector<std::string>	Context::getIndex() const {return index;}
+bool						Context::getAutoindex() const {return autoindex;}
+allowed_methods				Context::getMethods() const {return methods;}
+std::vector<error_page>		Context::getError_pages() const {return error_pages;}

@@ -24,7 +24,11 @@ class Server: public Context {
 		Server(const Server &model);
 		Server&operator=(const Server&model);
 		~Server();
-		std::string	displayConf() const;
+
+		std::string				getServer_name() const;
+		std::vector<hostport>	getHostports() const;
+		long long				getMax_body_size() const;
+		std::vector<Location>	getLocations() const;
 
 };
 

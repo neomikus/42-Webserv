@@ -23,6 +23,12 @@ class Context {
 	
 		Context();
 		virtual ~Context();
+		
+		std::string					getRoot() const;
+		std::vector<std::string>	getIndex() const;
+		bool						getAutoindex() const;
+		allowed_methods				getMethods() const;
+		std::vector<error_page>		getError_pages() const;
 
 };
 

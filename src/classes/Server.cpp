@@ -139,6 +139,23 @@ void	Server::parseServerName(std::string value) {
 	server_name = value;
 }
 
+void	resolveHostPorts(std::vector<hostport> &hostports)
+{
+	if (hostports.empty())
+		return;
+	std::vector<hostport>::reverse_iterator it = hostports.rbegin();
+	for (; it != hostports.rend(); it++)
+		if (it->default_server)
+			break;
+	if (it != hostports.rend())
+	{
+		it++;
+		for (; it != hostports.rend(); it++)
+			it->default_server = false;
+	}
+}
+
+
 Server::Server(std::ifstream &confFile)
 {	
 	std::string key_words[10] = {
@@ -150,7 +167,10 @@ Server::Server(std::ifstream &confFile)
 		if (buffer.empty() || buffer == ";" || buffer[0] == '#')
 			continue;
 		if (buffer == "}")
+		{
+			resolveHostPorts(hostports);
 			return ;
+		}
 		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)
 		{
 			std::cout << "ERROR4" << std::endl;
@@ -193,75 +213,82 @@ Server::Server(std::ifstream &confFile)
 				break;
 			default:
 				break;
-		}		
-	}
-}
-
-std::string	Server::displayConf() const {
-	std::stringstream strConf;
-	strConf << HBLU;
-	if (!server_name.empty())
-		strConf << "| SERVER NAME\t: " << server_name <<  + "\n";
-	if (max_body_size != MB)
-		strConf << "| MAX BODY SIZE\t: " << max_body_size <<  + "\n";
-
-	if (autoindex)
-	strConf << "| AUTOINDEX\t: ON" << "\n";
-	
-	if (!root.empty())
-		strConf << "| ROOT\t\t: " << root << "\n";
-
-	if (!index.empty())
-	{
-		strConf << "| INDEX\t\t:";
-		for (std::vector<std::string>::const_iterator it = index.begin(); it != index.end(); it++)
-			strConf << "\n  - [" << *it << "]";
-		strConf << "\n";
-	}
-
-	if (!hostports.empty())
-	{
-		strConf << "| HOST PORTS\t:";
-		for (std::vector<hostport>::const_iterator it = hostports.begin(); it != hostports.end(); it++)	
-			strConf << "\n  - [" << (!it->host.empty() ? it->host + ":" : "") << it->port << "]" << (it->default_server ? " defaul_server" : "");
-		strConf << "\n";
-	}
-
-	if (methods._delete || methods._get || methods._post)
-	{
-		strConf << "| METHODS\t:";
-		strConf << (methods._get ? " GET" : "");
-		strConf << (methods._post ? " POST" : "");
-		strConf << (methods._delete ? " DELETE" : "");
-		strConf << "\n";
-	}
-
-	if (!error_pages.empty())
-	{
-		strConf << "| ERROR PAGES\t:";
-		for (std::vector<error_page>::const_iterator it = error_pages.begin(); it != error_pages.end(); it++)
-		{
-			strConf << "\n  - [";
-			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
-				strConf << *it_catch << " ";
-			if (it->to_replace != -1)
-				strConf << "= " << it->to_replace;
-			strConf << " \\ " << it->page << "]";
 		}
-		strConf << "\n";
 	}
-
-	if (!locations.empty())
-	{
-		strConf << "| LOCATIONS\t:\n";
-		for (std::vector<Location>::const_iterator it = locations.begin(); it != locations.end(); it++)
-			strConf << it->displayConf();
-	}
-	return(strConf.str());
 }
-
 
 std::ostream &operator<<(std::ostream &stream, const Server server) {
-	stream << server.displayConf();
+
+	stream << HBLU;
+	if (!server.getServer_name().empty())
+		stream << "| SERVER NAME\t: " << server.getServer_name() <<  + "\n";
+	if (server.getMax_body_size() != MB)
+		stream << "| MAX BODY SIZE\t: " << server.getMax_body_size() <<  + "\n";
+
+	if (server.getAutoindex())
+	stream << "| AUTOINDEX\t: ON" << "\n";
+	
+	if (!server.getRoot().empty())
+		stream << "| ROOT\t\t: " << server.getRoot() << "\n";
+
+	std::vector<std::string> _index = server.getIndex();
+	if (!_index.empty())
+	{
+		stream << "| INDEX\t\t:";
+		for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); it++)
+			stream << "\n  - [" << *it << "]";
+		stream << "\n";
+	}
+
+	std::vector<hostport> _hostports = server.getHostports();
+	if (!_hostports.empty())
+	{
+		stream << "| HOST PORTS\t:";
+		for (std::vector<hostport>::const_iterator it = _hostports.begin(); it != _hostports.end(); it++)	
+			stream << "\n  - [" << (!it->host.empty() ? it->host + ":" : "") << it->port << "]" << (it->default_server ? " default_server" : "");
+		stream << "\n";
+	}
+
+	if (server.getMethods()._delete || server.getMethods()._get || server.getMethods()._post)
+	{
+		stream << "| METHODS\t:";
+		stream << (server.getMethods()._get ? " GET" : "");
+		stream << (server.getMethods()._post ? " POST" : "");
+		stream << (server.getMethods()._delete ? " DELETE" : "");
+		stream << "\n";
+	}
+
+	std::vector<error_page> _error_pages = server.getError_pages();
+	if (!_error_pages.empty())
+	{
+		stream << "| ERROR PAGES\t:";
+		for (std::vector<error_page>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); it++)
+		{
+			stream << "\n  - [";
+			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
+				stream << *it_catch << " ";
+			if (it->to_replace != -1)
+				stream << "= " << it->to_replace;
+			stream << " \\ " << it->page << "]";
+		}
+		stream << "\n";
+	}
+
+	std::vector<Location> _locations = server.getLocations();
+	if (!_locations.empty())
+	{
+		stream << "| LOCATIONS\t:\n";
+		for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); it++)
+			stream << *it;
+	}
 	return (stream); 
 }
+
+/*--------------------------------------------------------------*/
+/*								GETERS							*/
+/*--------------------------------------------------------------*/
+
+std::string				Server::getServer_name() const {return server_name;}
+std::vector<hostport>	Server::getHostports() const {return hostports;}
+long long				Server::getMax_body_size() const {return max_body_size;}
+std::vector<Location>	Server::getLocations() const {return locations;}

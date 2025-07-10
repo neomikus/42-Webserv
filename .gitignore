@@ -38,3 +38,5 @@ webserver
 webserver
 obj
 vgcore*
+
+*.py
