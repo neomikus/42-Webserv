@@ -111,6 +111,7 @@ void	Context::parseIndex(std::string value) {
 
 void Context::parseAlowedMethods(std::string value){
 	//std::cout << "[" << value << "]" << std::endl;
+
 	std::stringstream	split(value);
 	while (split)
 	{
@@ -129,6 +130,7 @@ void Context::parseAlowedMethods(std::string value){
 		else
 			exit(0);
 	}
+
 }
 std::string					Context::getRoot() const {return root;}
 std::vector<std::string>	Context::getIndex() const {return index;}

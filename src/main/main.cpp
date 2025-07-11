@@ -3,7 +3,6 @@
 #include "Request.hpp"
 
 int	main(int argc, char *argv[]) {
-
 	if (argc < 2)
 	{
 		std::cout << "file not given" << std::endl;
@@ -30,6 +29,7 @@ int	main(int argc, char *argv[]) {
 		if (buffer == "server {")
 			servers.push_back(Server(confFile));		
 	}
+
 
 	std::cout << servers.front() << std::endl;
 

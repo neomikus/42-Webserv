@@ -2,11 +2,11 @@ NAME		:=	webserv
 OBJ_DIR		:=	obj/
 SRC_PATH	:=	src/
 CC			:=	c++
-CPPFLAGS = -Wall -Wextra -Werror -Wshadow -g3 -std=c++98 -Iinclude
+CPPFLAGS = -Wall -Wextra -Werror -Wshadow -std=c++98 -Iinclude
 
 # SRCS #
 MAIN		:= main
-PARSE		:= 
+PARSE		:= #parse
 ClASSES		:= Location Server AContext
 UTILS	 	:= strUtils intUtils
 SOCKETS		:= Socket

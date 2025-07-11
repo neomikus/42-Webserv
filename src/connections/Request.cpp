@@ -117,7 +117,6 @@ std::string	getStatusText(int status) {
 }
 
 bool	checkAllowedMethods(std::string &method, allowed_methods methods) {
-	return (true);
 	if (method == "PUT" || method == "HEAD" || method == "CONNECT" || method == "TRACE" || method == "PATCH") // (Not Implemented Methods)
 		return (false);
 	if (method == "GET" && methods._get == false)
@@ -144,6 +143,12 @@ Server	&Request::selectServer(std::vector<Server> &servers, int fd) {
 int	Request::getStatus(const Server &server) {
 	if (error)
 		return (400);
+	if (method != "PUT" && method != "HEAD" &&
+		method != "CONNECT" && method != "TRACE" && method != "PATCH" &&
+		method != "GET" && method != "DELETE" && method != "PUT")
+		return (501);
+	if (!checkAllowedMethods(method, server.getMethods()))
+		return (405);
 	if (access(resource.substr(1).c_str(), F_OK)) {
 		if (resource.substr(1) == "teapot")
 			return (418);
@@ -152,33 +157,27 @@ int	Request::getStatus(const Server &server) {
 	// Save request body size in parsing!!!
 	//if (server.getMax_body_size() > request_body_size)
 	//	return (413);
-	if (method != "PUT" && method != "HEAD" &&
-		method != "CONNECT" && method != "TRACE" && method != "PATCH" &&
-		method != "GET" && method != "DELETE" && method != "PUT")
-		return (501);
-	if (!checkAllowedMethods(method, server.getMethods()))
-		return (405);
 
 	return (200);
 }
 
-std::vector<error_page>::iterator 	checkErrorPages(std::vector<error_page> error_pages, int &status) {
+std::string checkErrorPages(std::vector<error_page> error_pages, int &status) {
 	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); it++) {
 		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); it2++) {
 			if (*it2 == status) {
-				if (it->to_replace != -1)
+				if (it->to_replace > 199)
 					status = it->to_replace;
-				return (it);
+				return (it->page);
 			}
 		}
 	}
-	return (error_pages.end());
+	return ("");
 }
 
-std::string	Request::getErrorPages(std::vector<error_page>::iterator error_page) {
-	if (access(error_page->page.substr(1).c_str(), F_OK))
+std::string	Request::getErrorPages(std::string &page) {
+	if (access(page.c_str(), F_OK))
 		return (DEFAULT_ERROR_PAGE);
-	return (error_page->page.substr(1));
+	return (page);
 }
 
 std::string	Request::getBody(int &status, const Server &server) {
@@ -187,9 +186,9 @@ std::string	Request::getBody(int &status, const Server &server) {
 	//if (status == 418)
 	//	return (teapotGenerator());
 	if (status % 100 == 4 || status % 100 == 5) {
-		std::vector<error_page>::iterator it = checkErrorPages(server.getError_pages(), status);
-		if (it != server.getError_pages().end())
-			return (getErrorPages(it));
+		std::string page = checkErrorPages(server.getError_pages(), status);
+		if (!page.empty())
+			return (getErrorPages(page));
 	}
 	return (DEFAULT_ERROR_PAGE);
 }
@@ -217,12 +216,6 @@ void	Request::response(int fd, std::list<int> &clients, const Server &server) {
 	for (std::string line; std::getline(responseBody, line);) {
 		response += line;
 	}
-
-	for (size_t i = 0; i < response.size(); i++)
-	{
-		std::cout << response[i];
-	}
-	std::cout << std::endl << "RESPONSE ENDED!" << std::endl;
 
 	std::cout << send(fd, response.c_str(), response.length(), 0) << std::endl;
 	responseBody.close();

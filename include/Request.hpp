@@ -26,7 +26,7 @@ class Request
 		void						parseMethodResourceProtocol(const std::string line);
 		int							getStatus(const Server &server);
 		std::string					getBody(int  &status, const Server &server);
-		std::string					getErrorPages(std::vector<error_page>::iterator error_page);
+		std::string					getErrorPages(std::string &error_page);
 	public:
 		
 		Request();

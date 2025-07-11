@@ -159,7 +159,7 @@ void	resolveHostPorts(std::vector<hostport> &hostports)
 Server::Server(std::ifstream &confFile)
 {	
 	std::string key_words[10] = {
-	"server_name", "listen", "error_page", "client_max_body_size", "location", "autoindex", "root", "index", "allow_methods", "error" };
+	"server_name", "listen", "error_page", "client_max_body_size", "location", "autoindex", "root", "index", "allowed_methods", "error" };
 	max_body_size = MB;
 	for (std::string buffer; std::getline(confFile, buffer);)
 	{
@@ -182,6 +182,7 @@ Server::Server(std::ifstream &confFile)
 				break;
 		std::string value = buffer.substr(key_words[key].size(), buffer.find_first_of(';') - key_words[key].size());
 		value = strTrim(value);
+
 		switch (key)
 		{
 			case 0:
