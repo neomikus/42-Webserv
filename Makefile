@@ -10,7 +10,7 @@ PARSE		:=
 ClASSES		:= Location Server AContext
 UTILS	 	:= strUtils
 SOCKETS		:= Socket
-CONNECTIONS	:= connections Request
+CONNECTIONS	:= connections Request Get Post Delete
 
 PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \
 				$(addsuffix .cpp, $(addprefix classes/,	$(ClASSES))) \

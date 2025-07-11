@@ -1,6 +1,9 @@
 #include "webserv.hpp"
 #include "Server.hpp"
 #include "Request.hpp"
+#include "Get.hpp"
+#include "Post.hpp"
+#include "Delete.hpp"
 
 bool	checkfds(int fd, std::list<int> fdList) {
 	if (fdList.empty())
@@ -48,6 +51,44 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 	}
 }
 
+Request *makeRequest(std::string &rawResponse)
+{
+	Request *req = NULL;
+	std::stringstream	buffer;
+	std::string			_temp;
+	std::vector<std::string>	splitedResponse = strSplit(rawResponse, "\n");
+
+	buffer << splitedResponse[0];
+	buffer >> _temp;
+	if (_temp != "GET" && _temp != "POST" && _temp != "DELETE")
+		exit(400);
+
+
+	if (_temp == "GET")
+	{
+		req = new Get(splitedResponse);
+		std::cout << HMAG;
+
+	}
+	else if (_temp == "POST")
+	{
+		req = new Post(splitedResponse);
+		std::cout << HGRE;
+	}	
+	else
+	{
+		req = new Delete(splitedResponse);
+		std::cout << HRED;
+	}
+	
+
+	std::cout  << _temp << std::endl;
+
+	std::cout << "make_request out" << std::endl;
+
+	return (req);
+}
+
 void	acceptConnections(int epfd, std::vector<Server> &servers) {
 	std::list<int>	clients;
 
@@ -62,8 +103,10 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 				}
 				if (checkfds(events[i].data.fd, clients)) {
 					std::string rawResponse = read_request(events[i].data.fd);
-					Request request(rawResponse);
-					request.response(events[i].data.fd, clients);
+					
+					Request *request = makeRequest(rawResponse);
+					request->response(events[i].data.fd, clients);
+					delete request;
 				}
 			}
 		}

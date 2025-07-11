@@ -42,6 +42,5 @@ int	main(int argc, char *argv[]) {
 	}
 
 	acceptConnections(epfd, servers);
-	
 	return (0);
 }
