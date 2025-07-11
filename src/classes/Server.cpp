@@ -292,3 +292,4 @@ std::string				Server::getServer_name() const {return server_name;}
 std::vector<hostport>	Server::getHostports() const {return hostports;}
 long long				Server::getMax_body_size() const {return max_body_size;}
 std::vector<Location>	Server::getLocations() const {return locations;}
+std::list<int>			&Server::getSockets() {return sockets;}

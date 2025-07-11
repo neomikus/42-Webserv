@@ -1,10 +1,91 @@
 #include "webserv.hpp"
 #include "Request.hpp"
 
-Request::Request(std::string &raw) {
-	method = raw.substr(0, raw.find(" "));
-	resource = raw.substr(raw.find("/") + 1, raw.find(" HTTP") - raw.find("/") - 1);
+void	Request::parseMethodResourceProtocol(const std::string line)
+{
+	if (countWords(line) != 3)
+		error = true;
+
+	std::stringstream	buffer;
+	buffer << line;
+	buffer >> method;
+	buffer >> resource;
+	buffer >> protocol;
 }
+
+
+Request::Request(std::vector<std::string> splitedRaw): Request() {
+	parseMethodResourceProtocol(splitedRaw[0]);
+	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); it++)
+	{
+		std::stringstream	tokens;
+		tokens << *it;
+
+		std::string _temp;
+		tokens >> _temp;
+
+		if (_temp == "Host:")
+		{
+			hostport.host = it->substr(7, it->find(':', 7) - 7);
+			hostport.port = atoi(it->substr(7 + hostport.host.length() + 1).c_str());
+
+		}
+		if (_temp == "User-Agent:")
+			userAgent = it->substr(12);
+		if (_temp == "Accept:")
+			accept = strSplit(it->substr(8), ",");
+		if (_temp == "Accept-Encoding:")
+			acceptEncoding = strSplit(it->substr(17), ", ");
+		if (_temp == "Connection:")
+		{
+			tokens >> _temp;
+			if (_temp == "keep-alive")
+				keepAlive = true;
+		}
+		if (_temp == "Referer:")
+			referer = it->substr(9);		
+	}
+	std::cout << "this->host " << hostport.host << std::endl;
+	std::cout << "this->port " << hostport.port << std::endl;
+	std::cout << "this->userAgent " << userAgent << std::endl;
+	std::cout << "this->accept" << std::endl;
+	for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); it++)
+		std::cout << '\t' << *it << std::endl;
+	std::cout << "this->acceptEncoding" << std::endl;
+	for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); it++)
+		std::cout << '\t' << *it << std::endl;
+	std::cout << "this->keepAlive " << keepAlive << std::endl;
+	std::cout << "this->referer " << referer << std::endl;
+	std::cout << "this->method " << method << std::endl;
+	std::cout << "this->resource " << resource << std::endl;
+	std::cout << "this->protocol " << protocol << std::endl;
+
+	
+}
+
+Request::Request() {
+	error = false;
+	method = "";
+	resource = "";
+	protocol = "";
+	userAgent = "";
+	keepAlive = false;
+	referer = "";
+}
+
+Request::Request(const Request &model) {
+	this->error = model.error;
+	this->method = model.method;
+	this->resource = model.resource;
+	this->protocol = model.protocol;
+	this->hostport = model.hostport;
+	this->userAgent = model.userAgent;
+	this->accept = model.accept;
+	this->acceptEncoding = model.acceptEncoding;
+	this->keepAlive = model.keepAlive;
+	this->referer = model.referer;
+}
+
 
 Request::~Request() {
 	
@@ -32,7 +113,7 @@ std::string	getStatusText(int status) {
 }
 
 void	Request::response(int fd, std::list<int> &clients) {
-	std::ifstream	webpage(resource.c_str());
+	std::ifstream	webpage(resource.substr(1).c_str());
 	std::string		status;
 
 	if (method != "GET") {
