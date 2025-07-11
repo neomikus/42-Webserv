@@ -105,7 +105,7 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 					std::string rawResponse = read_request(events[i].data.fd);
 					
 					Request *request = makeRequest(rawResponse);
-					request->response(events[i].data.fd, clients);
+					request->response(events[i].data.fd, clients, request->selectServer(servers, events[i].data.fd));
 					delete request;
 				}
 			}

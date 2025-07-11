@@ -40,6 +40,8 @@ const long long KB = BYTE * 1024;
 const long long MB = KB * 1024;
 const long long GB = MB * 1024;
 
+#define DEFAULT_ERROR_PAGE "www/default_error_page.html"
+
 #include "Socket.hpp"
 
 struct error_page {
@@ -74,5 +76,7 @@ bool						strIsDigit(std::string const str);
 size_t						countWords(std::stringstream& ss);
 size_t						countWords(std::string const str);
 std::vector<std::string>	strSplit(const std::string& str, const std::string& delimiter);
+
+std::string					to_string(int n);
 
 #endif

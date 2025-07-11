@@ -8,7 +8,7 @@ CPPFLAGS = -Wall -Wextra -Werror -Wshadow -g3 -std=c++98 -Iinclude
 MAIN		:= main
 PARSE		:= 
 ClASSES		:= Location Server AContext
-UTILS	 	:= strUtils
+UTILS	 	:= strUtils intUtils
 SOCKETS		:= Socket
 CONNECTIONS	:= connections Request Get Post Delete
 

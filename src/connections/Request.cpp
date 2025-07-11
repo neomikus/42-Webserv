@@ -1,5 +1,6 @@
 #include "webserv.hpp"
 #include "Request.hpp"
+#include "Server.hpp"
 
 void	Request::parseMethodResourceProtocol(const std::string line)
 {
@@ -14,7 +15,8 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 }
 
 
-Request::Request(std::vector<std::string> splitedRaw): Request() {
+Request::Request(std::vector<std::string> splitedRaw) {
+	*this = Request();
 	parseMethodResourceProtocol(splitedRaw[0]);
 	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); it++)
 	{
@@ -26,8 +28,8 @@ Request::Request(std::vector<std::string> splitedRaw): Request() {
 
 		if (_temp == "Host:")
 		{
-			hostport.host = it->substr(7, it->find(':', 7) - 7);
-			hostport.port = atoi(it->substr(7 + hostport.host.length() + 1).c_str());
+			hostPort.host = it->substr(7, it->find(':', 7) - 7);
+			hostPort.port = atoi(it->substr(7 + hostPort.host.length() + 1).c_str());
 
 		}
 		if (_temp == "User-Agent:")
@@ -45,8 +47,8 @@ Request::Request(std::vector<std::string> splitedRaw): Request() {
 		if (_temp == "Referer:")
 			referer = it->substr(9);		
 	}
-	std::cout << "this->host " << hostport.host << std::endl;
-	std::cout << "this->port " << hostport.port << std::endl;
+	std::cout << "this->host " << hostPort.host << std::endl;
+	std::cout << "this->port " << hostPort.port << std::endl;
 	std::cout << "this->userAgent " << userAgent << std::endl;
 	std::cout << "this->accept" << std::endl;
 	for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); it++)
@@ -78,7 +80,7 @@ Request::Request(const Request &model) {
 	this->method = model.method;
 	this->resource = model.resource;
 	this->protocol = model.protocol;
-	this->hostport = model.hostport;
+	this->hostPort = model.hostPort;
 	this->userAgent = model.userAgent;
 	this->accept = model.accept;
 	this->acceptEncoding = model.acceptEncoding;
@@ -91,11 +93,11 @@ Request::~Request() {
 	
 }
 
-long	getPageSize(std::ifstream &webpage) {
-	std::streampos pagePos = webpage.tellg();
-	webpage.seekg(0, std::ios::end);
-	pagePos = webpage.tellg() - pagePos;
-	webpage.seekg(std::ios::beg);
+long	getBodySize(std::ifstream &requestBody) {
+	std::streampos pagePos = requestBody.tellg();
+	requestBody.seekg(0, std::ios::end);
+	pagePos = requestBody.tellg() - pagePos;
+	requestBody.seekg(std::ios::beg);
 	return (static_cast<long>(pagePos));
 }
 
@@ -106,52 +108,124 @@ std::string	getStatusText(int status) {
 			return ("OK\r\n");
 		case 404:
 			return ("Not Found\r\n");
+		case 418:
+			return ("I'm a teapot\r\n");
 		default:
 			break;
 	}
 	return ("\r\n");
 }
 
-void	Request::response(int fd, std::list<int> &clients) {
-	std::ifstream	webpage(resource.substr(1).c_str());
-	std::string		status;
+bool	checkAllowedMethods(std::string &method, allowed_methods methods) {
+	return (true);
+	if (method == "PUT" || method == "HEAD" || method == "CONNECT" || method == "TRACE" || method == "PATCH") // (Not Implemented Methods)
+		return (false);
+	if (method == "GET" && methods._get == false)
+		return (false);
+	if (method == "POST" && methods._delete == false)
+		return (false);
+	if (method == "DELETE" && methods._delete == false)
+		return (false);
+	return (true);
+}
 
-	if (method != "GET") {
-		std::cout << method << " not implemented" << std::endl;
-		return;
+Server	&Request::selectServer(std::vector<Server> &servers, int fd) {
+	std::vector<Server> candidates;
+	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
+		sockaddr	*temp = (sockaddr *)malloc(sizeof(sockaddr) * 1024);
+		socklen_t	temp2 = 1024;
+		
+		getsockname(fd, temp, &temp2);
+		std::cout << temp->sa_data << std::endl;
 	}
+	return (*servers.begin());
+}
 
-	if (!webpage) {
-		status = "404";
-
-		// Compare with server error pages, else:
-		webpage.close();
-		webpage.open("www/default_error_page.html");
+int	Request::getStatus(const Server &server) {
+	if (error)
+		return (400);
+	if (access(resource.substr(1).c_str(), F_OK)) {
+		if (resource.substr(1) == "teapot")
+			return (418);
+		return (404);
 	}
-	else
-		status = "200"; // Change later for different statuses
+	// Save request body size in parsing!!!
+	//if (server.getMax_body_size() > request_body_size)
+	//	return (413);
+	if (method != "PUT" && method != "HEAD" &&
+		method != "CONNECT" && method != "TRACE" && method != "PATCH" &&
+		method != "GET" && method != "DELETE" && method != "PUT")
+		return (501);
+	if (!checkAllowedMethods(method, server.getMethods()))
+		return (405);
 
-	long contentLenght = getPageSize(webpage);
+	return (200);
+}
 
-	std::string reply;
+std::vector<error_page>::iterator 	checkErrorPages(std::vector<error_page> error_pages, int &status) {
+	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); it++) {
+		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); it2++) {
+			if (*it2 == status) {
+				if (it->to_replace != -1)
+					status = it->to_replace;
+				return (it);
+			}
+		}
+	}
+	return (error_pages.end());
+}
 
-	reply += "HTTP/1.1 "; // This is always true
-	reply += status + " ";
-	reply += getStatusText(atoi(status.c_str()));
+std::string	Request::getErrorPages(std::vector<error_page>::iterator error_page) {
+	if (access(error_page->page.substr(1).c_str(), F_OK))
+		return (DEFAULT_ERROR_PAGE);
+	return (error_page->page.substr(1));
+}
+
+std::string	Request::getBody(int &status, const Server &server) {
+	if (status == 200)
+		return (resource.substr(1));
+	//if (status == 418)
+	//	return (teapotGenerator());
+	if (status % 100 == 4 || status % 100 == 5) {
+		std::vector<error_page>::iterator it = checkErrorPages(server.getError_pages(), status);
+		if (it != server.getError_pages().end())
+			return (getErrorPages(it));
+	}
+	return (DEFAULT_ERROR_PAGE);
+}
+
+void	Request::response(int fd, std::list<int> &clients, const Server &server) {
+	int	status = getStatus(server);
+	std::ifstream	responseBody(getBody(status, server).c_str());
+
+	long contentLenght = getBodySize(responseBody);
+	std::cout << contentLenght << std::endl;
+
+	std::string response;
+
+	response += "HTTP/1.1 "; // This is always true
+	response += to_string(status);
+	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
 	
-	reply += "Content Lenght: ";
-	reply += contentLenght;
-	reply += "\r\n";
+	response += "Content Lenght: ";
+	response += to_string(contentLenght);
+	response += "\r\n";
 	
-	reply += "\r\n";
+	response += "\r\n";
 
-	for (std::string line; std::getline(webpage, line);) {
-		reply += line;
+	for (std::string line; std::getline(responseBody, line);) {
+		response += line;
 	}
 
-	send(fd, reply.c_str(), reply.length(), 0);
-	webpage.close();
+	for (size_t i = 0; i < response.size(); i++)
+	{
+		std::cout << response[i];
+	}
+	std::cout << std::endl << "RESPONSE ENDED!" << std::endl;
+
+	std::cout << send(fd, response.c_str(), response.length(), 0) << std::endl;
+	responseBody.close();
 	close(fd);
 	clients.erase(std::find(clients.begin(), clients.end(), fd));
 
