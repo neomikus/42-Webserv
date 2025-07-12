@@ -6,15 +6,17 @@ CPPFLAGS = -Wall -Wextra -Werror -Wshadow -std=c++98 -Iinclude
 
 # SRCS #
 MAIN		:= main
-PARSE		:= #parse
+PARSE		:= 
+FILES		:= File
 ClASSES		:= Location Server AContext
-UTILS	 	:= strUtils intUtils
+UTILS	 	:= strUtils intUtils teapot
 SOCKETS		:= Socket
-CONNECTIONS	:= connections Request Get Post Delete
+CONNECTIONS	:= connections Request Get Post Delete Generic
 
 PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \
 				$(addsuffix .cpp, $(addprefix classes/,	$(ClASSES))) \
 				$(addsuffix .cpp, $(addprefix parse/,	$(PARSE))) \
+				$(addsuffix .cpp, $(addprefix files/,	$(FILES))) \
 				$(addsuffix .cpp, $(addprefix utils/,	$(UTILS))) \
 				$(addsuffix .cpp, $(addprefix sockets/,	$(SOCKETS))) \
 				$(addsuffix .cpp, $(addprefix connections/,	$(CONNECTIONS)))

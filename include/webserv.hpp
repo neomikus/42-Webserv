@@ -79,4 +79,10 @@ std::vector<std::string>	strSplit(const std::string& str, const std::string& del
 
 std::string					to_string(int n);
 
+#include "File.hpp"
+
+class File;
+
+void	teapotGenerator(File &responseBody);
+
 #endif

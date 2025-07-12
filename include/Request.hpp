@@ -25,15 +25,15 @@ class Request
 
 		void						parseMethodResourceProtocol(const std::string line);
 		int							getStatus(const Server &server);
-		std::string					getBody(int  &status, const Server &server);
-		std::string					getErrorPages(std::string &error_page);
+		void						getBody(int &status, const Server &server, File &responseBody);
+		void						getErrorPages(std::string &error_page, File &responseBody);
 	public:
 		
 		Request();
 		Request(const Request &model);
 		Request(std::vector<std::string> splitedRaw);
 		virtual ~Request();
-		Server	&selectServer(std::vector<Server> &servers, int fd);
+		Server	&selectServer(std::vector<Server> &servers);
 		void	response(int fd, std::list<int> &clients, const Server &server); // May return int for response code or for error check?
 };
 

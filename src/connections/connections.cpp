@@ -4,6 +4,7 @@
 #include "Get.hpp"
 #include "Post.hpp"
 #include "Delete.hpp"
+#include "Generic.hpp"
 
 bool	checkfds(int fd, std::list<int> fdList) {
 	if (fdList.empty())
@@ -61,8 +62,7 @@ Request *makeRequest(std::string &rawResponse)
 	buffer << splitedResponse[0];
 	buffer >> _temp;
 	if (_temp != "GET" && _temp != "POST" && _temp != "DELETE")
-		exit(400);
-
+		req = new Generic(splitedResponse);
 
 	if (_temp == "GET")
 	{
@@ -105,7 +105,7 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 					std::string rawResponse = read_request(events[i].data.fd);
 					
 					Request *request = makeRequest(rawResponse);
-					request->response(events[i].data.fd, clients, request->selectServer(servers, events[i].data.fd));
+					request->response(events[i].data.fd, clients, request->selectServer(servers));
 					delete request;
 				}
 			}

@@ -1,6 +1,7 @@
 #include "webserv.hpp"
 #include "Request.hpp"
 #include "Server.hpp"
+#include "File.hpp"
 
 void	Request::parseMethodResourceProtocol(const std::string line)
 {
@@ -28,8 +29,8 @@ Request::Request(std::vector<std::string> splitedRaw) {
 
 		if (_temp == "Host:")
 		{
-			hostPort.host = it->substr(7, it->find(':', 7) - 7);
-			hostPort.port = atoi(it->substr(7 + hostPort.host.length() + 1).c_str());
+			hostPort.host = it->substr(6, it->find(':', 7) - 6);
+			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
 
 		}
 		if (_temp == "User-Agent:")
@@ -93,7 +94,7 @@ Request::~Request() {
 	
 }
 
-long	getBodySize(std::ifstream &requestBody) {
+long	getBodySize(std::fstream &requestBody) {
 	std::streampos pagePos = requestBody.tellg();
 	requestBody.seekg(0, std::ios::end);
 	pagePos = requestBody.tellg() - pagePos;
@@ -108,8 +109,12 @@ std::string	getStatusText(int status) {
 			return ("OK\r\n");
 		case 404:
 			return ("Not Found\r\n");
+		case 405:
+			return ("Method Not Allowed\r\n");
 		case 418:
 			return ("I'm a teapot\r\n");
+		case 501:
+			return ("Not Implemented\r\n");
 		default:
 			break;
 	}
@@ -128,16 +133,25 @@ bool	checkAllowedMethods(std::string &method, allowed_methods methods) {
 	return (true);
 }
 
-Server	&Request::selectServer(std::vector<Server> &servers, int fd) {
+Server	&Request::selectServer(std::vector<Server> &servers) {
 	std::vector<Server> candidates;
+	/*
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
-		sockaddr	*temp = (sockaddr *)malloc(sizeof(sockaddr) * 1024);
-		socklen_t	temp2 = 1024;
-		
-		getsockname(fd, temp, &temp2);
-		std::cout << temp->sa_data << std::endl;
+		std::vector<hostport> hostports = it->getHostports();
+		for (std::vector<hostport>::iterator it2 = hostports.begin(); it2 != hostports.end(); it2++) {
+			if ((hostPort.host == it2->host || it2->host == "0.0.0.0") && (hostPort.port == it2->port || it2->port == -1))
+				candidates.push_back(*it);
+		}
+	}*/
+	if (candidates.empty())
+		return (*servers.begin());
+
+	for (std::vector<Server>::iterator it = candidates.begin(); it != candidates.end(); it++) {
+		if (it->getServer_name() == hostPort.host) {
+			return (*it);
+		}
 	}
-	return (*servers.begin());
+	return (*candidates.begin());
 }
 
 int	Request::getStatus(const Server &server) {
@@ -174,31 +188,39 @@ std::string checkErrorPages(std::vector<error_page> error_pages, int &status) {
 	return ("");
 }
 
-std::string	Request::getErrorPages(std::string &page) {
+void	Request::getErrorPages(std::string &page, File &responseBody) {
 	if (access(page.c_str(), F_OK))
-		return (DEFAULT_ERROR_PAGE);
-	return (page);
+		responseBody.open(DEFAULT_ERROR_PAGE);
+	else
+		responseBody.open(page);
 }
 
-std::string	Request::getBody(int &status, const Server &server) {
-	if (status == 200)
-		return (resource.substr(1));
-	//if (status == 418)
-	//	return (teapotGenerator());
+void	Request::getBody(int &status, const Server &server, File &responseBody) {
+	if (status == 200) {
+		responseBody.open(resource.substr(1));
+		return;
+	}
+	if (status == 418) {
+		teapotGenerator(responseBody);
+		return;
+	}
 	if (status % 100 == 4 || status % 100 == 5) {
 		std::string page = checkErrorPages(server.getError_pages(), status);
-		if (!page.empty())
-			return (getErrorPages(page));
+		if (!page.empty()) {
+			getErrorPages(page, responseBody);
+			return;
+		}
 	}
-	return (DEFAULT_ERROR_PAGE);
+	responseBody.open(DEFAULT_ERROR_PAGE);
 }
 
 void	Request::response(int fd, std::list<int> &clients, const Server &server) {
 	int	status = getStatus(server);
-	std::ifstream	responseBody(getBody(status, server).c_str());
+	File		responseBody;
 
-	long contentLenght = getBodySize(responseBody);
-	std::cout << contentLenght << std::endl;
+	getBody(status, server, responseBody);
+
+	long long contentLenght = responseBody.getSize();
 
 	std::string response;
 
@@ -206,20 +228,17 @@ void	Request::response(int fd, std::list<int> &clients, const Server &server) {
 	response += to_string(status);
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
-	
 	response += "Content Lenght: ";
 	response += to_string(contentLenght);
 	response += "\r\n";
 	
 	response += "\r\n";
 
-	for (std::string line; std::getline(responseBody, line);) {
+	for (std::string line; std::getline(responseBody.getStream(), line);) {
 		response += line;
 	}
 
-	std::cout << send(fd, response.c_str(), response.length(), 0) << std::endl;
-	responseBody.close();
+	send(fd, response.c_str(), response.length(), 0);
 	close(fd);
 	clients.erase(std::find(clients.begin(), clients.end(), fd));
-
 }
