@@ -2,31 +2,41 @@
 #define REQUEST_HPP
 
 #include "webserv.hpp"
+#include "Server.hpp"
 
 // MAYBE we can make it abstract and make a class for method?
 class Request
 {
 	private:
-		std::string method;
-		std::string	resource;
-		std::string protocol; // This is maybe not needed
+		std::vector<Server> candidates;
+	protected:
+		bool						error; // necesary : (firstline)method resource protocol
+		std::string					method;
+		std::string					resource;
+		std::string					protocol; // This is maybe not needed
 							  // Can be checked in constructor if it's HTTP/1.1 or not
 
-		std::pair<std::string, int>	hostport;
+		hostport					hostPort;
 		std::string userAgent; // I don't know if this is useful to us or not, maybe for cookies?
 		std::vector<std::string>	accept; // May be renamed acceptFormat?
 		// Accept-Language is horrible
 		std::vector<std::string>	acceptEncoding;
 		bool						keepAlive; // Connection: keep-alive = true, Connection: close = false
-		std::string	referer;
+		std::string					referer;
 		// Sec fetch: Do later
-		int	urgency; bool incremental; // Both part of priority, may be saved as double?
-		Request();
-	public:
-		Request(std::string &raw);
-		~Request();
 
-		void	response(int fd, std::list<int> &clients); // May return int for response code or for error check?
+		void						parseMethodResourceProtocol(const std::string line);
+		int							getStatus(const Server &server);
+		void						getBody(int &status, const Server &server, File &responseBody);
+		void						getErrorPages(std::string &error_page, File &responseBody);
+	public:
+		
+		Request();
+		Request(const Request &model);
+		Request(std::vector<std::string> splitedRaw);
+		virtual ~Request();
+		Server	&selectServer(std::vector<Server> &servers);
+		void	response(int fd, std::list<int> &clients, const Server &server); // May return int for response code or for error check?
 };
 
 #endif

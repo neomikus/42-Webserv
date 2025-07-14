@@ -1,8 +1,8 @@
 #include "webserv.hpp"
 #include "Server.hpp"
+#include "Request.hpp"
 
 int	main(int argc, char *argv[]) {
-
 	if (argc < 2)
 	{
 		std::cout << "file not given" << std::endl;
@@ -30,16 +30,17 @@ int	main(int argc, char *argv[]) {
 			servers.push_back(Server(confFile));		
 	}
 
+
 	std::cout << servers.front() << std::endl;
 
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
-		for (std::vector<hostport>::iterator it2 = it->hostports.begin(); it2 != it->hostports.end(); it2++) {
+		std::vector<hostport> _hostport = it->getHostports();
+		for (std::vector<hostport>::iterator it2 = _hostport.begin(); it2 != _hostport.end(); it2++) {
 			// Change inet_addr to something allowed by the subject later
-			it->sockets.push_back(Socket::initServer(it2->second, inet_addr(it2->first.c_str()), epfd));
+			it->getSockets().push_back(Socket::initServer(it2->port, inet_addr(it2->host.c_str()), epfd));
 		}
 	}
 
 	acceptConnections(epfd, servers);
-
 	return (0);
 }

@@ -11,7 +11,7 @@ class Server: public Context {
 		std::string					server_name;
 		std::vector<hostport>		hostports;
 		long long					max_body_size;
-		std::vector<Location>		locations;	
+		std::vector<Location>		locations;
 
 		void						parseServerName(std::string value);
 		void						parseHostPort(std::string value);
@@ -29,6 +29,7 @@ class Server: public Context {
 		std::vector<hostport>	getHostports() const;
 		long long				getMax_body_size() const;
 		std::vector<Location>	getLocations() const;
+		std::list<int>			&getSockets();
 
 };
 

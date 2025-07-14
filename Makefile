@@ -2,19 +2,21 @@ NAME		:=	webserv
 OBJ_DIR		:=	obj/
 SRC_PATH	:=	src/
 CC			:=	c++
-CPPFLAGS = -Wall -Wextra -Werror -Wshadow -g3 -std=c++98 -Iinclude
+CPPFLAGS = -Wall -Wextra -Werror -Wshadow -std=c++98 -Iinclude
 
 # SRCS #
 MAIN		:= main
 PARSE		:= 
+FILES		:= File
 ClASSES		:= Location Server AContext
-UTILS	 	:= strUtils
+UTILS	 	:= strUtils intUtils teapot
 SOCKETS		:= Socket
-CONNECTIONS	:= connections Request
+CONNECTIONS	:= connections Request Get Post Delete Generic
 
 PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \
 				$(addsuffix .cpp, $(addprefix classes/,	$(ClASSES))) \
 				$(addsuffix .cpp, $(addprefix parse/,	$(PARSE))) \
+				$(addsuffix .cpp, $(addprefix files/,	$(FILES))) \
 				$(addsuffix .cpp, $(addprefix utils/,	$(UTILS))) \
 				$(addsuffix .cpp, $(addprefix sockets/,	$(SOCKETS))) \
 				$(addsuffix .cpp, $(addprefix connections/,	$(CONNECTIONS)))
