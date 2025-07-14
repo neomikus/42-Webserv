@@ -11,7 +11,7 @@ FILES		:= File
 ClASSES		:= Location Server AContext
 UTILS	 	:= strUtils intUtils teapot
 SOCKETS		:= Socket
-CONNECTIONS	:= connections Request Get Post Delete Generic
+CONNECTIONS	:= connections Request Get Post Delete
 
 PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \
 				$(addsuffix .cpp, $(addprefix classes/,	$(ClASSES))) \

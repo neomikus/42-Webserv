@@ -4,7 +4,6 @@
 #include "Get.hpp"
 #include "Post.hpp"
 #include "Delete.hpp"
-#include "Generic.hpp"
 
 bool	checkfds(int fd, std::list<int> fdList) {
 	if (fdList.empty())

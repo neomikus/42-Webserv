@@ -22,17 +22,6 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 		std::pair<std::string, std::string>	temp(currentQuery.front(), currentQuery.back());
 	}
 	
-	/*
-	for (size_t i = resource.find("?"); i != resource.npos; i = resource.find("&", i)) {
-		std::cout << "Query == " << resource.substr(i + 1, resource.find("=", i) - 2) << " = " << resource.substr(resource.find("=", i) + 1, resource.size()) << std::endl;
-		std::pair<std::string, std::string>	temp;
-		if (resource.find("&", i) == resource.npos)
-			temp = std::pair<std::string, std::string>(resource.substr(i + 1, resource.find("=", i + 1) - 1), resource.substr(resource.find("=", i + 1) + 1, resource.size()));
-		else
-			temp = std::pair<std::string, std::string>(resource.substr(i + 1, resource.find("=", i + 1) - 1), resource.substr(resource.find("=", i + 1) + 1, resource.find("&", i)));
-		query.insert(temp);
-	}
-	*/
 	resource = resource.substr(0, resource.find("?"));
 }
 
