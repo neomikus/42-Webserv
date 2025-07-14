@@ -10,10 +10,11 @@ class Request
 	private:
 		std::vector<Server> candidates;
 	protected:
-		bool						error; // necesary : (firstline)method resource protocol
-		std::string					method;
-		std::string					resource;
-		std::string					protocol; // This is maybe not needed
+		bool								error; // necesary : (firstline)method resource protocol
+		std::string							method;
+		std::map<std::string, std::string>	query;
+		std::string							resource;
+		std::string							protocol; // This is maybe not needed
 							  // Can be checked in constructor if it's HTTP/1.1 or not
 
 		hostport					hostPort;
