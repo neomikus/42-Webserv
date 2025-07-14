@@ -19,6 +19,8 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 Request::Request(std::vector<std::string> splitedRaw) {
 	*this = Request();
 	parseMethodResourceProtocol(splitedRaw[0]);
+	if (error)
+		return ;
 	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); it++)
 	{
 		std::stringstream	tokens;
@@ -29,7 +31,7 @@ Request::Request(std::vector<std::string> splitedRaw) {
 
 		if (_temp == "Host:")
 		{
-			hostPort.host = it->substr(6, it->find(':', 7) - 6);
+			hostPort.host = it->substr(6, it->find(':', 6) - 6);
 			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
 
 		}
@@ -134,15 +136,15 @@ bool	checkAllowedMethods(std::string &method, allowed_methods methods) {
 }
 
 Server	&Request::selectServer(std::vector<Server> &servers) {
-	std::vector<Server> candidates;
-	/*
+
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
 		std::vector<hostport> hostports = it->getHostports();
 		for (std::vector<hostport>::iterator it2 = hostports.begin(); it2 != hostports.end(); it2++) {
 			if ((hostPort.host == it2->host || it2->host == "0.0.0.0") && (hostPort.port == it2->port || it2->port == -1))
 				candidates.push_back(*it);
 		}
-	}*/
+	}
+
 	if (candidates.empty())
 		return (*servers.begin());
 
@@ -197,14 +199,14 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 
 void	Request::getBody(int &status, const Server &server, File &responseBody) {
 	if (status == 200) {
-		responseBody.open(resource.substr(1));
+		responseBody.open(resource.substr(1, resource.find("?") - 1));
 		return;
 	}
 	if (status == 418) {
 		teapotGenerator(responseBody);
 		return;
 	}
-	if (status % 100 == 4 || status % 100 == 5) {
+	if (status / 100 == 4 || status / 100 == 5) {
 		std::string page = checkErrorPages(server.getError_pages(), status);
 		if (!page.empty()) {
 			getErrorPages(page, responseBody);
@@ -218,6 +220,7 @@ void	Request::response(int fd, std::list<int> &clients, const Server &server) {
 	int	status = getStatus(server);
 	File		responseBody;
 
+	std::cout << HMAG << "STATUS = " << status << std::endl;
 	getBody(status, server, responseBody);
 
 	long long contentLenght = responseBody.getSize();

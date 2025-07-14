@@ -7,6 +7,8 @@
 // MAYBE we can make it abstract and make a class for method?
 class Request
 {
+	private:
+		std::vector<Server> candidates;
 	protected:
 		bool						error; // necesary : (firstline)method resource protocol
 		std::string					method;

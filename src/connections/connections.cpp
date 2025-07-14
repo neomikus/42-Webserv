@@ -62,7 +62,7 @@ Request *makeRequest(std::string &rawResponse)
 	buffer << splitedResponse[0];
 	buffer >> _temp;
 	if (_temp != "GET" && _temp != "POST" && _temp != "DELETE")
-		req = new Generic(splitedResponse);
+		req = new Request(splitedResponse);
 
 	if (_temp == "GET")
 	{
