@@ -22,6 +22,7 @@ std::string	read_request(int fd) {
 	int rd = recv(fd, buffer, 1024, 0);
 	if (rd == -1) {
 		std::cerr << "Read failed!" << std::endl;
+		return ("");
 	}
 	buffer[rd] = '\0';
 	while (rd > 0) {
@@ -52,7 +53,9 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 }
 
 std::string getBody(std::string &rawResponse) {
-	return (rawResponse.substr(rawResponse.find("\n\n"), rawResponse.size()));
+	if (rawResponse.find("\n\n") != rawResponse.npos)
+		return (rawResponse.substr(rawResponse.find("\n\n"), rawResponse.size()));
+	return (std::string());
 }
 
 Request *makeRequest(std::string &rawResponse)

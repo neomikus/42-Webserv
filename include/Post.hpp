@@ -12,11 +12,14 @@ class Post: public Request {
 		std::string	contentType;
 		Post();
 		void	parseBody(std::string &rawBody);
+		void	updateResource();
 	public:
 		Post(std::vector<std::string> splitedResponse, std::string &rawBody);
 		//Post	&operator=(const Post &model);
 		Post(const Post &model);
 		~Post();
+
+		void	response(int fd, std::list<int> &clients, const Server &server);
 };
 
 #endif

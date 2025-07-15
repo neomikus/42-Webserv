@@ -53,7 +53,7 @@ Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody): Request(s
 			contentType = it->substr(13);	
 	}
 	parseBody(rawBody);
-
+	body << rawBody;
 	std::cout << "this->host " << hostPort.host << std::endl;
 	std::cout << "this->port " << hostPort.port << std::endl;
 	std::cout << "this->userAgent " << userAgent << std::endl;
@@ -75,6 +75,46 @@ Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody): Request(s
 
 Post::Post(const Post &model): Request(model) {
 
+}
+
+void	Post::updateResource() {
+	std::cout << "To create: " << resource.substr(1).c_str() << std::endl;
+	std::filebuf fb;
+	fb.open(resource.substr(1).c_str(), std::ios::out);
+	std::ostream	newResource(&fb);
+
+	newResource << body.getStream();
+}
+
+void	Post::response(int fd, std::list<int> &clients, const Server &server) {
+	updateResource();
+	int	status = getStatus(server);
+	File		responseBody;
+
+	std::cout << HMAG << "STATUS = " << status << std::endl;
+	getBody(status, server, responseBody);
+
+	long long contentLenght = responseBody.getSize();
+
+	std::string response;
+
+	response += "HTTP/1.1 "; // This is always true
+	response += to_string(status);
+	response += " " + getStatusText(status);
+	// I don't know how much we need to add to the response?
+	response += "Content Lenght: ";
+	response += to_string(contentLenght);
+	response += "\r\n";
+	
+	response += "\r\n";
+
+	for (std::string line; std::getline(responseBody.getStream(), line);) {
+		response += line;
+	}
+
+	send(fd, response.c_str(), response.length(), 0);
+	close(fd);
+	clients.erase(std::find(clients.begin(), clients.end(), fd));
 }
 
 Post::~Post(){}
