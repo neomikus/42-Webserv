@@ -216,10 +216,67 @@ void	Request::getBody(int &status, const Server &server, File &responseBody) {
 	responseBody.open(DEFAULT_ERROR_PAGE);
 }
 
-void	Request::response(int fd, std::list<int> &clients, const Server &server) {
+std::string trimLastWord(std::string str, char delimiter)
+{
+	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; it--)
+	{
+		if (*it == delimiter)
+		{
+			str.erase(it, str.end());
+			return (str);
+		}
+	}
+	return std::string("");
+}
+
+Location Request::selectContext(Server &location) {
+
+	std::string uri = resource;
+
+
+	while(!uri.empty())
+	{	
+		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); it++)
+		{
+			std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
+			if (it->getUri() == uri)
+				return (selectContext(*it));
+		}
+		uri = trimLastWord(uri, '/');
+		std::cout << "trimed [" << uri << "]" << std::endl;
+		if (uri.empty())
+			uri = "/";
+	}
+	std::cout << "mal" << std::endl;
+	return (location.getLocations()[0]);
+}
+
+Location Request::selectContext(Location &location) {
+
+	std::string uri = resource;
+	std::cout << "im in " << location.getUri() << std::endl;
+
+	while(!uri.empty())
+	{	
+		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); it++)
+		{
+			std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
+			if (it->getUri() == uri)
+				return (selectContext(*it));
+		}
+		uri = trimLastWord(uri, '/');
+		std::cout << "trimed [" << uri << "]" << std::endl;
+	}
+	return (location);
+}
+
+
+void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	int	status = getStatus(server);
+	Location 	location = selectContext(server);
 	File		responseBody;
 
+	std::cout << "selected context: " << location.getUri() << std::endl;
 	std::cout << HMAG << "STATUS = " << status << std::endl;
 	getBody(status, server, responseBody);
 

@@ -28,12 +28,11 @@ Location &Location::operator=(const Location &model) {
 	autoindex = model.autoindex;
 	error_pages = model.error_pages;
 	cgi = model.cgi;
-    for (size_t i = 0; i < model.locations.size(); i++) {
-        locations.push_back(Location(model.locations[i]));
-    }
 	level = model.level;
 	methods = model.methods;
-
+	for (size_t i = 0; i < model.locations.size(); i++) {
+		locations.push_back(Location(model.locations[i]));
+	}
 	return(*this);
 }
 
@@ -125,7 +124,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 	}
 }
 
-std::ostream &operator<<(std::ostream &stream, const Location location) {
+std::ostream &operator<<(std::ostream &stream, Location location) {
 	
 	std::string tabs(location.getLevel(), '\t');
 	const char *colors[4] = {HBLU, HGRE, HMAG, HRED};
@@ -199,4 +198,4 @@ std::ostream &operator<<(std::ostream &stream, const Location location) {
 std::string				Location::getUri() const {return uri;}
 long long				Location::getLevel() const {return level;}
 cgi_options				Location::getCgi() const {return cgi;}
-std::vector<Location>	Location::getLocations() const {return locations;}
+std::vector<Location>	&Location::getLocations() {return locations;}

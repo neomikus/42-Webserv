@@ -218,7 +218,7 @@ Server::Server(std::ifstream &confFile)
 	}
 }
 
-std::ostream &operator<<(std::ostream &stream, const Server server) {
+std::ostream &operator<<(std::ostream &stream, Server server) {
 
 	stream << HBLU;
 	if (!server.getServer_name().empty())
@@ -292,5 +292,5 @@ std::ostream &operator<<(std::ostream &stream, const Server server) {
 std::string				Server::getServer_name() const {return server_name;}
 std::vector<hostport>	Server::getHostports() const {return hostports;}
 long long				Server::getMax_body_size() const {return max_body_size;}
-std::vector<Location>	Server::getLocations() const {return locations;}
+std::vector<Location>	&Server::getLocations() {return locations;}
 std::list<int>			&Server::getSockets() {return sockets;}

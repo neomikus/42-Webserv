@@ -56,6 +56,36 @@ std::string strTrim(std::string str) {return(rtrim(ltrim(str)));
 }
 
 
+
+std::string ltrim(std::string str, char delimiter)
+{
+	for (std::string::iterator it = str.begin(); it != str.end(); it++)
+	{
+		if (*it != delimiter)
+		{
+			str.erase(str.begin(), it);
+			return str;
+		}
+	}
+	return std::string("");
+}
+std::string rtrim(std::string str, char delimiter)
+{
+	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; it--)
+	{
+		if (*it != delimiter)
+		{
+			str.erase(it + 1, str.end());
+			return str;
+		}
+	}
+	return std::string("");
+}
+
+std::string strTrim(std::string str, char delimiter) {return(rtrim(ltrim(str, delimiter), delimiter)); 
+}
+
+
 std::vector<std::string> strSplit(const std::string& str, const std::string& delimiter) {
 	std::vector<std::string> tokens;
 	size_t start = 0;

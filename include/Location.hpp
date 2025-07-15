@@ -25,10 +25,10 @@ class Location: public Context {
 		std::string				getUri() const;
 		long long				getLevel() const;
 		cgi_options				getCgi() const;
-		std::vector<Location>	getLocations() const;
+		std::vector<Location>	&getLocations();
 
 };
 
-std::ostream &operator<<(std::ostream &stream, const Location location);
+std::ostream &operator<<(std::ostream &stream, Location location);
 
 #endif

@@ -29,6 +29,9 @@ class Request
 		int							getStatus(const Server &server);
 		void						getBody(int &status, const Server &server, File &responseBody);
 		void						getErrorPages(std::string &error_page, File &responseBody);
+		Location 					selectContext(Location &location);
+		Location 					selectContext(Server &location);
+
 	public:
 		
 		Request();
@@ -36,7 +39,7 @@ class Request
 		Request(std::vector<std::string> splitedRaw);
 		virtual ~Request();
 		Server	&selectServer(std::vector<Server> &servers);
-		void	response(int fd, std::list<int> &clients, const Server &server); // May return int for response code or for error check?
+		void	response(int fd, std::list<int> &clients, Server &server); // May return int for response code or for error check?
 };
 
 #endif

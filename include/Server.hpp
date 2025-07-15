@@ -28,12 +28,12 @@ class Server: public Context {
 		std::string				getServer_name() const;
 		std::vector<hostport>	getHostports() const;
 		long long				getMax_body_size() const;
-		std::vector<Location>	getLocations() const;
+		std::vector<Location>	&getLocations();
 		std::list<int>			&getSockets();
 
 };
 
-std::ostream &operator<<(std::ostream &stream, const Server server);
+std::ostream &operator<<(std::ostream &stream, Server server);
 
 void		acceptConnections(int epfd, std::vector<Server> &servers);
 
