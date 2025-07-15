@@ -27,8 +27,8 @@ class Request
 		// Sec fetch: Do later
 
 		void						parseMethodResourceProtocol(std::string line);
-		int							getStatus(Server &server);
-		void						getBody(int &status, Server &server, File &responseBody);
+		int							getStatus(Location &currentLocation);
+		void						getBody(int &status, Location &currentLocation, File &responseBody);
 		void						getErrorPages(std::string &error_page, File &responseBody);
 		Location 					selectContext(Location &location, std::string fatherUri);
 
@@ -40,7 +40,7 @@ class Request
 		Request	&operator=(const Request &model);
 		virtual ~Request();
 		Server	&selectServer(std::vector<Server> &servers);
-		virtual void	response(int fd, std::list<int> &clients, const Server &server); // May return int for response code or for error check?
+		virtual void	response(int fd, std::list<int> &clients, Server &server); // May return int for response code or for error check?
 
 };
 

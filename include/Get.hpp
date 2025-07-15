@@ -6,11 +6,13 @@
 class Get: public Request {
 	private:
 
-	Get();
+		Get();
 	public:
 		Get(std::vector<std::string> splitedResponse);
 		Get(const Get &model);
 		~Get();
+	
+		void	response(int fd, std::list<int> &clients, Server &server);
 };
 
 #endif

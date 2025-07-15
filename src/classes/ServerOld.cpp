@@ -144,13 +144,13 @@ void	resolveHostPorts(std::vector<hostport> &hostports)
 	if (hostports.empty())
 		return;
 	std::vector<hostport>::reverse_iterator it = hostports.rbegin();
-	for (; it != hostports.rend(); it++)
+	for (; it != hostports.rend(); ++it)
 		if (it->default_server)
 			break;
 	if (it != hostports.rend())
 	{
-		it++;
-		for (; it != hostports.rend(); it++)
+		++it;
+		for (; it != hostports.rend(); ++it)
 			it->default_server = false;
 	}
 }
@@ -236,7 +236,7 @@ std::ostream &operator<<(std::ostream &stream, Server server) {
 	if (!_index.empty())
 	{
 		stream << "| INDEX\t\t:";
-		for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); it++)
+		for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); ++it)
 			stream << "\n  - [" << *it << "]";
 		stream << "\n";
 	}
@@ -245,7 +245,7 @@ std::ostream &operator<<(std::ostream &stream, Server server) {
 	if (!_hostports.empty())
 	{
 		stream << "| HOST PORTS\t:";
-		for (std::vector<hostport>::const_iterator it = _hostports.begin(); it != _hostports.end(); it++)	
+		for (std::vector<hostport>::const_iterator it = _hostports.begin(); it != _hostports.end(); ++it)	
 			stream << "\n  - [" << (!it->host.empty() ? it->host + ":" : "") << it->port << "]" << (it->default_server ? " default_server" : "");
 		stream << "\n";
 	}
@@ -263,10 +263,10 @@ std::ostream &operator<<(std::ostream &stream, Server server) {
 	if (!_error_pages.empty())
 	{
 		stream << "| ERROR PAGES\t:";
-		for (std::vector<error_page>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); it++)
+		for (std::vector<error_page>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); ++it)
 		{
 			stream << "\n  - [";
-			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
+			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); ++it_catch)
 				stream << *it_catch << " ";
 			if (it->to_replace != -1)
 				stream << "= " << it->to_replace;
@@ -279,7 +279,7 @@ std::ostream &operator<<(std::ostream &stream, Server server) {
 	if (!_locations.empty())
 	{
 		stream << "| LOCATIONS\t:\n";
-		for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); it++)
+		for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); ++it)
 			stream << *it;
 	}
 	return (stream); 

@@ -15,7 +15,7 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 	buffer >> protocol;
 
 	std::vector<std::string>	queries = strSplit(resource.substr(resource.find("?") + 1, resource.size()), "&");
-	for (std::vector<std::string>::iterator it = queries.begin(); it != queries.end(); it++) {
+	for (std::vector<std::string>::iterator it = queries.begin(); it != queries.end(); ++it) {
 		std::vector<std::string>	currentQuery = strSplit(*it, "=");
 		if (currentQuery.size() != 2)
 			continue;
@@ -31,7 +31,7 @@ Request::Request(std::vector<std::string> splitedRaw) {
 	parseMethodResourceProtocol(splitedRaw[0]);
 	if (error)
 		return ;
-	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); it++)
+	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
 	{
 		std::stringstream	tokens;
 		tokens << *it;
@@ -64,10 +64,10 @@ Request::Request(std::vector<std::string> splitedRaw) {
 	std::cout << "this->port " << hostPort.port << std::endl;
 	std::cout << "this->userAgent " << userAgent << std::endl;
 	std::cout << "this->accept" << std::endl;
-	for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); it++)
+	for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); ++it)
 		std::cout << '\t' << *it << std::endl;
 	std::cout << "this->acceptEncoding" << std::endl;
-	for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); it++)
+	for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); ++it)
 		std::cout << '\t' << *it << std::endl;
 	std::cout << "this->keepAlive " << keepAlive << std::endl;
 	std::cout << "this->referer " << referer << std::endl;
@@ -162,9 +162,9 @@ bool	checkAllowedMethods(std::string &method, allowed_methods methods) {
 
 Server	&Request::selectServer(std::vector<Server> &servers) {
 
-	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
+	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 		std::vector<hostport> hostports = it->getHostports();
-		for (std::vector<hostport>::iterator it2 = hostports.begin(); it2 != hostports.end(); it2++) {
+		for (std::vector<hostport>::iterator it2 = hostports.begin(); it2 != hostports.end(); ++it2) {
 			if ((hostPort.host == it2->host || it2->host == "0.0.0.0") && (hostPort.port == it2->port || it2->port == -1))
 				candidates.push_back(*it);
 		}
@@ -173,7 +173,7 @@ Server	&Request::selectServer(std::vector<Server> &servers) {
 	if (candidates.empty())
 		return (*servers.begin());
 
-	for (std::vector<Server>::iterator it = candidates.begin(); it != candidates.end(); it++) {
+	for (std::vector<Server>::iterator it = candidates.begin(); it != candidates.end(); ++it) {
 		if (it->getServer_name() == hostPort.host) {
 			return (*it);
 		}
@@ -181,14 +181,14 @@ Server	&Request::selectServer(std::vector<Server> &servers) {
 	return (*candidates.begin());
 }
 
-int	Request::getStatus(Server &server) {
+int	Request::getStatus(Location &currentLocation) {
 	if (error)
 		return (400);
 	if (method != "PUT" && method != "HEAD" &&
-		method != "CONNECT" && method != "TRACE" && method != "PATCH" &&
-		method != "GET" && method != "DELETE" && method != "PUT")
+		method != "CONNECT" && method != "TRACE" && 
+		method != "PATCH" && method != "GET" && method != "DELETE")
 		return (501);
-	if (!checkAllowedMethods(method, server.getVLocation().getMethods()))
+	if (!checkAllowedMethods(method, currentLocation.getMethods()))
 		return (405);
 	if (access(resource.substr(1).c_str(), F_OK)) {
 		if (resource.substr(1) == "teapot")
@@ -196,15 +196,16 @@ int	Request::getStatus(Server &server) {
 		return (404);
 	}
 	// Save request body size in parsing!!!
-	//if (server.getMax_body_size() > request_body_size)
+	//if (currentLocation.getMax_body_size() > request_body_size)
 	//	return (413);
-
+	if (method == "POST")
+		return (201);
 	return (200);
 }
 
 std::string checkErrorPages(std::vector<error_page> error_pages, int &status) {
-	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); it++) {
-		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); it2++) {
+	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
+		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); ++it2) {
 			if (*it2 == status) {
 				if (it->to_replace > 199)
 					status = it->to_replace;
@@ -222,7 +223,7 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 		responseBody.open(page);
 }
 
-void	Request::getBody(int &status, Server &server, File &responseBody) {
+void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
 	if (status == 200) {
 		responseBody.open(resource.substr(1, resource.find("?") - 1));
 		return;
@@ -232,7 +233,7 @@ void	Request::getBody(int &status, Server &server, File &responseBody) {
 		return;
 	}
 	if (status / 100 == 4 || status / 100 == 5) {
-		std::string page = checkErrorPages(server.getVLocation().getError_pages(), status);
+		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
 		if (!page.empty()) {
 			getErrorPages(page, responseBody);
 			return;
@@ -241,20 +242,6 @@ void	Request::getBody(int &status, Server &server, File &responseBody) {
 	responseBody.open(DEFAULT_ERROR_PAGE);
 }
 
-std::string trimLastWord(std::string str, char delimiter)
-{
-	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; it--)
-	{
-		if (*it == delimiter)
-		{
-			str.erase(it, str.end());
-			if (str.empty())
-				return std::string("/");
-			return (str);
-		}
-	}
-	return std::string("");
-}
 Location Request::selectContext(Location &location, std::string fatherUri) {
 
 	std::cout << "FatherUri : " << fatherUri << std::endl;
@@ -270,7 +257,7 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
 
 	while(!uri.empty())
 	{	
-		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); it++)
+		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
 		{
 			std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
 			if (it->getUri() == uri)
@@ -284,15 +271,12 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
 	return (location);
 }
 
-
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
-	int	status = getStatus(server);
 	Location 	location = selectContext(server.getVLocation(), "");
+	int	status = getStatus(location);
 	File		responseBody;
 
-	std::cout << "selected context: " << (location.getUri().empty() ? "Vlocation" : location.getUri()) << std::endl;
-	std::cout << HMAG << "STATUS = " << status << std::endl;
-	getBody(status, server, responseBody);
+	getBody(status, location, responseBody);
 
 	long long contentLenght = responseBody.getSize();
 

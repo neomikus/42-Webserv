@@ -14,14 +14,15 @@ void	Post::parseBody(std::string &rawBody) {
 		;
 	else if (contentType == "application/json")
 		;
+	else if (contentType == "text/html")
+		;
 }
 
 Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody): Request(splitedRaw){
-	//*this = Post();
 	parseMethodResourceProtocol(splitedRaw[0]);
 	if (error)
 		return ;
-	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); it++)
+	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
 	{
 		std::stringstream	tokens;
 		tokens << *it;
@@ -58,10 +59,10 @@ Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody): Request(s
 	std::cout << "this->port " << hostPort.port << std::endl;
 	std::cout << "this->userAgent " << userAgent << std::endl;
 	std::cout << "this->accept" << std::endl;
-	for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); it++)
+	for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); ++it)
 		std::cout << '\t' << *it << std::endl;
 	std::cout << "this->acceptEncoding" << std::endl;
-	for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); it++)
+	for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); ++it)
 		std::cout << '\t' << *it << std::endl;
 	std::cout << "this->keepAlive " << keepAlive << std::endl;
 	std::cout << "this->referer " << referer << std::endl;
@@ -77,22 +78,25 @@ Post::Post(const Post &model): Request(model) {
 
 }
 
-void	Post::updateResource() {
-	std::cout << "To create: " << resource.substr(1).c_str() << std::endl;
+std::string	Post::updateResource() {
+	std::string	resourceName;
 	std::filebuf fb;
 	fb.open(resource.substr(1).c_str(), std::ios::out);
+	resourceName = resource; // for now
 	std::ostream	newResource(&fb);
 
 	newResource << body.getStream();
+	return (resourceName);
 }
 
-void	Post::response(int fd, std::list<int> &clients, const Server &server) {
-	updateResource();
-	int	status = getStatus(server);
+void	Post::response(int fd, std::list<int> &clients, Server &server) {
+	Location 	location = selectContext(server.getVLocation(), "");
+	std::string newResource = updateResource();
+	int	status = getStatus(location);
 	File		responseBody;
 
 	std::cout << HMAG << "STATUS = " << status << std::endl;
-	getBody(status, server, responseBody);
+	getBody(status, location, responseBody);
 
 	long long contentLenght = responseBody.getSize();
 
@@ -106,6 +110,12 @@ void	Post::response(int fd, std::list<int> &clients, const Server &server) {
 	response += to_string(contentLenght);
 	response += "\r\n";
 	
+	if (status == 201) {
+		response += "Location: ";
+		response += newResource;
+		response += "\r\n";
+	}
+
 	response += "\r\n";
 
 	for (std::string line; std::getline(responseBody.getStream(), line);) {

@@ -20,7 +20,7 @@ size_t countWords(std::string const str) {
 
 bool strIsDigit(std::string const str)
 {
-	for (std::string::const_iterator it = str.begin(); it != str.end(); it++)
+	for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
 		if (!std::isdigit(*it))
 			return (false);
 	return(true);
@@ -29,7 +29,7 @@ bool strIsDigit(std::string const str)
 
 std::string ltrim(std::string str)
 {
-	for (std::string::iterator it = str.begin(); it != str.end(); it++)
+	for (std::string::iterator it = str.begin(); it != str.end(); ++it)
 	{
 		if (*it != ' ' && *it != '\t')
 		{
@@ -41,7 +41,7 @@ std::string ltrim(std::string str)
 }
 std::string rtrim(std::string str)
 {
-	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; it--)
+	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; --it)
 	{
 		if (*it != ' ' && *it != '\t')
 		{
@@ -59,7 +59,7 @@ std::string strTrim(std::string str) {return(rtrim(ltrim(str)));
 
 std::string ltrim(std::string str, char delimiter)
 {
-	for (std::string::iterator it = str.begin(); it != str.end(); it++)
+	for (std::string::iterator it = str.begin(); it != str.end(); ++it)
 	{
 		if (*it != delimiter)
 		{
@@ -71,7 +71,7 @@ std::string ltrim(std::string str, char delimiter)
 }
 std::string rtrim(std::string str, char delimiter)
 {
-	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; it--)
+	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; --it)
 	{
 		if (*it != delimiter)
 		{
@@ -85,6 +85,20 @@ std::string rtrim(std::string str, char delimiter)
 std::string strTrim(std::string str, char delimiter) {return(rtrim(ltrim(str, delimiter), delimiter)); 
 }
 
+std::string trimLastWord(std::string str, char delimiter)
+{
+	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; --it)
+	{
+		if (*it == delimiter)
+		{
+			str.erase(it, str.end());
+			if (str.empty())
+				return std::string("/");
+			return (str);
+		}
+	}
+	return std::string("");
+}
 
 std::vector<std::string> strSplit(const std::string& str, const std::string& delimiter) {
 	std::vector<std::string> tokens;

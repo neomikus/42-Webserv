@@ -38,7 +38,7 @@ Location &Location::operator=(const Location &model) {
 
 void	Location::parseCgi(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
-	std::string	cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
+	const std::string	cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
 
 	for (size_t i = 0; i < 5; i++)
 	{
@@ -325,7 +325,7 @@ std::ostream &operator<<(std::ostream &stream, Location location) {
 	if (!_index.empty())
 	{
 		stream << tabs << "| INDEX\t\t:";
-		for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); it++)
+		for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); ++it)
 			stream << "\n" << tabs << "  - [" << *it << "]";
 		stream << tabs << "\n";
 	}
@@ -334,10 +334,10 @@ std::ostream &operator<<(std::ostream &stream, Location location) {
 	if (!_error_pages.empty())
 	{
 		stream << tabs << "| ERROR PAGES\t:";
-		for (std::vector<error_page>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); it++)
+		for (std::vector<error_page>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); ++it)
 		{
 			stream << "\n" << tabs << "  - [";
-			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
+			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); ++it_catch)
 				stream << *it_catch << " ";
 			if (it->to_replace != -1)
 				stream << "= " << it->to_replace;
@@ -360,7 +360,7 @@ std::ostream &operator<<(std::ostream &stream, Location location) {
 	{
 		stream << tabs << "| LOCATIONS\t:";
 		stream << "\n";
-		for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); it++)
+		for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); ++it)
 			stream << *it;
 	}
 

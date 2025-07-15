@@ -1,120 +1,51 @@
-[1m/proyecto/src/classes/Location.cpp:132:14: [31mstyle:[39m Variable 'cgiStr' can be declared with const [constVariable][0m
+[1m/proyecto/src/classes/Location.cpp:303:14: [31mstyle:[39m The scope of the variable 'colors' can be reduced. [variableScope][0m
+ const char *colors[4] = {HBLU, HGRE, HMAG, HRED};
+             ^
+[1m/proyecto/src/classes/Location.cpp:304:14: [31mstyle:[39m Variable 'cgiStr' can be declared with const [constVariable][0m
  std::string cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
              ^
-[1m/proyecto/src/classes/Location.cpp:153:90: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
-  for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); it++)
-                                                                                         ^
-[1m/proyecto/src/classes/Location.cpp:162:101: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
-  for (std::vector<error_page>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); it++)
-                                                                                                    ^
-[1m/proyecto/src/classes/Location.cpp:165:107: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
+[1m/proyecto/src/classes/Location.cpp:340:107: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
    for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
                                                                                                           ^
-[1m/proyecto/src/classes/Location.cpp:188:95: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
-  for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); it++)
-                                                                                              ^
-[1m/proyecto/src/classes/Server.cpp:147:33: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (; it != hostports.rend(); it++)
-                                ^
-[1m/proyecto/src/classes/Server.cpp:152:3: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
-  it++;
-  ^
-[1m/proyecto/src/classes/Server.cpp:153:34: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
-  for (; it != hostports.rend(); it++)
-                                 ^
-[1m/proyecto/src/classes/Server.cpp:239:90: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
-  for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); it++)
-                                                                                         ^
-[1m/proyecto/src/classes/Server.cpp:248:95: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
-  for (std::vector<hostport>::const_iterator it = _hostports.begin(); it != _hostports.end(); it++)
-                                                                                              ^
-[1m/proyecto/src/classes/Server.cpp:266:101: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
-  for (std::vector<error_page>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); it++)
-                                                                                                    ^
-[1m/proyecto/src/classes/Server.cpp:269:107: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
+[1m/proyecto/src/classes/LocationOld.cpp:131:14: [31mstyle:[39m Variable 'cgiStr' can be declared with const [constVariable][0m
+ std::string cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
+             ^
+[1m/proyecto/src/classes/LocationOld.cpp:164:107: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
    for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
                                                                                                           ^
-[1m/proyecto/src/classes/Server.cpp:282:95: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
-  for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); it++)
-                                                                                              ^
+[1m/proyecto/src/classes/ServerOld.cpp:269:107: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
+   for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
+                                                                                                          ^
 [1m/proyecto/src/connections/Post.cpp:83:5: [31mwarning:[39m Return value of function fb.open() is not used. [ignoredReturnValue][0m
  fb.open(resource.substr(1).c_str(), std::ios::out);
     ^
-[1m/proyecto/src/connections/Post.cpp:24:91: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); it++)
-                                                                                          ^
-[1m/proyecto/src/connections/Post.cpp:61:83: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); it++)
-                                                                                  ^
-[1m/proyecto/src/connections/Post.cpp:64:99: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); it++)
-                                                                                                  ^
 [1m/proyecto/src/connections/Request.cpp:189:41: [31mstyle:[39m Same expression on both sides of '&&'. [duplicateExpression][0m
   method != "GET" && method != "DELETE" && method != "PUT")
                                         ^
 [1m/proyecto/src/connections/Request.cpp:151:39: [31mstyle:[39m Parameter 'method' can be declared with const [constParameter][0m
 bool checkAllowedMethods(std::string &method, allowed_methods methods) {
                                       ^
-[1m/proyecto/src/connections/Request.cpp:18:85: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::vector<std::string>::iterator it = queries.begin(); it != queries.end(); it++) {
-                                                                                    ^
-[1m/proyecto/src/connections/Request.cpp:34:91: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); it++)
-                                                                                          ^
-[1m/proyecto/src/connections/Request.cpp:67:83: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); it++)
-                                                                                  ^
-[1m/proyecto/src/connections/Request.cpp:70:99: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); it++)
-                                                                                                  ^
-[1m/proyecto/src/connections/Request.cpp:165:80: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
-                                                                               ^
+[1m/proyecto/src/connections/Request.cpp:246:67: [31merror:[39m Dereference of an invalid iterator: str.begin()-1 [derefInvalidIterator][0m
+ for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; --it)
+                                                                  ^
 [1m/proyecto/src/connections/Request.cpp:167:89: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
   for (std::vector<hostport>::iterator it2 = hostports.begin(); it2 != hostports.end(); it2++) {
                                                                                         ^
-[1m/proyecto/src/connections/Request.cpp:176:86: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::vector<Server>::iterator it = candidates.begin(); it != candidates.end(); it++) {
-                                                                                     ^
-[1m/proyecto/src/connections/Request.cpp:206:92: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); it++) {
-                                                                                           ^
 [1m/proyecto/src/connections/Request.cpp:207:90: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
   for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); it2++) {
                                                                                          ^
-[1m/proyecto/src/connections/connections.cpp:26:8: [31mwarning:[39m Either the condition 'rd==-1' is redundant or the array 'buffer[1024]' is accessed at index -1, which is out of bounds. [negativeIndex][0m
- buffer[rd] = '\0';
-       ^
-[1m/proyecto/src/connections/connections.cpp:23:9: [2mnote:[0m Assuming that condition 'rd==-1' is not redundant
- if (rd == -1) {
-        ^
-[1m/proyecto/src/connections/connections.cpp:26:8: [2mnote:[0m Negative array index
- buffer[rd] = '\0';
-       ^
-[1m/proyecto/src/connections/connections.cpp:75:7: [31mstyle:[39m Variable 'req' is reassigned a value before the old one has been used. [redundantAssignment][0m
+[1m/proyecto/src/connections/connections.cpp:76:7: [31mstyle:[39m Variable 'req' is reassigned a value before the old one has been used. [redundantAssignment][0m
   req = new Get(splitedResponse);
       ^
-[1m/proyecto/src/connections/connections.cpp:71:7: [2mnote:[0m req is assigned
+[1m/proyecto/src/connections/connections.cpp:72:7: [2mnote:[0m req is assigned
   req = new Request(splitedResponse);
       ^
-[1m/proyecto/src/connections/connections.cpp:75:7: [2mnote:[0m req is overwritten
+[1m/proyecto/src/connections/connections.cpp:76:7: [2mnote:[0m req is overwritten
   req = new Get(splitedResponse);
       ^
-[1m/proyecto/src/connections/connections.cpp:11:73: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::list<int>::iterator it = fdList.begin(); it != fdList.end(); it++)
-                                                                        ^
-[1m/proyecto/src/connections/connections.cpp:105:81: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
-  for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
-                                                                                ^
-[1m/proyecto/src/connections/connections.cpp:121:75: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::list<int>::iterator it = clients.begin(); it != clients.end(); it++) {
-                                                                          ^
 [1m/proyecto/src/files/File.cpp:65:49: [31mperformance:[39m Function parameter 'str' should be passed by const reference. [passedByValue][0m
 File &operator<<(File &model, const std::string str) {
                                                 ^
-[1m/proyecto/src/main/main.cpp:36:80: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
-                                                                               ^
 [1m/proyecto/src/main/main.cpp:38:89: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
   for (std::vector<hostport>::iterator it2 = _hostport.begin(); it2 != _hostport.end(); it2++) {
                                                                                         ^
@@ -127,18 +58,15 @@ bool strIsDigit(std::string const str)
 [1m/proyecto/src/utils/strUtils.cpp:55:33: [31mperformance:[39m Function parameter 'str' should be passed by const reference. [passedByValue][0m
 std::string strTrim(std::string str) {return(rtrim(ltrim(str)));
                                 ^
+[1m/proyecto/src/utils/strUtils.cpp:85:33: [31mperformance:[39m Function parameter 'str' should be passed by const reference. [passedByValue][0m
+std::string strTrim(std::string str, char delimiter) {return(rtrim(ltrim(str, delimiter), delimiter));
+                                ^
 [1m/proyecto/src/utils/strUtils.cpp:44:67: [31merror:[39m Dereference of an invalid iterator: str.begin()-1 [derefInvalidIterator][0m
- for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; it--)
+ for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; --it)
                                                                   ^
-[1m/proyecto/src/utils/strUtils.cpp:23:70: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::string::const_iterator it = str.begin(); it != str.end(); it++)
-                                                                     ^
-[1m/proyecto/src/utils/strUtils.cpp:32:64: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::string::iterator it = str.begin(); it != str.end(); it++)
-                                                               ^
-[1m/proyecto/src/utils/strUtils.cpp:44:72: [31mperformance:[39m Prefer prefix ++/-- operators for non-primitive types. [postfixOperator][0m
- for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; it--)
-                                                                       ^
+[1m/proyecto/src/utils/strUtils.cpp:74:67: [31merror:[39m Dereference of an invalid iterator: str.begin()-1 [derefInvalidIterator][0m
+ for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; --it)
+                                                                  ^
 [1m/proyecto/src/connections/Request.cpp:124:0: [31mstyle:[39m The function 'getBodySize' is never used. [unusedFunction][0m
 
 ^

@@ -89,13 +89,13 @@ void	resolveHostPorts(std::vector<hostport> &hostports)
 	if (hostports.empty())
 		return;
 	std::vector<hostport>::reverse_iterator it = hostports.rbegin();
-	for (; it != hostports.rend(); it++)
+	for (; it != hostports.rend(); ++it)
 		if (it->default_server)
 			break;
 	if (it != hostports.rend())
 	{
-		it++;
-		for (; it != hostports.rend(); it++)
+		++it;
+		for (; it != hostports.rend(); ++it)
 			it->default_server = false;
 	}
 }
@@ -142,7 +142,7 @@ std::ostream &operator<<(std::ostream &stream, Server server) {
 	if (!_hostports.empty())
 	{
 		stream << "| HOST PORTS\t:";
-		for (std::vector<hostport>::const_iterator it = _hostports.begin(); it != _hostports.end(); it++)	
+		for (std::vector<hostport>::const_iterator it = _hostports.begin(); it != _hostports.end(); ++it)	
 			stream << "\n  - [" << (!it->host.empty() ? it->host + ":" : "") << it->port << "]" << (it->default_server ? " default_server" : "");
 		stream << "\n";
 	}
