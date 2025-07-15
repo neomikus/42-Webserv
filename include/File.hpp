@@ -8,6 +8,7 @@ class File
 	private:
 		std::stringstream	contents;
 		std::string			type;
+		std::string			name;
 		long long			size;
 	public:
 		File();
@@ -20,11 +21,17 @@ class File
 		void	write(const std::string str);
 		void	write(const char *str);
 
-		std::stringstream	&getStream() {return (contents);};
-		long long			&getSize() {return (size);};
+		std::stringstream	&getStream() {return (contents);}
+		long long			&getSize() {return (size);}
+		std::string			getType() const {return(name);}
+		std::string			getName() const {return(name);}
+
+		void				setType(std::string newType) {type = newType;}
+		void				setName(std::string newName) {name = newName;}
+
 };
 
-File			&operator<<(File &model, const std::string str);
+File			&operator<<(File &model, const std::string &str);
 File			&operator<<(File &model, const char *str);
 std::ostream	&operator<<(std::ostream &stream, File &model);	
 

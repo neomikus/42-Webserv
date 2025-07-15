@@ -53,8 +53,8 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 }
 
 std::string getBody(std::string &rawResponse) {
-	if (rawResponse.find("\n\n") != rawResponse.npos)
-		return (rawResponse.substr(rawResponse.find("\n\n"), rawResponse.size()));
+	if (rawResponse.find("\r\n") != rawResponse.npos)
+		return (rawResponse.substr(0, rawResponse.size()));
 	return (std::string());
 }
 
@@ -86,11 +86,6 @@ Request *makeRequest(std::string &rawResponse)
 	}	
 	else
 		req = new Request(splitedResponse);
-	
-
-	std::cout  << _temp << std::endl;
-
-	std::cout << "make_request out" << std::endl;
 
 	return (req);
 }

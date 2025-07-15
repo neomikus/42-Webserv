@@ -9,16 +9,28 @@ void	Post::parseBody(std::string &rawBody) {
 	// Program later
 	//if (rawBody.size() > server.getMax_body_size())
 	//	return ;
-	(void)rawBody;
-	if (contentType == "application/x-www-form-urlencoded")
+	std::string	resourceName;
+	if (contentType == "application/x-www-form-urlencoded") {
 		;
-	else if (contentType == "application/json")
+	}
+	else if (contentType == "application/json") {
 		;
-	else if (contentType == "text/html")
+	}
+	else if (contentType == "text/html") {
 		;
+	}
+
+	if (!resourceName.empty())
+		body.setName(resourceName);
+	else
+		body.setName(resource.substr(1));
+	if (rawBody.empty())
+		std::cout << "I'm actually empty dumbass" << std::endl;
+	std::cout << "Copying the body..." << std::endl;
+	body << rawBody;
 }
 
-Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody): Request(splitedRaw){
+Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody)/*: Request(splitedRaw)*/ {
 	parseMethodResourceProtocol(splitedRaw[0]);
 	if (error)
 		return ;
@@ -54,7 +66,6 @@ Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody): Request(s
 			contentType = it->substr(13);	
 	}
 	parseBody(rawBody);
-	body << rawBody;
 	std::cout << "this->host " << hostPort.host << std::endl;
 	std::cout << "this->port " << hostPort.port << std::endl;
 	std::cout << "this->userAgent " << userAgent << std::endl;
@@ -70,8 +81,9 @@ Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody): Request(s
 	std::cout << "this->resource " << resource << std::endl;
 	std::cout << "this->protocol " << protocol << std::endl;
 
-	std::cout << std::endl << std::endl;
+	std::cout << std::endl;
 	std::cout << "this->body " << body << std::endl;
+	std::cout << std::endl << std::endl;
 }
 
 Post::Post(const Post &model): Request(model) {
@@ -85,7 +97,7 @@ std::string	Post::updateResource() {
 	resourceName = resource; // for now
 	std::ostream	newResource(&fb);
 
-	newResource << body.getStream();
+	body.getStream();
 	return (resourceName);
 }
 
@@ -118,6 +130,9 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 
 	response += "\r\n";
 
+	// If the created resource is small, send it after creation (code 201)
+	// If the created resource is big, send metadata (or nothing, fuck it at this point) (Code 201)
+	// If !body, then code 204
 	for (std::string line; std::getline(responseBody.getStream(), line);) {
 		response += line;
 	}

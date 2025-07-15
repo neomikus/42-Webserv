@@ -185,11 +185,13 @@ int	Request::getStatus(Location &currentLocation) {
 	if (error)
 		return (400);
 	if (method != "PUT" && method != "HEAD" &&
-		method != "CONNECT" && method != "TRACE" && 
+		method != "CONNECT" && method != "TRACE" && method != "POST" &&
 		method != "PATCH" && method != "GET" && method != "DELETE")
+	
 		return (501);
-	if (!checkAllowedMethods(method, currentLocation.getMethods()))
-		return (405);
+	(void)currentLocation;
+//	if (!checkAllowedMethods(method, currentLocation.getMethods()))
+//		return (405);
 	if (access(resource.substr(1).c_str(), F_OK)) {
 		if (resource.substr(1) == "teapot")
 			return (418);
