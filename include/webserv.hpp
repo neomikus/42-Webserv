@@ -72,6 +72,11 @@ enum cgi_options {
 };
 
 std::string 				strTrim(std::string str);
+std::string 				rtrim(std::string str);
+std::string 				rtrim(std::string str);
+std::string 				strTrim(std::string str, char delimiter);
+std::string 				rtrim(std::string str, char delimiter);
+std::string 				ltrim(std::string str, char delimiter);
 bool						strIsDigit(std::string const str);
 size_t						countWords(std::stringstream& ss);
 size_t						countWords(std::string const str);
