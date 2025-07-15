@@ -33,8 +33,9 @@ class Request
 	public:
 		
 		Request();
-		Request(const Request &model);
 		Request(std::vector<std::string> splitedRaw);
+		Request(const Request &model);
+		Request	&operator=(const Request &model);
 		virtual ~Request();
 		Server	&selectServer(std::vector<Server> &servers);
 		void	response(int fd, std::list<int> &clients, const Server &server); // May return int for response code or for error check?

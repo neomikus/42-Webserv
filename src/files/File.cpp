@@ -74,3 +74,7 @@ File	&operator<<(File &model, const char *str) {
 	return (model);
 }
 
+std::ostream	&operator<<(std::ostream &stream, File &model) {
+	stream << model.getStream();
+	return (stream);
+}

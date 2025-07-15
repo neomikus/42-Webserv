@@ -32,7 +32,7 @@ std::string	read_request(int fd) {
 		rd = recv(fd, buffer, 1024, 0);
 		buffer[rd] = '\0';
 	}
-
+	std::cout << std::endl << std::endl;
 	return (retval);
 }
 
@@ -51,11 +51,16 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 	}
 }
 
+std::string getBody(std::string &rawResponse) {
+	return (rawResponse.substr(rawResponse.find("\n\n"), rawResponse.size()));
+}
+
 Request *makeRequest(std::string &rawResponse)
 {
 	Request *req = NULL;
 	std::stringstream	buffer;
 	std::string			_temp;
+	std::string			rawBody = getBody(rawResponse);
 	std::vector<std::string>	splitedResponse = strSplit(rawResponse, "\n");
 
 	buffer << splitedResponse[0];
@@ -71,7 +76,7 @@ Request *makeRequest(std::string &rawResponse)
 	}
 	else if (_temp == "POST")
 	{
-		req = new Post(splitedResponse);
+		req = new Post(splitedResponse, rawBody);
 		std::cout << HGRE;
 	}	
 	else

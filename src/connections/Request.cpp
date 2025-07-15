@@ -102,6 +102,21 @@ Request::Request(const Request &model) {
 }
 
 
+Request	&Request::operator=(const Request &model) {
+	this->error = model.error;
+	this->method = model.method;
+	this->resource = model.resource;
+	this->protocol = model.protocol;
+	this->hostPort = model.hostPort;
+	this->userAgent = model.userAgent;
+	this->accept = model.accept;
+	this->acceptEncoding = model.acceptEncoding;
+	this->keepAlive = model.keepAlive;
+	this->referer = model.referer;
+	return (*this);
+}
+
+
 Request::~Request() {
 	
 }

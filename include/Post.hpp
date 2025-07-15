@@ -2,13 +2,19 @@
 #define POST_HPP
 
 #include "Request.hpp"
+#include "File.hpp"
+
+class File;
 
 class Post: public Request {
 	private:
-
-	Post();
+		File		body;
+		std::string	contentType;
+		Post();
+		void	parseBody(std::string &rawBody);
 	public:
-		Post(std::vector<std::string> splitedResponse);
+		Post(std::vector<std::string> splitedResponse, std::string &rawBody);
+		//Post	&operator=(const Post &model);
 		Post(const Post &model);
 		~Post();
 };

@@ -14,7 +14,21 @@
   <input type="submit" value="Submit">
 </form> 
 
-<p>If you click the "Submit" button, the form-data will be sent to a page called "/action_page.php".</p>
+<p>If you click the "Submit" button, the form-data will be sent.</p>
+
+<form method="post" enctype="multipart/form-data">
+  <div>
+    <label for="file">Choose file to upload</label>
+    <input type="file" id="file" name="file" multiple />
+  </div>
+  <div>
+    <button>Submit</button>
+  </div>
+</form>
+
+
+<p>If you click the "Submit" button, the image will be sent.</p>
+
 
 </body>
 </html>

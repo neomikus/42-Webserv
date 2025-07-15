@@ -24,7 +24,8 @@ class File
 		long long			&getSize() {return (size);};
 };
 
-File	&operator<<(File &model, const std::string str);
-File	&operator<<(File &model, const char *str);
+File			&operator<<(File &model, const std::string str);
+File			&operator<<(File &model, const char *str);
+std::ostream	&operator<<(std::ostream &stream, File &model);	
 
 #endif
