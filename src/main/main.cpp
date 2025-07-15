@@ -1,5 +1,5 @@
 #include "webserv.hpp"
-#include "Server2.hpp"
+#include "Server.hpp"
 #include "Request.hpp"
 
 int	main(int argc, char *argv[]) {

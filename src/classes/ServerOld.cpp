@@ -1,4 +1,4 @@
-#include "Server2.hpp"
+#include "Server.hpp"
 
 
 Server::Server() {}
@@ -7,20 +7,75 @@ Server::Server(const Server& model) {
 
 	server_name = model.server_name;
 	hostports = model.hostports;
-	vLocation = Location(model.vLocation);
+	error_pages = model.error_pages;
+	max_body_size = model.max_body_size;
+	autoindex = model.autoindex;
+	root = model.root;
+	index = model.index;
+    for (size_t i = 0; i < model.locations.size(); i++) {
+        locations.push_back(Location(model.locations[i]));
+    }
+	methods = model.methods;
 }
 
 Server &Server::operator=(const Server &model) {
 
 	server_name = model.server_name;
 	hostports = model.hostports;
-	vLocation = Location(model.vLocation);
+	error_pages = model.error_pages;
+	max_body_size = model.max_body_size;
+	autoindex = model.autoindex;
+	root = model.root;
+	index = model.index;
+    for (size_t i = 0; i < model.locations.size(); i++) {
+        locations.push_back(Location(model.locations[i]));
+    }
+	methods = model.methods;
+
 	return(*this);
 }
 
 Server::~Server() {
 
 }
+
+void Server::parseBodySize(const std::string value) {
+	//std::cout << "[" << value << "]" << std::endl;
+	size_t i = 0;
+
+	std::map<std::string, int> unitMap;
+	unitMap["b"] = 0;
+	unitMap["k"] = 1;
+	unitMap["kb"] = 1;
+	unitMap["m"] = 2;
+	unitMap["mb"] = 2;
+	unitMap["g"] = 3;
+	unitMap["gb"] = 3;
+
+	long long multipliers[] = {
+		BYTE, KB, MB, GB
+	};
+
+	while (i < value.size() && std::isdigit(value[i]))
+		++i;
+
+	std::string unit = value.substr(i);
+
+	long long size = atoll(value.substr(0, i).c_str());
+
+	if (i == 0)
+		exit (0);
+	
+	for (i = 0; i < unit.size(); ++i) {
+		unit[i] = std::tolower(unit[i]);
+	}
+
+	if (unitMap.find(unit) == unitMap.end())
+		exit (0);
+	
+	this->max_body_size = (size * multipliers[unitMap.find(unit)->second]);
+}
+
 
 void Server::parseHostPort(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
@@ -103,10 +158,9 @@ void	resolveHostPorts(std::vector<hostport> &hostports)
 
 Server::Server(std::ifstream &confFile)
 {	
-	std::streampos startPos = confFile.tellg();
-	std::string key_words[3] = {
-	"server_name", "listen", "error" };
-
+	std::string key_words[10] = {
+	"server_name", "listen", "error_page", "client_max_body_size", "location", "autoindex", "root", "index", "allowed_methods", "error" };
+	max_body_size = MB;
 	for (std::string buffer; std::getline(confFile, buffer);)
 	{
 		buffer = strTrim(buffer);
@@ -115,9 +169,6 @@ Server::Server(std::ifstream &confFile)
 		if (buffer == "}")
 		{
 			resolveHostPorts(hostports);
-			confFile.clear();
-			confFile.seekg(startPos);
-			vLocation = Location("", confFile, 0);
 			return ;
 		}
 		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)
@@ -140,6 +191,27 @@ Server::Server(std::ifstream &confFile)
 			case 1:
 				parseHostPort(value);
 				break;
+			case 2:
+				parseErrorPage(value);
+				break;
+			case 3:
+				parseBodySize(value);
+				break;
+			case 4:
+				locations.push_back(Location(value, confFile, 1));
+				break;
+			case 5:
+				parseAutoindex(value);
+				break;
+			case 6:
+				parseRoot(value);
+				break;
+			case 7:
+				parseIndex(value);
+				break;
+			case 8:
+				parseAlowedMethods(value);
+				break;
 			default:
 				break;
 		}
@@ -151,6 +223,24 @@ std::ostream &operator<<(std::ostream &stream, Server server) {
 	stream << HBLU;
 	if (!server.getServer_name().empty())
 		stream << "| SERVER NAME\t: " << server.getServer_name() <<  + "\n";
+	if (server.getMax_body_size() != MB)
+		stream << "| MAX BODY SIZE\t: " << server.getMax_body_size() <<  + "\n";
+
+	if (server.getAutoindex())
+	stream << "| AUTOINDEX\t: ON" << "\n";
+	
+	if (!server.getRoot().empty())
+		stream << "| ROOT\t\t: " << server.getRoot() << "\n";
+
+	std::vector<std::string> _index = server.getIndex();
+	if (!_index.empty())
+	{
+		stream << "| INDEX\t\t:";
+		for (std::vector<std::string>::const_iterator it = _index.begin(); it != _index.end(); it++)
+			stream << "\n  - [" << *it << "]";
+		stream << "\n";
+	}
+
 	std::vector<hostport> _hostports = server.getHostports();
 	if (!_hostports.empty())
 	{
@@ -159,7 +249,39 @@ std::ostream &operator<<(std::ostream &stream, Server server) {
 			stream << "\n  - [" << (!it->host.empty() ? it->host + ":" : "") << it->port << "]" << (it->default_server ? " default_server" : "");
 		stream << "\n";
 	}
-	stream << server.getVLocation();
+
+	if (server.getMethods()._delete || server.getMethods()._get || server.getMethods()._post)
+	{
+		stream << "| METHODS\t:";
+		stream << (server.getMethods()._get ? " GET" : "");
+		stream << (server.getMethods()._post ? " POST" : "");
+		stream << (server.getMethods()._delete ? " DELETE" : "");
+		stream << "\n";
+	}
+
+	std::vector<error_page> _error_pages = server.getError_pages();
+	if (!_error_pages.empty())
+	{
+		stream << "| ERROR PAGES\t:";
+		for (std::vector<error_page>::const_iterator it = _error_pages.begin(); it != _error_pages.end(); it++)
+		{
+			stream << "\n  - [";
+			for (std::vector<int>::const_iterator it_catch = it->to_catch.begin(); it_catch != it->to_catch.end(); it_catch++)
+				stream << *it_catch << " ";
+			if (it->to_replace != -1)
+				stream << "= " << it->to_replace;
+			stream << " \\ " << it->page << "]";
+		}
+		stream << "\n";
+	}
+
+	std::vector<Location> _locations = server.getLocations();
+	if (!_locations.empty())
+	{
+		stream << "| LOCATIONS\t:\n";
+		for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); it++)
+			stream << *it;
+	}
 	return (stream); 
 }
 
@@ -169,5 +291,6 @@ std::ostream &operator<<(std::ostream &stream, Server server) {
 
 std::string				Server::getServer_name() const {return server_name;}
 std::vector<hostport>	Server::getHostports() const {return hostports;}
-Location				&Server::getVLocation() {return vLocation;}
+long long				Server::getMax_body_size() const {return max_body_size;}
+std::vector<Location>	&Server::getLocations() {return locations;}
 std::list<int>			&Server::getSockets() {return sockets;}

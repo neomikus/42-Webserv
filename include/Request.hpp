@@ -25,12 +25,11 @@ class Request
 		std::string					referer;
 		// Sec fetch: Do later
 
-		void						parseMethodResourceProtocol(const std::string line);
-		int							getStatus(const Server &server);
-		void						getBody(int &status, const Server &server, File &responseBody);
+		void						parseMethodResourceProtocol(std::string line);
+		int							getStatus(Server &server);
+		void						getBody(int &status, Server &server, File &responseBody);
 		void						getErrorPages(std::string &error_page, File &responseBody);
-		Location 					selectContext(Location &location);
-		Location 					selectContext(Server &location);
+		Location 					selectContext(Location &location, std::string fatherUri);
 
 	public:
 		

@@ -2,20 +2,17 @@
 #define SERVER_HPP
 
 #include "webserv.hpp"
-#include "AContext.hpp"
 #include "Location.hpp"
 
-class Server: public Context {
+class Server {
 	private:
 		std::list<int>				sockets;
 		std::string					server_name;
 		std::vector<hostport>		hostports;
-		long long					max_body_size;
-		std::vector<Location>		locations;
+		Location					vLocation;
 
 		void						parseServerName(std::string value);
 		void						parseHostPort(std::string value);
-		void						parseBodySize(std::string value);
 	
 	public:
 	
@@ -27,8 +24,7 @@ class Server: public Context {
 
 		std::string				getServer_name() const;
 		std::vector<hostport>	getHostports() const;
-		long long				getMax_body_size() const;
-		std::vector<Location>	&getLocations();
+		Location				&getVLocation();
 		std::list<int>			&getSockets();
 
 };

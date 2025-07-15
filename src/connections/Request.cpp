@@ -156,14 +156,14 @@ Server	&Request::selectServer(std::vector<Server> &servers) {
 	return (*candidates.begin());
 }
 
-int	Request::getStatus(const Server &server) {
+int	Request::getStatus(Server &server) {
 	if (error)
 		return (400);
 	if (method != "PUT" && method != "HEAD" &&
 		method != "CONNECT" && method != "TRACE" && method != "PATCH" &&
 		method != "GET" && method != "DELETE" && method != "PUT")
 		return (501);
-	if (!checkAllowedMethods(method, server.getMethods()))
+	if (!checkAllowedMethods(method, server.getVLocation().getMethods()))
 		return (405);
 	if (access(resource.substr(1).c_str(), F_OK)) {
 		if (resource.substr(1) == "teapot")
@@ -197,7 +197,7 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 		responseBody.open(page);
 }
 
-void	Request::getBody(int &status, const Server &server, File &responseBody) {
+void	Request::getBody(int &status, Server &server, File &responseBody) {
 	if (status == 200) {
 		responseBody.open(resource.substr(1, resource.find("?") - 1));
 		return;
@@ -207,7 +207,7 @@ void	Request::getBody(int &status, const Server &server, File &responseBody) {
 		return;
 	}
 	if (status / 100 == 4 || status / 100 == 5) {
-		std::string page = checkErrorPages(server.getError_pages(), status);
+		std::string page = checkErrorPages(server.getVLocation().getError_pages(), status);
 		if (!page.empty()) {
 			getErrorPages(page, responseBody);
 			return;
@@ -223,37 +223,24 @@ std::string trimLastWord(std::string str, char delimiter)
 		if (*it == delimiter)
 		{
 			str.erase(it, str.end());
+			if (str.empty())
+				return std::string("/");
 			return (str);
 		}
 	}
 	return std::string("");
 }
+Location Request::selectContext(Location &location, std::string fatherUri) {
 
-Location Request::selectContext(Server &location) {
-
+	std::cout << "FatherUri : " << fatherUri << std::endl;
 	std::string uri = resource;
-
-
-	while(!uri.empty())
-	{	
-		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); it++)
-		{
-			std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
-			if (it->getUri() == uri)
-				return (selectContext(*it));
-		}
-		uri = trimLastWord(uri, '/');
-		std::cout << "trimed [" << uri << "]" << std::endl;
-		if (uri.empty())
-			uri = "/";
-	}
-	std::cout << "mal" << std::endl;
-	return (location.getLocations()[0]);
-}
-
-Location Request::selectContext(Location &location) {
-
-	std::string uri = resource;
+	if (uri[uri.size() - 1] == '/')
+		uri.erase(uri.end() - 1);
+	if (fatherUri != "/")
+		uri = uri.substr(fatherUri.size());
+	else
+		fatherUri = "";
+	std::cout << "im searching " << resource << std::endl;
 	std::cout << "im in " << location.getUri() << std::endl;
 
 	while(!uri.empty())
@@ -262,8 +249,10 @@ Location Request::selectContext(Location &location) {
 		{
 			std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
 			if (it->getUri() == uri)
-				return (selectContext(*it));
+				return (selectContext(*it, fatherUri + it->getUri()));
 		}
+		if (uri == "/")
+			break;
 		uri = trimLastWord(uri, '/');
 		std::cout << "trimed [" << uri << "]" << std::endl;
 	}
@@ -273,10 +262,10 @@ Location Request::selectContext(Location &location) {
 
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	int	status = getStatus(server);
-	Location 	location = selectContext(server);
+	Location 	location = selectContext(server.getVLocation(), "");
 	File		responseBody;
 
-	std::cout << "selected context: " << location.getUri() << std::endl;
+	std::cout << "selected context: " << (location.getUri().empty() ? "Vlocation" : location.getUri()) << std::endl;
 	std::cout << HMAG << "STATUS = " << status << std::endl;
 	getBody(status, server, responseBody);
 
