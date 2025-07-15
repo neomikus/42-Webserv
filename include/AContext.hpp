@@ -13,6 +13,7 @@ class Context {
 	allowed_methods				methods;
 	std::vector<error_page>		error_pages;
 	
+	
 	void					parseRoot(std::string value);
 	void					parseIndex(std::string value);
 	void					parseAutoindex(std::string value);

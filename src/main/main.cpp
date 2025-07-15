@@ -1,5 +1,5 @@
 #include "webserv.hpp"
-#include "Server.hpp"
+#include "Server2.hpp"
 #include "Request.hpp"
 
 int	main(int argc, char *argv[]) {
@@ -33,7 +33,7 @@ int	main(int argc, char *argv[]) {
 
 	std::cout << servers.front() << std::endl;
 
-	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
+ 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
 		std::vector<hostport> _hostport = it->getHostports();
 		for (std::vector<hostport>::iterator it2 = _hostport.begin(); it2 != _hostport.end(); it2++) {
 			// Change inet_addr to something allowed by the subject later
