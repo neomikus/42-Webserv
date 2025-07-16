@@ -1,6 +1,16 @@
 #include "Location.hpp"
 
-Location::Location() { }
+Location::Location() {
+	uri = "";
+	level = 0;
+	cgi = NONE;
+	root = "";
+	autoindex = false;
+	allowed_methods a_methods = {false, false, false};
+	this->methods = a_methods;
+	max_body_size = MB;
+
+}
 
 Location::~Location(){
 
@@ -15,6 +25,7 @@ Location::Location(const Location& model) {
     cgi = model.cgi;
     level = model.level;
     methods = model.methods;
+	max_body_size = model.max_body_size;
     for (size_t i = 0; i < model.locations.size(); i++) {
         locations.push_back(Location(model.locations[i]));
     }
@@ -30,6 +41,7 @@ Location &Location::operator=(const Location &model) {
 	cgi = model.cgi;
 	level = model.level;
 	methods = model.methods;
+	max_body_size = model.max_body_size;
 	for (size_t i = 0; i < model.locations.size(); i++) {
 		locations.push_back(Location(model.locations[i]));
 	}
@@ -55,7 +67,7 @@ void	Location::parseErrorPage(std::string value) {
 
 	if (value.empty() || value.find('/') == value.npos)
 	{
-		std::cout << "ERROR ERROR PAGE1" << std::endl;
+		std::cout << HRED << "ERROR ERROR PAGE1" << std::endl;
 		exit(0);
 	}
 	
@@ -73,7 +85,7 @@ void	Location::parseErrorPage(std::string value) {
 
 	if (strPage.find(' ') != strPage.npos)
 	{
-		std::cout << "ERROR ERROR PAGE2" << std::endl;
+		std::cout << HRED << "ERROR ERROR PAGE2" << std::endl;
 		exit(0);
 	}
 
@@ -89,7 +101,7 @@ void	Location::parseErrorPage(std::string value) {
 
 	if (error_codes.empty() || (!redirect.empty() && !strIsDigit(redirect)))
 	{
-		std::cout << "ERROR ERROR PAGE3" << std::endl;
+		std::cout << HRED << "ERROR ERROR PAGE3" << std::endl;
 		exit(0);
 	}
 
@@ -126,7 +138,10 @@ void	Location::parseAutoindex(std::string value) {
 	else if (value == "off")
 		autoindex = false;
 	else
+	{
+		std::cout << HRED << "autoindex on or off" << std::endl;
 		exit(0);
+	}
 }
 
 void	Location::parseRoot(std::string value) {
@@ -193,6 +208,8 @@ void Location::parseAlowedMethods(std::string value){
 	//std::cout << "[" << value << "]" << std::endl;
 
 	std::stringstream	split(value);
+	allowed_methods a_methods = {false, false, false};
+	this->methods = a_methods;
 	while (split)
 	{
 		std::string			word;
@@ -208,21 +225,26 @@ void Location::parseAlowedMethods(std::string value){
 		else if (word == "DELETE")
 			methods._delete = true;
 		else
+		{
+			std::cout << "method not implemented" << std::endl;
 			exit(0);
+		}
 	}
 
 }
 
-Location::Location(std::string value, std::ifstream &confFile, int nest)
+Location::Location(std::string value, std::ifstream &confFile, int nest, const Location father)
 {
 	std::cout << "[" << value << "]" << std::endl;
-	max_body_size = MB;
-	allowed_methods a_methods = {false, false, false};
-	this->methods = a_methods;
+	this->methods = father.getMethods();
+	this->max_body_size = father.getMax_body_size();
+	this->error_pages = father.getError_pages();
+	this->root = father.getRoot();
+	this->autoindex = father.getAutoindex();
 
 	if (nest != 0 && (value.empty() || value.find('{') == value.npos))
 	{
-		std::cout << "ERROR1" << std::endl;
+		std::cout << HRED << "ERROR1" << std::endl;
 		exit(0);
 	}
 
@@ -230,7 +252,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 
 	if (nest != 0 && (value.empty() || value.find(' ') != value.npos || value.find('\t') != value.npos))
 	{
-		std::cout << "ERROR2" << std::endl;
+		std::cout << HRED << "ERROR2" << std::endl;
 		exit(0);
 	}
 
@@ -240,7 +262,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 	autoindex = false;
 	
 	std::string key_words[10] = {
-	"error_page", "location", "autoindex", "root", "index", "cgi", "allow_methods", "client_max_body_size", "listen", "server_name"};
+	"error_page", "location", "autoindex", "root", "index", "cgi", "allowed_methods", "client_max_body_size", "listen", "server_name"};
 	for (std::string buffer; std::getline(confFile, buffer);)
 	{
 		buffer = strTrim(buffer);
@@ -274,7 +296,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 				parseErrorPage(value);
 				break;
 			case 1:
-				locations.push_back(Location(value, confFile, level + 1));
+				locations.push_back(Location(value, confFile, level + 1, *this));
 				break;
 			case 2:
 				parseAutoindex((value));
@@ -291,9 +313,11 @@ Location::Location(std::string value, std::ifstream &confFile, int nest)
 			case 6:
 				parseAlowedMethods(value);
 				break;
+			case 7:
+				parseBodySize(value);
+				break;
 			default:
 				break;
-				
 		}
 	}
 }
@@ -307,10 +331,10 @@ std::ostream &operator<<(std::ostream &stream, Location location) {
 	{
 		tabs = std::string(location.getLevel(), '\t');
 		stream << colors[location.getLevel() % 4];
-		stream << std::string(location.getLevel() - 1, '\t') << "LOCATION:" << std::endl;
+		stream << std::string(location.getLevel() - 1, '\t') << "LOCATION\t: " << location.getUri() << std::endl;
 
 	}
-	stream << tabs << "| URI\t\t: " << location.getUri() << "\n";
+	//stream << tabs << "| URI\t\t: " << location.getUri() << "\n";
 
 	if (!location.getRoot().empty())
 		stream << tabs << "| ROOT\t\t: " << location.getRoot() << "\n";
@@ -355,6 +379,8 @@ std::ostream &operator<<(std::ostream &stream, Location location) {
 		stream << "\n";
 	}
 
+	stream << tabs <<  "| MAX BODY SIZE\t: " << location.getMax_body_size() <<  + "\n";
+
 	std::vector<Location> _locations = location.getLocations();
 	if (!_locations.empty())
 	{
@@ -363,11 +389,6 @@ std::ostream &operator<<(std::ostream &stream, Location location) {
 		for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); ++it)
 			stream << *it;
 	}
-
-	if (location.getMax_body_size() != MB)
-		stream << "| MAX BODY SIZE\t: " << location.getMax_body_size() <<  + "\n";
-
-
 	return(stream);
 }
 

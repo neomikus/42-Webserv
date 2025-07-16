@@ -60,7 +60,7 @@ std::string getBody(std::string &rawResponse) {
 
 Request *makeRequest(std::string &rawResponse)
 {
-	Request *req;
+	Request 			*req;
 	std::stringstream	buffer;
 	std::string			_temp;
 	std::string			rawBody = getBody(rawResponse);

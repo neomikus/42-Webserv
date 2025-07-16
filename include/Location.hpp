@@ -29,7 +29,7 @@ class Location {
 		public:
 
 		Location();
-		Location(std::string value, std::ifstream &confFile, int nest);
+		Location(std::string value, std::ifstream &confFile, int nest, const Location father);
 		Location(const Location &model);
 		Location &operator=(const Location &model);
 		~Location();

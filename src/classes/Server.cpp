@@ -118,7 +118,7 @@ Server::Server(std::ifstream &confFile)
 			resolveHostPorts(hostports);
 			confFile.clear();
 			confFile.seekg(startPos);
-			vLocation = Location("", confFile, 0);
+			vLocation = Location("", confFile, 0, Location());
 			return ;
 		}
 		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)

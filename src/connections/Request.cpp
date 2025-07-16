@@ -60,7 +60,7 @@ Request::Request(std::vector<std::string> splitedRaw) {
 		if (_temp == "Referer:")
 			referer = it->substr(9);		
 	}
-	std::cout << "this->host " << hostPort.host << std::endl;
+/* 	std::cout << "this->host " << hostPort.host << std::endl;
 	std::cout << "this->port " << hostPort.port << std::endl;
 	std::cout << "this->userAgent " << userAgent << std::endl;
 	std::cout << "this->accept" << std::endl;
@@ -73,7 +73,7 @@ Request::Request(std::vector<std::string> splitedRaw) {
 	std::cout << "this->referer " << referer << std::endl;
 	std::cout << "this->method " << method << std::endl;
 	std::cout << "this->resource " << resource << std::endl;
-	std::cout << "this->protocol " << protocol << std::endl;
+	std::cout << "this->protocol " << protocol << std::endl; */
 
 	
 }
