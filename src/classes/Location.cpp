@@ -254,7 +254,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 	{
 		std::cout << HRED << "ERROR2" << std::endl;
 		exit(0);
-	}
+	} 
 
 	level = nest;
 	uri = value;
