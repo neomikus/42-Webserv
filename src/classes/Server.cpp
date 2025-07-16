@@ -1,7 +1,10 @@
 #include "Server.hpp"
 
 
-Server::Server() {}
+Server::Server() {
+	server_name = "";
+	vLocation = Location();
+}
 
 Server::Server(const Server& model) {
 
@@ -24,11 +27,6 @@ Server::~Server() {
 
 void Server::parseHostPort(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
-	if (value.empty())
-	{
-		std::cout << "ERROR HOST PORT1" << std::endl;
-		exit(0);
-	}
 
 	hostport hostport;
 
@@ -40,7 +38,11 @@ void Server::parseHostPort(std::string value) {
 	size_t nOfWords = countWords(split);
 
 	if (nOfWords > 2)
-		exit(0);
+	{
+		this->hostports.push_back(hostport);
+		errorCode = 3;
+		return ;
+	}
 
 	std::string firstWord;
 	std::string secondWord;
@@ -58,14 +60,19 @@ void Server::parseHostPort(std::string value) {
 	
 		if (check.str().size() != firstWord.size() - hostport.host.size() - 1)
 		{
-			std::cout << "ERROR HOST PORT2" << std::endl;
-			exit(0);
+			this->hostports.push_back(hostport);
+			errorCode = 3;
+			return ;
 		}
 	}
 	else if (strIsDigit(firstWord))
 		hostport.port = atoi(firstWord.c_str());
 	else if (firstWord == "default_server")
-		exit(0);
+	{
+		this->hostports.push_back(hostport);
+		errorCode = 3;
+		return ;
+	}
 	else
 		hostport.host = firstWord;
 	if (secondWord == "default_server")
@@ -75,11 +82,12 @@ void Server::parseHostPort(std::string value) {
 
 void	Server::parseServerName(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
+	server_name = "";
 
 	if (value.empty() || value.find('\t') != value.npos || value.find(' ') != value.npos)
 	{
-		std::cout << "ERROR SERVER NAME" << std::endl;
-		exit(0);
+		errorCode = 3;
+		return ;
 	}
 	server_name = value;
 }
@@ -103,6 +111,7 @@ void	resolveHostPorts(std::vector<hostport> &hostports)
 
 Server::Server(std::ifstream &confFile)
 {	
+	*this = Server();
 	std::streampos startPos = confFile.tellg();
 	std::string key_words[3] = {
 	"server_name", "listen", "error" };
@@ -114,7 +123,6 @@ Server::Server(std::ifstream &confFile)
 			continue;
 		if (buffer == "}")
 		{
-			std::cout << "Server parsed, way to virtual Location" << std::endl;
 			resolveHostPorts(hostports);
 			confFile.clear();
 			confFile.seekg(startPos);
@@ -123,13 +131,20 @@ Server::Server(std::ifstream &confFile)
 		}
 		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)
 		{
-			std::cout << "ERROR4" << std::endl;
-			exit(0);
+			errorCode = 3;
+			errorLine = buffer;
+			return ;
 		}
 		if (buffer.substr(0, buffer.find_first_of(' ')) == "listen")
 			parseHostPort(buffer.substr(7, buffer.size() - 8));
 		if (buffer.substr(0, buffer.find_first_of(' ')) == "server_name")
 			parseServerName(buffer.substr(12, buffer.size() - 13));
+		if (errorCode != 0)
+		{
+			
+			errorLine = buffer;
+			return;
+		}
 	}
 }
 
