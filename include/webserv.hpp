@@ -43,6 +43,9 @@ const long long GB = MB * 1024;
 #define DEFAULT_ERROR_PAGE "www/default_error_page.html"
 
 extern bool	sigstop;
+extern int	errorCode;
+extern std::string errorLine;	
+
 
 #include "Socket.hpp"
 

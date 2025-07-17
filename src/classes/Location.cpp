@@ -60,15 +60,16 @@ void	Location::parseCgi(std::string value) {
 			return;
 		}
 	}
-	exit (0);
+	errorCode = 3;
 }
+
 void	Location::parseErrorPage(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
 
 	if (value.empty() || value.find('/') == value.npos)
 	{
-		std::cout << HRED << "ERROR ERROR PAGE1" << std::endl;
-		exit(0);
+		errorCode = 3;
+		return ;
 	}
 	
 	error_page	error_page;
@@ -85,11 +86,11 @@ void	Location::parseErrorPage(std::string value) {
 
 	if (strPage.find(' ') != strPage.npos)
 	{
-		std::cout << HRED << "ERROR ERROR PAGE2" << std::endl;
-		exit(0);
+		errorCode = 3;
+		return ;
 	}
-
-	if (value.find('=') != value.npos)
+	
+		if (value.find('=') != value.npos)
 	{
 		error_codes = strTrim(value.substr(0, value.find('=')));
 		redirect = strTrim(value.substr(value.find('=') + 1));	}
@@ -101,8 +102,8 @@ void	Location::parseErrorPage(std::string value) {
 
 	if (error_codes.empty() || (!redirect.empty() && !strIsDigit(redirect)))
 	{
-		std::cout << HRED << "ERROR ERROR PAGE3" << std::endl;
-		exit(0);
+		errorCode = 3;
+		return ;
 	}
 
 	if (error_codes.find(' ') != error_codes.npos)
@@ -115,14 +116,20 @@ void	Location::parseErrorPage(std::string value) {
 			if(error_c.empty())
 				break ;
 			if (!strIsDigit(error_c))
-				exit (0);
+			{
+				errorCode = 3;
+				return ;
+			}
 			error_page.to_catch.push_back(atoi(error_c.c_str()));
 		}
 	}
 	else if (strIsDigit(error_codes))
 		error_page.to_catch.push_back(atoi(error_codes.c_str()));
 	else
-		exit (0);
+	{
+		errorCode = 3;
+		return ;
+	}
 
 	error_page.page = strPage;
 	if (error_page.to_replace != -1)
@@ -139,15 +146,18 @@ void	Location::parseAutoindex(std::string value) {
 		autoindex = false;
 	else
 	{
-		std::cout << HRED << "autoindex on or off" << std::endl;
-		exit(0);
+		errorCode = 3;
+		return ;
 	}
 }
 
 void	Location::parseRoot(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
 	if (value.find(' ') != value.npos || value.find('\t') != value.npos)
-		exit (0);
+	{
+		errorCode = 3;
+		return ;
+	}
 	root = value;
 }
 
@@ -192,14 +202,20 @@ void Location::parseBodySize(const std::string value) {
 	long long size = atoll(value.substr(0, i).c_str());
 
 	if (i == 0)
-		exit (0);
+	{
+		errorCode = 3;
+		return ;
+	}
 	
 	for (i = 0; i < unit.size(); ++i) {
 		unit[i] = std::tolower(unit[i]);
 	}
 
 	if (unitMap.find(unit) == unitMap.end())
-		exit (0);
+	{
+		errorCode = 3;
+		return ;
+	}
 	
 	this->max_body_size = (size * multipliers[unitMap.find(unit)->second]);
 }
@@ -226,8 +242,8 @@ void Location::parseAlowedMethods(std::string value){
 			methods._delete = true;
 		else
 		{
-			std::cout << "method not implemented" << std::endl;
-			exit(0);
+			errorCode = 3;
+			return ;
 		}
 	}
 
@@ -235,7 +251,7 @@ void Location::parseAlowedMethods(std::string value){
 
 Location::Location(std::string value, std::ifstream &confFile, int nest, const Location father)
 {
-	std::cout << "[" << value << "]" << std::endl;
+	//std::cout << "[" << value << "]" << std::endl;
 	this->methods = father.getMethods();
 	this->max_body_size = father.getMax_body_size();
 	this->error_pages = father.getError_pages();
@@ -244,25 +260,26 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 
 	if (nest != 0 && (value.empty() || value.find('{') == value.npos))
 	{
-		std::cout << HRED << "ERROR1" << std::endl;
-		exit(0);
+		errorCode = 3;
+		return ;
 	}
 
 	value = strTrim(value.substr(0, value.find('{')));
 
 	if (nest != 0 && (value.empty() || value.find(' ') != value.npos || value.find('\t') != value.npos))
 	{
-		std::cout << HRED << "ERROR2" << std::endl;
-		exit(0);
-	} 
+		errorCode = 3;
+		errorLine = value;
+		return ;
+	}
 
 	level = nest;
 	uri = value;
 	cgi = NONE;
 	autoindex = false;
 	
-	std::string key_words[10] = {
-	"error_page", "location", "autoindex", "root", "index", "cgi", "allowed_methods", "client_max_body_size", "listen", "server_name"};
+	std::string key_words[11] = {
+	"error_page", "location", "autoindex", "root", "index", "cgi", "allowed_methods", "client_max_body_size", "listen", "server_name", "error"};
 	for (std::string buffer; std::getline(confFile, buffer);)
 	{
 		buffer = strTrim(buffer);
@@ -272,21 +289,21 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 			return ;
 		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)
 		{
-			std::cout << "ERROR3" << std::endl;
-			exit(0);
+			errorCode = 3;
+			errorLine = buffer;
+			return ;
 		}
 		int key;
-		for (key = 0; key < 9; key++)
+		for (key = 0; key < 10; key++)
 			if (buffer.substr(0, buffer.find_first_of(' ')) == key_words[key])
 				break;
 
-		if ((key == 8 || key == 9) && nest != 0)
+		if (key == 10 || ((key == 8 || key == 9) && nest != 0))
 		{
-			std::cout << "ERROR5" << std::endl;
-			exit(0);
+			errorCode = 3;
+			errorLine = buffer;
+			return ;
 		}
-		std::cout << "choosed key = " << key << std::endl;
-		std::cout << buffer << std::endl;
 		
 		value = buffer.substr(key_words[key].size(), buffer.find_first_of(';') - key_words[key].size());
 		value = strTrim(value);
@@ -318,6 +335,11 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 				break;
 			default:
 				break;
+		}
+		if (errorCode != 0)
+		{
+			errorLine = buffer;
+			return;
 		}
 	}
 }

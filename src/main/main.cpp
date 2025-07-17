@@ -2,12 +2,23 @@
 #include "Server.hpp"
 #include "Request.hpp"
 
-bool sigstop = false;
+bool		sigstop = false;
+int			errorCode = 0;
+std::string	errorLine = "";
 
 void stop(int sig) {
 	if (sig == SIGINT) {
 		sigstop = true;
 	}
+}
+
+int	errorMesage(std::string fileName)
+{
+	std::cerr << "Error in " << fileName << " : ";
+	if (errorCode == 3)
+		std::cerr << "parsing error" << std::endl;
+	std::cerr << errorLine << std::endl;
+	return (errorCode);
 }
 
 int	main(int argc, char *argv[]) {
@@ -36,8 +47,12 @@ int	main(int argc, char *argv[]) {
 		if (buffer.empty())
 		continue;
 		if (buffer == "server {")
-		servers.push_back(Server(confFile));		
+			servers.push_back(Server(confFile));
+		if (errorCode != 0)
+			break;
 	}
+	if (errorCode != 0)
+		return (errorMesage(argv[1]));
 	
 	int	epfd = epoll_create(1);
 	
