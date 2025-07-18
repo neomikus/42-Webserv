@@ -9,7 +9,7 @@ MAIN		:= main
 PARSE		:= 
 FILES		:= File
 ClASSES		:= Location Server
-UTILS	 	:= strUtils intUtils teapot
+UTILS	 	:= httpUtils strUtils intUtils teapot
 SOCKETS		:= Socket
 CONNECTIONS	:= connections Request Get Post Delete
 

@@ -121,39 +121,12 @@ Request::~Request() {
 	
 }
 
-long	getBodySize(std::fstream &requestBody) {
-	std::streampos pagePos = requestBody.tellg();
-	requestBody.seekg(0, std::ios::end);
-	pagePos = requestBody.tellg() - pagePos;
-	requestBody.seekg(std::ios::beg);
-	return (static_cast<long>(pagePos));
-}
-
-std::string	getStatusText(int status) {
-	switch (status)
-	{
-		case 200:
-			return ("OK\r\n");
-		case 404:
-			return ("Not Found\r\n");
-		case 405:
-			return ("Method Not Allowed\r\n");
-		case 418:
-			return ("I'm a teapot\r\n");
-		case 501:
-			return ("Not Implemented\r\n");
-		default:
-			break;
-	}
-	return ("\r\n");
-}
-
 bool	checkAllowedMethods(std::string &method, allowed_methods methods) {
 	if (method == "PUT" || method == "HEAD" || method == "CONNECT" || method == "TRACE" || method == "PATCH") // (Not Implemented Methods)
 		return (false);
 	if (method == "GET" && methods._get == false)
 		return (false);
-	if (method == "POST" && methods._delete == false)
+	if (method == "POST" && methods._post == false)
 		return (false);
 	if (method == "DELETE" && methods._delete == false)
 		return (false);
@@ -187,12 +160,10 @@ int	Request::getStatus(Location &currentLocation) {
 	if (method != "PUT" && method != "HEAD" &&
 		method != "CONNECT" && method != "TRACE" && method != "POST" &&
 		method != "PATCH" && method != "GET" && method != "DELETE")
-	
 		return (501);
-	(void)currentLocation;
-//	if (!checkAllowedMethods(method, currentLocation.getMethods()))
-//		return (405);
-	if (access(resource.substr(1).c_str(), F_OK)) {
+	if (!checkAllowedMethods(method, currentLocation.getMethods()))
+		return (405);
+	if (method != "POST" && access(resource.substr(1).c_str(), F_OK)) {
 		if (resource.substr(1) == "teapot")
 			return (418);
 		return (404);
@@ -228,25 +199,24 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
 	if (status == 200) {
 		responseBody.open(resource.substr(1, resource.find("?") - 1));
-		return;
-	}
-	if (status == 418) {
+	} else if (status == 201) {
+		;
+	} else if (status == 204) {
+		// Nothing to return!!!
+	} else if (status == 418) {
 		teapotGenerator(responseBody);
-		return;
-	}
-	if (status / 100 == 4 || status / 100 == 5) {
+	} else if (status / 100 == 4 || status / 100 == 5) {
 		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
 		if (!page.empty()) {
 			getErrorPages(page, responseBody);
 			return;
 		}
-	}
-	responseBody.open(DEFAULT_ERROR_PAGE);
+	} else
+		responseBody.open(DEFAULT_ERROR_PAGE);
 }
 
 Location Request::selectContext(Location &location, std::string fatherUri) {
-
-	std::cout << "FatherUri : " << fatherUri << std::endl;
+	//std::cout << "FatherUri : " << fatherUri << std::endl;
 	std::string uri = resource;
 	if (uri[uri.size() - 1] == '/')
 		uri.erase(uri.end() - 1);
@@ -254,21 +224,21 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
 		uri = uri.substr(fatherUri.size());
 	else
 		fatherUri = "";
-	std::cout << "im searching " << resource << std::endl;
-	std::cout << "im in " << location.getUri() << std::endl;
+	//std::cout << "im searching " << resource << std::endl;
+	//std::cout << "im in " << location.getUri() << std::endl;
 
 	while(!uri.empty())
 	{	
 		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
 		{
-			std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
+			//std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
 			if (it->getUri() == uri)
 				return (selectContext(*it, fatherUri + it->getUri()));
 		}
 		if (uri == "/")
 			break;
 		uri = trimLastWord(uri, '/');
-		std::cout << "trimed [" << uri << "]" << std::endl;
+		//std::cout << "trimed [" << uri << "]" << std::endl;
 	}
 	return (location);
 }

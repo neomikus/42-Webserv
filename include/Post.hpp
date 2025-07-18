@@ -12,7 +12,7 @@ class Post: public Request {
 		std::string	contentType;
 		Post();
 		void	parseBody(std::string &rawBody);
-		std::string	updateResource();
+		std::string	updateResource(int &status);
 	public:
 		Post(std::vector<std::string> splitedResponse, std::string &rawBody);
 		//Post	&operator=(const Post &model);

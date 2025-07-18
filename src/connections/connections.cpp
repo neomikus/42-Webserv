@@ -53,8 +53,9 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 }
 
 std::string getBody(std::string &rawResponse) {
-	if (rawResponse.find("\r\n") != rawResponse.npos)
-		return (rawResponse.substr(0, rawResponse.size()));
+	if (rawResponse.find("\r\n\r\n") != rawResponse.npos) {
+		return (rawResponse.substr(rawResponse.find("\r\n\r\n") + cstrlen("\r\n\r\n"), rawResponse.size()));
+	}
 	return (std::string());
 }
 
@@ -95,7 +96,8 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 
 	struct epoll_event events[5];
 
-	while (!sigstop) {
+	while (!sigstop)
+	{
 		int evt_count = epoll_wait(epfd, events, 5, 200);
 		for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 			for (int i = 0; i < evt_count; i++) {
@@ -113,7 +115,7 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 	}
 	
 	for (std::list<int>::iterator it = clients.begin(); it != clients.end(); ++it) {
-		send(*it, "Connection closed by server\n", strlen("Connection closed by server\n"), 0);
+		send(*it, "Connection closed by server\n", cstrlen("Connection closed by server\n"), 0);
 		close(*it);
 	}
 }

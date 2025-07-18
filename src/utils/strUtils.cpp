@@ -115,3 +115,10 @@ std::vector<std::string> strSplit(const std::string& str, const std::string& del
     
 	return tokens;
 }
+
+size_t	cstrlen(const char *str) {
+	int size = 0;
+	while (str[size])
+		size++;
+	return (size);
+}

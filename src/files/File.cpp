@@ -59,7 +59,7 @@ void	File::write(const std::string str) {
 
 void	File::write(const char *str) {
 	contents << str;
-	size += strlen(str);
+	size += cstrlen(str);
 }
 
 File	&operator<<(File &model, const std::string &str) {
@@ -70,7 +70,7 @@ File	&operator<<(File &model, const std::string &str) {
 
 File	&operator<<(File &model, const char *str) {
 	model.getStream() << str;
-	model.getSize() += strlen(str);
+	model.getSize() += cstrlen(str);
 	return (model);
 }
 

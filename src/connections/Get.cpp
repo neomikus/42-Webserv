@@ -18,8 +18,6 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	int	status = getStatus(location);
 	File		responseBody;
 
-	std::cout << "selected context: " << (location.getUri().empty() ? "Vlocation" : location.getUri()) << std::endl;
-	std::cout << HMAG << "STATUS = " << status << std::endl;
 	getBody(status, location, responseBody);
 
 	long long contentLenght = responseBody.getSize();
