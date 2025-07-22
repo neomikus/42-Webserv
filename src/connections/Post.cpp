@@ -71,13 +71,12 @@ Post::Post(const Post &model): Request(model) {
 }
 
 std::string	Post::updateResource(int &status) {
-	std::cout << "Status at start = " << status << std::endl;
 	if (status != 201 && status != 204)
 		return ("");
 	std::string	resourceName;
-	std::filebuf fb;
-	fb.open(resource.substr(1).c_str(), std::ios::out);
 	resourceName = resource; // for now
+	std::filebuf fb;
+	fb.open(resource.substr(1).c_str(), std::ios::binary | std::ios::out);
 	std::ostream	newResource(&fb);
 
 	newResource << body;
@@ -85,13 +84,11 @@ std::string	Post::updateResource(int &status) {
 }
 
 void	Post::response(int fd, std::list<int> &clients, Server &server) {
-	std::cout << "I'm a POST!!" << std::endl;
 	Location 	location = selectContext(server.getVLocation(), "");
 	int	status = getStatus(location);
 	std::string newResource = updateResource(status);
 	File		responseBody;
 
-	std::cout << HMAG << "STATUS = " << status << std::endl;
 	getBody(status, location, responseBody);
 
 	long long contentLenght = responseBody.getSize();
