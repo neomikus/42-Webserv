@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/wait.h>
 
 #define HMAG		"\033[95m"
 #define HCYA		"\033[96m"
@@ -44,7 +45,8 @@ const long long GB = MB * 1024;
 
 extern bool	sigstop;
 extern int	errorCode;
-extern std::string errorLine;	
+extern std::string errorLine;
+extern char **global_envp;
 
 
 #include "Socket.hpp"
@@ -68,14 +70,6 @@ struct hostport {
 	int						socket;
 };
 
-enum cgi_options {
-	BASH,
-	PHP,
-	PYTHON,
-	GO,
-	NONE
-};
-
 std::string 				strTrim(std::string str);
 std::string 				rtrim(std::string str);
 std::string 				rtrim(std::string str);
@@ -87,6 +81,7 @@ bool						strIsDigit(std::string const str);
 size_t						countWords(std::stringstream& ss);
 size_t						countWords(std::string const str);
 std::vector<std::string>	strSplit(const std::string& str, const std::string& delimiter);
+std::string					read_request(int fd);
 
 std::string					to_string(int n);
 

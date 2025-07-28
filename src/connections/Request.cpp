@@ -187,8 +187,8 @@ int	Request::getStatus(Location &currentLocation) {
 	if (method != "PUT" && method != "HEAD" &&
 		method != "CONNECT" && method != "TRACE" && method != "POST" &&
 		method != "PATCH" && method != "GET" && method != "DELETE")
-	
 		return (501);
+
 	(void)currentLocation;
 //	if (!checkAllowedMethods(method, currentLocation.getMethods()))
 //		return (405);
@@ -225,9 +225,86 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 		responseBody.open(page);
 }
 
+std::string read_from_pipe(int fd) {
+    char buffer[1024];
+    std::string retval;
+    ssize_t rd = read(fd, buffer, sizeof(buffer));
+
+	if (rd == -1) {
+		std::cerr << "Read failed!" << std::endl;
+		return ("");
+	}
+	buffer[rd] = '\0';
+    while (rd > 0) {
+		std::cout << buffer;
+		retval += buffer;
+		if (rd < 1024)
+			break;
+		rd = read(fd, buffer, 1024);
+		buffer[rd] = '\0';
+    }
+	std::cout << "I READ" << std::endl;
+    return retval;
+}
+
+void cgi(File &responseBody, std::string resource, std::string command) {
+    std::cout << "IM IN CGI" << std::endl;
+    
+    int _pipe[2];
+    if (pipe(_pipe) == -1) {
+        std::cerr << "pipe failed" << std::endl;
+        return;
+    }
+
+    pid_t child = fork();
+    if (child == -1) {
+        std::cerr << "fork failed" << std::endl;
+        close(_pipe[0]);
+        close(_pipe[1]);
+        return;
+    }
+    if (child == 0) { 
+        close(_pipe[0]); 
+        dup2(_pipe[1], STDOUT_FILENO); 
+        close(_pipe[1]);
+
+		std::string file = resource;
+		if (file[0] == '/')
+			file = file.substr(1);
+        char *argv[] = {const_cast<char*>(command.c_str()), const_cast<char*>(file.c_str()), NULL};
+
+        execve(argv[0], argv, global_envp);
+        
+        std::cerr << "execve failed" << std::endl;
+        exit(0);
+    }
+    else {
+        close(_pipe[1]); 
+        waitpid(child, NULL, 0);        
+        std::string response = read_from_pipe(_pipe[0]);
+        std::cout << HCYA << response << std::endl;
+        responseBody << response;
+        
+        close(_pipe[0]); 
+    }
+}
+
 void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
 	if (status == 200) {
-		responseBody.open(resource.substr(1, resource.find("?") - 1));
+/*
+		ifDirectory == true
+			checkIndex -> str
+			if str.empty()
+				a la mierda
+			else
+				body.open(str)
+*/
+		std::cout << HCYA << "[" << resource.substr(resource.size() - 3) << "]" << std::endl;
+		std::cout << (currentLocation.getCgi()) << std::endl;
+		if (currentLocation.getCgi() != "")
+			cgi(responseBody, resource, currentLocation.getCgi());
+		else
+			responseBody.open(resource.substr(1, resource.find("?") - 1));
 		return;
 	}
 	if (status == 418) {
@@ -246,7 +323,7 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 
 Location Request::selectContext(Location &location, std::string fatherUri) {
 
-	std::cout << "FatherUri : " << fatherUri << std::endl;
+ 	std::cout << "FatherUri : " << fatherUri << std::endl;
 	std::string uri = resource;
 	if (uri[uri.size() - 1] == '/')
 		uri.erase(uri.end() - 1);
@@ -254,7 +331,7 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
 		uri = uri.substr(fatherUri.size());
 	else
 		fatherUri = "";
-	std::cout << "im searching " << resource << std::endl;
+	std::cout << "im searching " << uri << std::endl;
 	std::cout << "im in " << location.getUri() << std::endl;
 
 	while(!uri.empty())
@@ -262,6 +339,8 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
 		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
 		{
 			std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
+			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
+				return (*it);
 			if (it->getUri() == uri)
 				return (selectContext(*it, fatherUri + it->getUri()));
 		}
@@ -275,7 +354,7 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
 
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
-	int	status = getStatus(location);
+	int			status = getStatus(location);
 	File		responseBody;
 
 	getBody(status, location, responseBody);

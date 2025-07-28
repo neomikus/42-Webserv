@@ -20,6 +20,7 @@ std::string	read_request(int fd) {
 	char buffer[1024];
 	std::string retval;
 	int rd = recv(fd, buffer, 1024, 0);
+	
 	if (rd == -1) {
 		std::cerr << "Read failed!" << std::endl;
 		return ("");
@@ -99,9 +100,10 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 		int evt_count = epoll_wait(epfd, events, 5, 200);
 		for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 			for (int i = 0; i < evt_count; i++) {
-				if (checkfds(events[i].data.fd, it->getSockets())) {
+
+				if (checkfds(events[i].data.fd, it->getSockets()))
 					connect(epfd, events[i].data.fd, clients);
-				}
+
 				if (checkfds(events[i].data.fd, clients)) {
 					std::string rawResponse = read_request(events[i].data.fd);
 					Request *request = makeRequest(rawResponse);

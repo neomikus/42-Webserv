@@ -3,7 +3,7 @@
 Location::Location() {
 	uri = "";
 	level = 0;
-	cgi = NONE;
+	cgi_option = "";
 	root = "";
 	autoindex = false;
 	allowed_methods a_methods = {false, false, false};
@@ -22,7 +22,7 @@ Location::Location(const Location& model) {
     index = model.index;
     autoindex = model.autoindex;
     error_pages = model.error_pages;
-    cgi = model.cgi;
+    cgi_option = model.cgi_option;
     level = model.level;
     methods = model.methods;
 	max_body_size = model.max_body_size;
@@ -38,7 +38,7 @@ Location &Location::operator=(const Location &model) {
 	index = model.index;
 	autoindex = model.autoindex;
 	error_pages = model.error_pages;
-	cgi = model.cgi;
+	cgi_option = model.cgi_option;
 	level = model.level;
 	methods = model.methods;
 	max_body_size = model.max_body_size;
@@ -50,21 +50,16 @@ Location &Location::operator=(const Location &model) {
 
 void	Location::parseCgi(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
-	const std::string	cgiStr[5] = {"BASH", "PHP", "PYTHON", "GO", "NONE"};
-
-	for (size_t i = 0; i < 5; i++)
+	if (cgi_option != "")
 	{
-		if (value == cgiStr[i])
-		{
-			cgi = (static_cast<cgi_options>(i));
-			return;
-		}
+		errorCode = 3;
+		return ;
 	}
-	errorCode = 3;
+	cgi_option = value;
 }
 
 void	Location::parseErrorPage(std::string value) {
-	//std::cout << "[" << value << "]" << std::endl;
+	std::cout << "[" << value << "]" << std::endl;
 
 	if (value.empty() || value.find('/') == value.npos)
 	{
@@ -249,6 +244,7 @@ void Location::parseAlowedMethods(std::string value){
 
 }
 
+
 Location::Location(std::string value, std::ifstream &confFile, int nest, const Location father)
 {
 	//std::cout << "[" << value << "]" << std::endl;
@@ -275,7 +271,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 
 	level = nest;
 	uri = value;
-	cgi = NONE;
+	cgi_option = "";
 	autoindex = false;
 	
 	std::string key_words[11] = {
@@ -314,6 +310,16 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 				break;
 			case 1:
 				locations.push_back(Location(value, confFile, level + 1, *this));
+				if (locations.back().getUri() == "/")
+				{
+					Location kid = Location(locations.back());
+					locations.pop_back();
+					for (std::vector<Location>::iterator it = kid.getLocations().begin(); it != kid.getLocations().end(); it++)
+					{
+						it->setLevel((it->getLevel() - 1));
+						this->locations.push_back(Location(*it));
+					}
+				}
 				break;
 			case 2:
 				parseAutoindex((value));
@@ -364,8 +370,8 @@ std::ostream &operator<<(std::ostream &stream, Location location) {
 	if (location.getAutoindex())
 	stream << tabs << "| AUTOINDEX\t: ON" << "\n";
 
-	if (location.getCgi() != NONE)
-	stream << tabs << "| CGI\t\t: " << cgiStr[location.getCgi()]<< "\n";
+	if (location.getCgi() != "")
+	stream << tabs << "| CGI\t\t: " << location.getCgi() << "\n";
 
 	std::vector<std::string> _index = location.getIndex();
 	if (!_index.empty())
@@ -421,7 +427,7 @@ std::ostream &operator<<(std::ostream &stream, Location location) {
 
 std::string					Location::getUri() const {return uri;}
 long long					Location::getLevel() const {return level;}
-cgi_options					Location::getCgi() const {return cgi;}
+std::string					Location::getCgi() const {return cgi_option;}
 std::vector<Location>		&Location::getLocations() {return locations;}
 std::string					Location::getRoot() const {return root;}
 std::vector<std::string>	Location::getIndex() const {return index;}
@@ -429,3 +435,4 @@ bool						Location::getAutoindex() const {return autoindex;}
 allowed_methods				Location::getMethods() const {return methods;}
 std::vector<error_page>		Location::getError_pages() const {return error_pages;}
 long long					Location::getMax_body_size() const {return max_body_size;}
+void						Location::setLevel(long long newLevel) {level = newLevel;}

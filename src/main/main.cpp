@@ -5,6 +5,7 @@
 bool		sigstop = false;
 int			errorCode = 0;
 std::string	errorLine = "";
+char **global_envp = NULL;
 
 void stop(int sig) {
 	if (sig == SIGINT) {
@@ -21,9 +22,9 @@ int	errorMesage(std::string fileName)
 	return (errorCode);
 }
 
-int	main(int argc, char *argv[]) {
+int	main(int argc, char *argv[], char *envp[]) {
 	signal(SIGINT, stop);
-
+	global_envp = envp;
 	if (argc < 2)
 	{
 		std::cout << "file not given" << std::endl;
