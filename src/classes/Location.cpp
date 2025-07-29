@@ -59,11 +59,17 @@ void	Location::parseCgi(std::string value) {
 }
 
 void	Location::parseErrorPage(std::string value) {
-	std::cout << "[" << value << "]" << std::endl;
+	//std::cout << "[" << value << "]" << std::endl;
 
-	if (value.empty() || value.find('/') == value.npos)
+	if (value.empty())
 	{
-		errorCode = 3;
+		errorCode = 4;
+		return ;
+	}
+
+	if (value.find('/') == value.npos)
+	{
+		errorCode = 8;
 		return ;
 	}
 	
@@ -81,7 +87,7 @@ void	Location::parseErrorPage(std::string value) {
 
 	if (strPage.find(' ') != strPage.npos)
 	{
-		errorCode = 3;
+		errorCode = 9;
 		return ;
 	}
 	
@@ -254,9 +260,15 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 	this->root = father.getRoot();
 	this->autoindex = father.getAutoindex();
 
-	if (nest != 0 && (value.empty() || value.find('{') == value.npos))
+	if (nest != 0 && value.empty())
 	{
-		errorCode = 3;
+		errorCode = 6;
+		return ;
+	}
+
+	if (nest != 0 && value.find('{') == value.npos)
+	{
+		errorCode = 5;
 		return ;
 	}
 
@@ -264,7 +276,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 
 	if (nest != 0 && (value.empty() || value.find(' ') != value.npos || value.find('\t') != value.npos))
 	{
-		errorCode = 3;
+		errorCode = 7;
 		errorLine = value;
 		return ;
 	}
@@ -285,7 +297,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 			return ;
 		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)
 		{
-			errorCode = 3;
+			errorCode = 2;
 			errorLine = buffer;
 			return ;
 		}
@@ -296,7 +308,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 
 		if (key == 10 || ((key == 8 || key == 9) && nest != 0))
 		{
-			errorCode = 3;
+			errorCode = 7;
 			errorLine = buffer;
 			return ;
 		}

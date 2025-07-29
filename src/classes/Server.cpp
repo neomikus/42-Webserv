@@ -86,7 +86,7 @@ void	Server::parseServerName(std::string value) {
 
 	if (value.empty() || value.find('\t') != value.npos || value.find(' ') != value.npos)
 	{
-		errorCode = 3;
+		errorCode = 4;
 		return ;
 	}
 	server_name = value;
@@ -131,7 +131,7 @@ Server::Server(std::ifstream &confFile)
 		}
 		if (buffer.find(';') == buffer.npos && buffer.find("location") == buffer.npos)
 		{
-			errorCode = 3;
+			errorCode = 2;
 			errorLine = buffer;
 			return ;
 		}
@@ -141,7 +141,6 @@ Server::Server(std::ifstream &confFile)
 			parseServerName(buffer.substr(12, buffer.size() - 13));
 		if (errorCode != 0)
 		{
-			
 			errorLine = buffer;
 			return;
 		}

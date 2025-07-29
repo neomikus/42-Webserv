@@ -234,6 +234,7 @@ std::string read_from_pipe(int fd) {
 		std::cerr << "Read failed!" << std::endl;
 		return ("");
 	}
+
 	buffer[rd] = '\0';
     while (rd > 0) {
 		std::cout << buffer;
@@ -243,11 +244,12 @@ std::string read_from_pipe(int fd) {
 		rd = read(fd, buffer, 1024);
 		buffer[rd] = '\0';
     }
+	
 	std::cout << "I READ" << std::endl;
     return retval;
 }
 
-void cgi(File &responseBody, std::string resource, std::string command) {
+void cgi(int &status,File &responseBody, std::string resource, std::string command) {
     std::cout << "IM IN CGI" << std::endl;
     
     int _pipe[2];
@@ -263,6 +265,7 @@ void cgi(File &responseBody, std::string resource, std::string command) {
         close(_pipe[1]);
         return;
     }
+
     if (child == 0) { 
         close(_pipe[0]); 
         dup2(_pipe[1], STDOUT_FILENO); 
@@ -278,9 +281,17 @@ void cgi(File &responseBody, std::string resource, std::string command) {
         std::cerr << "execve failed" << std::endl;
         exit(0);
     }
+
     else {
+		int	childStatus;
         close(_pipe[1]); 
-        waitpid(child, NULL, 0);        
+        waitpid(child, &childStatus, 0);
+		if (childStatus != 0)
+		{
+			status = 500;
+			return;
+		}
+
         std::string response = read_from_pipe(_pipe[0]);
         std::cout << HCYA << response << std::endl;
         responseBody << response;
@@ -290,27 +301,22 @@ void cgi(File &responseBody, std::string resource, std::string command) {
 }
 
 void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
+	
 	if (status == 200) {
-/*
-		ifDirectory == true
-			checkIndex -> str
-			if str.empty()
-				a la mierda
-			else
-				body.open(str)
-*/
 		std::cout << HCYA << "[" << resource.substr(resource.size() - 3) << "]" << std::endl;
 		std::cout << (currentLocation.getCgi()) << std::endl;
 		if (currentLocation.getCgi() != "")
-			cgi(responseBody, resource, currentLocation.getCgi());
+			cgi(status, responseBody, resource, currentLocation.getCgi());
 		else
 			responseBody.open(resource.substr(1, resource.find("?") - 1));
 		return;
 	}
+
 	if (status == 418) {
 		teapotGenerator(responseBody);
 		return;
 	}
+
 	if (status / 100 == 4 || status / 100 == 5) {
 		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
 		if (!page.empty()) {
@@ -318,12 +324,13 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 			return;
 		}
 	}
+
 	responseBody.open(DEFAULT_ERROR_PAGE);
 }
 
 Location Request::selectContext(Location &location, std::string fatherUri) {
 
- 	std::cout << "FatherUri : " << fatherUri << std::endl;
+ 	//std::cout << "FatherUri : " << fatherUri << std::endl;
 	std::string uri = resource;
 	if (uri[uri.size() - 1] == '/')
 		uri.erase(uri.end() - 1);
@@ -331,8 +338,9 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
 		uri = uri.substr(fatherUri.size());
 	else
 		fatherUri = "";
-	std::cout << "im searching " << uri << std::endl;
-	std::cout << "im in " << location.getUri() << std::endl;
+
+	//std::cout << "im searching " << uri << std::endl;
+	//std::cout << "im in " << location.getUri() << std::endl;
 
 	while(!uri.empty())
 	{	
@@ -349,6 +357,7 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
 		uri = trimLastWord(uri, '/');
 		std::cout << "trimed [" << uri << "]" << std::endl;
 	}
+
 	return (location);
 }
 
