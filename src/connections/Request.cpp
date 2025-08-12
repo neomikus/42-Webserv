@@ -180,13 +180,13 @@ std::string checkErrorPages(std::vector<error_page> error_pages, int &status) {
 	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
 		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); ++it2) {
 			if (*it2 == status) {
-				if (it->to_replace > 199)
+				if (it->to_replace > 99)
 					status = it->to_replace;
 				return (it->page);
 			}
 		}
 	}
-	return ("");
+	return (DEFAULT_ERROR_PAGE);
 }
 
 void	Request::getErrorPages(std::string &page, File &responseBody) {
@@ -255,11 +255,11 @@ void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	std::string response;
 
 	response += "HTTP/1.1 "; // This is always true
-	response += to_string(status);
+	response += toString(status);
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
 	response += "Content Lenght: ";
-	response += to_string(contentLenght);
+	response += toString(contentLenght);
 	response += "\r\n";
 	
 	response += "\r\n";

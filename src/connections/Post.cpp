@@ -13,8 +13,13 @@ void	Post::parseBody(std::string &rawBody) {
 	if (contentType == "application/x-www-form-urlencoded") {
 		;
 	}
-	else if (contentType == "application/json") {
-		;
+	else if (contentType == "multipart/form-data") {
+		if (boundary.empty())
+			return;
+		std::vector<std::string> files = strSplit(rawBody, "--" + boundary);
+		for (std::vector<std::string>::iterator it = files.begin(); it != files.end(); ++it) {
+			body.write(*it);
+		}
 	}
 	else if (contentType == "text/html") {
 		;
@@ -25,7 +30,6 @@ void	Post::parseBody(std::string &rawBody) {
 	else
 		body.setName(resource.substr(1));
 	std::cout << "Copying the body..." << std::endl;
-	body << rawBody;
 }
 
 Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody)/*: Request(splitedRaw)*/ {
@@ -60,8 +64,13 @@ Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody)/*: Request
 		}
 		if (_temp == "Referer:")
 			referer = it->substr(9);		
-		if (_temp == "Content-Type:")
-			contentType = it->substr(13);	
+		if (_temp == "Content-Type:") {
+			tokens >> contentType;
+			tokens >> _temp;
+			if (_temp.substr(0, cstrlen("boundary=")) == "boundary=") {
+				_temp.substr(cstrlen("boundary="));
+			}
+		}
 	}
 	parseBody(rawBody);
 }
@@ -75,17 +84,17 @@ std::string	Post::updateResource(int &status) {
 		return ("");
 	std::string	resourceName;
 	resourceName = resource; // for now
-	std::filebuf fb;
+	std::filebuf	fb;
 	fb.open(resource.substr(1).c_str(), std::ios::binary | std::ios::out);
 	std::ostream	newResource(&fb);
 
-	newResource << body;
+	newResource.write(body.getStream().str().c_str(), body.getStream().str().size());
 	return (resourceName);
 }
 
 void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
-	int	status = getStatus(location);
+	int			status = getStatus(location);
 	std::string newResource = updateResource(status);
 	File		responseBody;
 
@@ -96,11 +105,11 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	std::string response;
 
 	response += "HTTP/1.1 "; // This is always true
-	response += to_string(status);
+	response += toString(status);
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
 	response += "Content Lenght: ";
-	response += to_string(contentLenght);
+	response += toString(contentLenght);
 	response += "\r\n";
 	
 	if (status == 201) {	

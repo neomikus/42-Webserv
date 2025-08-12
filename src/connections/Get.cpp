@@ -25,11 +25,11 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	std::string response;
 
 	response += "HTTP/1.1 "; // This is always true
-	response += to_string(status);
+	response += toString(status);
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
 	response += "Content Lenght: ";
-	response += to_string(contentLenght);
+	response += toString(contentLenght);
 	response += "\r\n";
 	
 	response += "\r\n";

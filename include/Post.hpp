@@ -10,11 +10,12 @@ class Post: public Request {
 	private:
 		File		body;
 		std::string	contentType;
+		std::string	boundary;
 		Post();
 		void	parseBody(std::string &rawBody);
 		std::string	updateResource(int &status);
 	public:
-		Post(std::vector<std::string> splitedResponse, std::string &rawBody);
+		Post(std::vector<std::string> splittedResponse, std::string &rawBody);
 		//Post	&operator=(const Post &model);
 		Post(const Post &model);
 		~Post();

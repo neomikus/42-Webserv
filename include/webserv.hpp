@@ -89,7 +89,7 @@ size_t						countWords(std::string const str);
 std::vector<std::string>	strSplit(const std::string& str, const std::string& delimiter);
 size_t						cstrlen(const char *str);
 
-std::string					to_string(int n);
+std::string					toString(int n);
 
 #include "File.hpp"
 
