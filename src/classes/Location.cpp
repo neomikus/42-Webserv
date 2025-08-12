@@ -91,7 +91,7 @@ void	Location::parseErrorPage(std::string value) {
 		return ;
 	}
 	
-		if (value.find('=') != value.npos)
+	if (value.find('=') != value.npos)
 	{
 		error_codes = strTrim(value.substr(0, value.find('=')));
 		redirect = strTrim(value.substr(value.find('=') + 1));	}
@@ -103,7 +103,7 @@ void	Location::parseErrorPage(std::string value) {
 
 	if (error_codes.empty() || (!redirect.empty() && !strIsDigit(redirect)))
 	{
-		errorCode = 3;
+		errorCode = 10;
 		return ;
 	}
 
@@ -118,7 +118,7 @@ void	Location::parseErrorPage(std::string value) {
 				break ;
 			if (!strIsDigit(error_c))
 			{
-				errorCode = 3;
+				errorCode = 10;
 				return ;
 			}
 			error_page.to_catch.push_back(atoi(error_c.c_str()));
@@ -128,7 +128,7 @@ void	Location::parseErrorPage(std::string value) {
 		error_page.to_catch.push_back(atoi(error_codes.c_str()));
 	else
 	{
-		errorCode = 3;
+		errorCode = 10;
 		return ;
 	}
 
@@ -147,7 +147,7 @@ void	Location::parseAutoindex(std::string value) {
 		autoindex = false;
 	else
 	{
-		errorCode = 3;
+		errorCode = 11;
 		return ;
 	}
 }
@@ -156,7 +156,7 @@ void	Location::parseRoot(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
 	if (value.find(' ') != value.npos || value.find('\t') != value.npos)
 	{
-		errorCode = 3;
+		errorCode = 4;
 		return ;
 	}
 	root = value;
@@ -165,6 +165,12 @@ void	Location::parseRoot(std::string value) {
 void	Location::parseIndex(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
 	std::vector<std::string> indexVector;
+
+	if (value.empty())
+	{
+		errorCode = 4;
+		return ;
+	}
 
 	std::stringstream	split(value);
 	while (split)
@@ -181,6 +187,12 @@ void	Location::parseIndex(std::string value) {
 void Location::parseBodySize(const std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
 	size_t i = 0;
+
+	if (value.empty())
+	{
+		errorCode = 4;
+		return ;
+	}
 
 	std::map<std::string, int> unitMap;
 	unitMap["b"] = 0;
@@ -204,7 +216,7 @@ void Location::parseBodySize(const std::string value) {
 
 	if (i == 0)
 	{
-		errorCode = 3;
+		errorCode = 12;
 		return ;
 	}
 	
@@ -214,7 +226,7 @@ void Location::parseBodySize(const std::string value) {
 
 	if (unitMap.find(unit) == unitMap.end())
 	{
-		errorCode = 3;
+		errorCode = 13;
 		return ;
 	}
 	
@@ -243,7 +255,7 @@ void Location::parseAlowedMethods(std::string value){
 			methods._delete = true;
 		else
 		{
-			errorCode = 3;
+			errorCode = 14;
 			return ;
 		}
 	}

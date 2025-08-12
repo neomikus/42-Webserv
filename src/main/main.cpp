@@ -42,11 +42,25 @@ int	errorMesage(std::string fileName)
 			std::cerr << "error_page needs an error_page to be redirected." << std::endl;
 			break;
 		case 9:
-			std::cerr << "something found outside context" << std::endl;
+			std::cerr << "the error_page redirect page is only one argument" << std::endl;
 			break;
-	
-	default:
-		break;
+		case 10:
+			std::cerr << "error_page error code must be a digit" << std::endl;
+			break;
+		case 11:
+			std::cerr << "Autoindex argument must be \"on\" or \"off\"" << std::endl;
+			break;
+		case 12:
+			std::cerr << "client_max_body_size argument must be an integer followed by the unit" << std::endl;
+			break;
+		case 13:
+			std::cerr << "client_max_body_size unit goes from b to Gb" << std::endl;
+			break;
+		case 14:
+			std::cerr << "allowed methods are \"GET\", \"POST\" and \"DELETE\"" << std::endl;
+			break;
+		default:
+			break;
 	}
 	std::cerr << errorLine << std::endl;
 	return (errorCode);
