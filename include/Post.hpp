@@ -8,14 +8,15 @@ class File;
 
 class Post: public Request {
 	private:
-		File		body;
+		//File		body;
+		std::vector<char>	body;
 		std::string	contentType;
 		std::string	boundary;
 		Post();
-		void	parseBody(std::string &rawBody);
+		void		parseBody(std::vector<char> &rawBody);
 		std::string	updateResource(int &status);
 	public:
-		Post(std::vector<std::string> splittedResponse, std::string &rawBody);
+		Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
 		//Post	&operator=(const Post &model);
 		Post(const Post &model);
 		~Post();

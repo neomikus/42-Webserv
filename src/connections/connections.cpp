@@ -16,21 +16,21 @@ bool	checkfds(int fd, std::list<int> fdList) {
 	return (false);
 }
 
-std::string	read_request(int fd) {
+std::vector<char>	read_request(int fd) {
 	char buffer[1024];
-	std::string retval;
-	int rd = recv(fd, buffer, 1024, 0);
+	std::vector<char> retval;
+	int rd = recv(fd, buffer, 1024, MSG_DONTWAIT);
 	if (rd == -1) {
 		std::cerr << "Read failed!" << std::endl;
-		return ("");
+		return (retval);
 	}
 	buffer[rd] = '\0';
 	while (rd > 0) {
 		std::cout << buffer;
-		retval += buffer;
-		if (rd < 1024)
-			break;
-		rd = recv(fd, buffer, 1024, 0);
+		for (int i = 0; i < rd; i++) {
+			retval.push_back(buffer[i]);
+		}
+		rd = recv(fd, buffer, 1024, MSG_DONTWAIT);
 		buffer[rd] = '\0';
 	}
 	std::cout << std::endl << std::endl;
@@ -52,20 +52,29 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 	}
 }
 
-std::string getBody(std::string &rawResponse) {
-	if (rawResponse.find("\r\n\r\n") != rawResponse.npos) {
-		return (rawResponse.substr(rawResponse.find("\r\n\r\n") + cstrlen("\r\n\r\n"), rawResponse.size()));
+std::vector<char> getBody(std::vector<char> &rawResponse, std::vector<char>::iterator &bodyStart) {
+	std::vector<char> retval;
+	for (std::vector<char>::iterator it = rawResponse.begin(); it != rawResponse.end(); it = std::find(it, rawResponse.end(), '\r'))
+	{
+		if (*(it + 1) == '\n' && *(it + 2) == '\r' && *(it + 3) == '\n') {
+			it += 4;
+			bodyStart = it;
+			std::copy(it, rawResponse.end(), retval.begin());
+			break;
+		}
 	}
-	return (std::string());
+	return (retval);
 }
 
-Request *makeRequest(std::string &rawResponse)
+Request *makeRequest(std::vector<char> &rawResponse)
 {
 	Request 			*req;
 	std::stringstream	buffer;
 	std::string			_temp;
-	std::string			rawBody = getBody(rawResponse);
-	std::vector<std::string>	splitedResponse = strSplit(rawResponse, "\n");
+	std::vector<char>::iterator	bodyStart;
+	std::vector<char>	rawBody = getBody(rawResponse, bodyStart);
+	std::string			rawHeader = makeString(rawResponse.begin(), bodyStart);
+	std::vector<std::string>	splitedResponse = strSplit(rawHeader, "\n");
 
 	buffer << splitedResponse[0];
 	buffer >> _temp;
@@ -105,7 +114,7 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 					connect(epfd, events[i].data.fd, clients);
 				}
 				if (checkfds(events[i].data.fd, clients)) {
-					std::string rawResponse = read_request(events[i].data.fd);
+					std::vector<char> rawResponse = read_request(events[i].data.fd);
 					Request *request = makeRequest(rawResponse);
 					request->response(events[i].data.fd, clients, request->selectServer(servers));
 					delete request;

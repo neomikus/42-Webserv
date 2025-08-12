@@ -5,7 +5,7 @@ Post::Post(): Request() {
 	contentType = "none";
 }
 
-void	Post::parseBody(std::string &rawBody) {
+void	Post::parseBody(std::vector<char> &rawBody) {
 	// Program later
 	//if (rawBody.size() > server.getMax_body_size())
 	//	return ;
@@ -14,25 +14,30 @@ void	Post::parseBody(std::string &rawBody) {
 		;
 	}
 	else if (contentType == "multipart/form-data") {
-		if (boundary.empty())
+		/*if (boundary.empty())
 			return;
 		std::vector<std::string> files = strSplit(rawBody, "--" + boundary);
 		for (std::vector<std::string>::iterator it = files.begin(); it != files.end(); ++it) {
 			body.write(*it);
+			break;
 		}
+			*/
 	}
 	else if (contentType == "text/html") {
 		;
 	}
 
+	/*
 	if (!resourceName.empty())
 		body.setName(resourceName);
 	else
 		body.setName(resource.substr(1));
+	*/
 	std::cout << "Copying the body..." << std::endl;
+	body = rawBody;
 }
 
-Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody)/*: Request(splitedRaw)*/ {
+Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: Request(splitedRaw)*/ {
 	parseMethodResourceProtocol(splitedRaw[0]);
 	if (error)
 		return ;
@@ -88,7 +93,10 @@ std::string	Post::updateResource(int &status) {
 	fb.open(resource.substr(1).c_str(), std::ios::binary | std::ios::out);
 	std::ostream	newResource(&fb);
 
-	newResource.write(body.getStream().str().c_str(), body.getStream().str().size());
+	for (std::vector<char>::iterator it = body.begin(); it != body.end(); ++it)
+		newResource.write(&(*it), 1);
+
+	
 	return (resourceName);
 }
 
