@@ -5,6 +5,42 @@ Post::Post(): Request() {
 	contentType = "none";
 }
 
+std::vector<char>::iterator myHaystack(std::vector<char> &haystack, std::vector<char>::iterator begin, std::string needle)
+{
+	std::vector<char>::iterator itH = begin;
+	std::string::iterator itN = needle.begin();
+	for (; itH != haystack.end(); ++itH)
+	{
+		if(*itH == *itN)
+		{
+			std::vector<char>::iterator retval = itH;
+			for (; itN != needle.end() && itH != haystack.end() && *itH == *itN;)
+			{
+				itH++;
+				itN++;
+			}
+			if (itN == needle.end())
+				return retval;
+			else
+			{
+				itN = needle.begin();
+				itH = retval + 1;
+			}
+		}
+	}
+	return haystack.end();
+}
+std::string get_filename(std::string filehead)
+{
+	std::vector<std::string> splited = strSplit(filehead, "\n");
+	for (std::vector<std::string>::iterator it = splited.begin(); it != splited.end(); ++it)
+	{
+		if (it->find("filename=") != it->npos)
+			return it->substr((it->find("filename=") + strlen("filename=") + 1), it->size() - (it->find("filename=") + strlen("filename=") + 1) - 2); 
+	}
+	return "";
+}
+
 void	Post::parseBody(std::vector<char> &rawBody) {
 	// Program later
 	//if (rawBody.size() > server.getMax_body_size())
@@ -13,8 +49,30 @@ void	Post::parseBody(std::vector<char> &rawBody) {
 	if (contentType == "application/x-www-form-urlencoded") {
 		;
 	}
-	else if (contentType == "multipart/form-data") {
+	else if (contentType == "multipart/form-data;") {
+		std::vector<char>::iterator start;
+
+ 		for (start = rawBody.begin(); start != rawBody.end(); ++start)
+			if (std::distance(start, rawBody.end()) > 4 && *start == '\r' && *(start + 1) == '\n' && *(start + 2) == '\r' && *(start + 3) == '\n')
+				break;
 		
+		std::string fileHead = makeString(rawBody.begin(), start);
+
+		filename = get_filename(fileHead);
+
+		std::cout << filename << std::endl;
+		std::vector<char>::iterator end = myHaystack(rawBody, start, boundary);
+		if (end == rawBody.end())
+			std::cout << "NO HE ENCONTRADO EL BOUNDRI" << std::endl;
+		if (start == rawBody.end())
+			return ;
+		start += 4;
+
+		for (; start != end - 4; ++start)
+		{
+			body.push_back(*start);
+		}
+		std::cout << "pushing done" << std::endl;
 	}
 	else if (contentType == "text/html") {
 		;
@@ -27,7 +85,7 @@ void	Post::parseBody(std::vector<char> &rawBody) {
 		body.setName(resource.substr(1));
 	*/
 	std::cout << "Copying the body..." << std::endl;
-	body = rawBody;
+	//body = rawBody;
 }
 
 Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: Request(splitedRaw)*/ {
@@ -66,7 +124,7 @@ Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: R
 			tokens >> contentType;
 			tokens >> _temp;
 			if (_temp.substr(0, cstrlen("boundary=")) == "boundary=") {
-				_temp.substr(cstrlen("boundary="));
+				boundary = _temp.substr(cstrlen("boundary="));
 			}
 		}
 	}

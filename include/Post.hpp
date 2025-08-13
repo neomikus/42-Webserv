@@ -10,8 +10,9 @@ class Post: public Request {
 	private:
 		//File		body;
 		std::vector<char>	body;
-		std::string	contentType;
-		std::string	boundary;
+		std::string			filename;
+		std::string			contentType;
+		std::string			boundary;
 		Post();
 		void		parseBody(std::vector<char> &rawBody);
 		std::string	updateResource(int &status);

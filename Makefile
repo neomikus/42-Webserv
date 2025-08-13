@@ -21,6 +21,7 @@ PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \
 				$(addsuffix .cpp, $(addprefix sockets/,	$(SOCKETS))) \
 				$(addsuffix .cpp, $(addprefix connections/,	$(CONNECTIONS)))
 
+
 SRCS 		:=	$(addprefix $(SRC_PATH), $(PLAIN_SRCS))
 OBJS 		:=	$(addprefix $(OBJ_DIR), $(PLAIN_SRCS:.cpp=.o))
 

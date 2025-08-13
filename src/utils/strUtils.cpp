@@ -133,6 +133,7 @@ std::string makeString(std::vector<char> &vec) {
 
 std::string makeString(std::vector<char>::iterator start, std::vector<char>::iterator end) {
 	std::string	retval;
+
 	for (std::vector<char>::iterator it = start; it != end ; ++it) {
 		retval += *it;
 	}
