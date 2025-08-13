@@ -14,14 +14,7 @@ void	Post::parseBody(std::vector<char> &rawBody) {
 		;
 	}
 	else if (contentType == "multipart/form-data") {
-		/*if (boundary.empty())
-			return;
-		std::vector<std::string> files = strSplit(rawBody, "--" + boundary);
-		for (std::vector<std::string>::iterator it = files.begin(); it != files.end(); ++it) {
-			body.write(*it);
-			break;
-		}
-			*/
+		
 	}
 	else if (contentType == "text/html") {
 		;
@@ -93,10 +86,10 @@ std::string	Post::updateResource(int &status) {
 	fb.open(resource.substr(1).c_str(), std::ios::binary | std::ios::out);
 	std::ostream	newResource(&fb);
 
-	for (std::vector<char>::iterator it = body.begin(); it != body.end(); ++it)
-		newResource.write(&(*it), 1);
+	for (std::vector<char>::iterator it = body.begin(); it != body.end(); ++it) {
+		newResource.put(*it);
+	}
 
-	
 	return (resourceName);
 }
 

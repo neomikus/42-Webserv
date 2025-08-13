@@ -19,19 +19,17 @@ bool	checkfds(int fd, std::list<int> fdList) {
 std::vector<char>	read_request(int fd) {
 	char buffer[1024];
 	std::vector<char> retval;
-	int rd = recv(fd, buffer, 1024, MSG_DONTWAIT);
+	int rd = recv(fd, buffer, 1024, 0);
 	if (rd == -1) {
 		std::cerr << "Read failed!" << std::endl;
 		return (retval);
 	}
-	buffer[rd] = '\0';
 	while (rd > 0) {
-		std::cout << buffer;
+		//std::cout << buffer;
 		for (int i = 0; i < rd; i++) {
 			retval.push_back(buffer[i]);
 		}
 		rd = recv(fd, buffer, 1024, MSG_DONTWAIT);
-		buffer[rd] = '\0';
 	}
 	std::cout << std::endl << std::endl;
 	return (retval);
@@ -54,12 +52,18 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 
 std::vector<char> getBody(std::vector<char> &rawResponse, std::vector<char>::iterator &bodyStart) {
 	std::vector<char> retval;
-	for (std::vector<char>::iterator it = rawResponse.begin(); it != rawResponse.end(); it = std::find(it, rawResponse.end(), '\r'))
+	//for (std::vector<char>::iterator it = std::find(rawResponse.begin(), rawResponse.end(), '\r'); it != rawResponse.end(); it = std::find(it + 1, rawResponse.end(), '\r'))
+	for (std::vector<char>::iterator it = rawResponse.begin(); it != rawResponse.end(); ++it)
 	{
-		if (*(it + 1) == '\n' && *(it + 2) == '\r' && *(it + 3) == '\n') {
+		(void)bodyStart;
+		if (std::distance(it, rawResponse.end()) < 4)
+			break;
+		if (*it == '\r' && *(it + 1) == '\n' && *(it + 2) == '\r' && *(it + 3) == '\n') {
 			it += 4;
 			bodyStart = it;
-			std::copy(it, rawResponse.end(), retval.begin());
+			for (std::vector<char>::iterator it2 = it; it2 != rawResponse.end(); ++it2) {
+				retval.push_back(*it2);
+			}
 			break;
 		}
 	}
@@ -73,6 +77,7 @@ Request *makeRequest(std::vector<char> &rawResponse)
 	std::string			_temp;
 	std::vector<char>::iterator	bodyStart;
 	std::vector<char>	rawBody = getBody(rawResponse, bodyStart);
+	std::cout << rawBody.size() << std::endl;
 	std::string			rawHeader = makeString(rawResponse.begin(), bodyStart);
 	std::vector<std::string>	splitedResponse = strSplit(rawHeader, "\n");
 
