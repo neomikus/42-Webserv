@@ -8,7 +8,7 @@ class Location {
 
 		std::string					uri;
 		long long					level;
-		cgi_options					cgi;
+		std::string					cgi_option;
 		std::vector<Location>		locations;
 		std::string					root;
 		std::vector<std::string>	index;
@@ -36,7 +36,8 @@ class Location {
 
 		std::string					getUri() const;
 		long long					getLevel() const;
-		cgi_options					getCgi() const;
+		void						setLevel(long long newLevel);
+		std::string					getCgi() const;
 		std::vector<Location>		&getLocations();
 		std::string					getRoot() const;
 		std::vector<std::string>	getIndex() const;

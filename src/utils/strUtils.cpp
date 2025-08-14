@@ -1,5 +1,25 @@
 #include "webserv.hpp"
 
+std::string cgiToStr(int choice)
+{
+	switch (choice)
+	{
+	case 0:
+		return std::string("BASH");
+	case 1:
+		return std::string("PHP");
+	case 2:
+		return std::string("PYTHON");
+	case 3:
+		return std::string("GO");
+	case 4:
+		return std::string("NONE");
+	default:
+		break;
+	}
+	return("");
+}
+
 
 size_t countWords(std::stringstream& ss) {
     size_t count = 0;

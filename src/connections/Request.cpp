@@ -196,13 +196,93 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 		responseBody.open(page);
 }
 
+std::string read_from_pipe(int fd) {
+    char buffer[1024];
+    std::string retval;
+    ssize_t rd = read(fd, buffer, sizeof(buffer));
+
+	if (rd == -1) {
+		std::cerr << "Read failed!" << std::endl;
+		return ("");
+	}
+
+	buffer[rd] = '\0';
+    while (rd > 0) {
+		std::cout << buffer;
+		retval += buffer;
+		if (rd < 1024)
+			break;
+		rd = read(fd, buffer, 1024);
+		buffer[rd] = '\0';
+    }
+	
+	std::cout << "I READ" << std::endl;
+    return retval;
+}
+
+void cgi(int &status,File &responseBody, std::string resource, std::string command) {
+    std::cout << "IM IN CGI" << std::endl;
+    
+    int _pipe[2];
+    if (pipe(_pipe) == -1) {
+        std::cerr << "pipe failed" << std::endl;
+        return;
+    }
+
+    pid_t child = fork();
+    if (child == -1) {
+        std::cerr << "fork failed" << std::endl;
+        close(_pipe[0]);
+        close(_pipe[1]);
+        return;
+    }
+
+    if (child == 0) { 
+        close(_pipe[0]); 
+        dup2(_pipe[1], STDOUT_FILENO); 
+        close(_pipe[1]);
+
+		std::string file = resource;
+		if (file[0] == '/')
+			file = file.substr(1);
+        char *argv[] = {const_cast<char*>(command.c_str()), const_cast<char*>(file.c_str()), NULL};
+
+        execve(argv[0], argv, global_envp);
+        
+        std::cerr << "execve failed" << std::endl;
+        exit(0);
+    }
+
+    else {
+		int	childStatus;
+        close(_pipe[1]); 
+        waitpid(child, &childStatus, 0);
+		if (childStatus != 0)
+		{
+			status = 500;
+			return;
+		}
+
+        std::string response = read_from_pipe(_pipe[0]);
+        std::cout << HCYA << response << std::endl;
+        responseBody << response;
+        
+        close(_pipe[0]); 
+    }
+}
+
 void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
+	
 	if (status == 200) {
-		responseBody.open(resource.substr(1, resource.find("?") - 1));
+		if (currentLocation.getCgi() != "")
+			cgi(status, responseBody, resource, currentLocation.getCgi());
+		else
+			responseBody.open(resource.substr(1, resource.find("?") - 1));
+		return;
 	} else if (status == 201) {
 		;
 	} else if (status == 204) {
-		// Nothing to return!!!
+		; // Nothing to return!!!
 	} else if (status == 418) {
 		teapotGenerator(responseBody);
 	} else if (status / 100 == 4 || status / 100 == 5) {
@@ -211,12 +291,10 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 			getErrorPages(page, responseBody);
 			return;
 		}
-	} else
-		responseBody.open(DEFAULT_ERROR_PAGE);
-}
+  } else
+    responseBody.open(DEFAULT_ERROR_PAGE);
 
 Location Request::selectContext(Location &location, std::string fatherUri) {
-	//std::cout << "FatherUri : " << fatherUri << std::endl;
 	std::string uri = resource;
 	if (uri[uri.size() - 1] == '/')
 		uri.erase(uri.end() - 1);
@@ -224,28 +302,35 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
 		uri = uri.substr(fatherUri.size());
 	else
 		fatherUri = "";
-	//std::cout << "im searching " << resource << std::endl;
-	//std::cout << "im in " << location.getUri() << std::endl;
 
 	while(!uri.empty())
 	{	
 		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
 		{
+      /* TO CHECK
+xabicode
+			std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
+			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
+				return (*it);
+=======
 			//std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
+mikucode
 			if (it->getUri() == uri)
 				return (selectContext(*it, fatherUri + it->getUri()));
 		}
+    */
 		if (uri == "/")
 			break;
 		uri = trimLastWord(uri, '/');
 		//std::cout << "trimed [" << uri << "]" << std::endl;
 	}
+
 	return (location);
 }
 
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
-	int	status = getStatus(location);
+	int			status = getStatus(location);
 	File		responseBody;
 
 	getBody(status, location, responseBody);
