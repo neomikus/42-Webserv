@@ -71,7 +71,7 @@ int	main(int argc, char *argv[], char *envp[]) {
 	global_envp = envp;
 	if (argc < 2)
 	{
-		std::cout << "file not given" << std::endl;
+		std::cerr << "file not given" << std::endl;
 		return (1);
 	}
 
@@ -82,7 +82,7 @@ int	main(int argc, char *argv[], char *envp[]) {
 	
 	if (!confFile.is_open())
 	{
-		std::cout << "file not found" << std::endl;
+		std::cerr << "file not found" << std::endl;
 		return (1);
 	}
 	
@@ -113,8 +113,6 @@ int	main(int argc, char *argv[], char *envp[]) {
 		return (errorMesage(argv[1]));
 	
 	int	epfd = epoll_create(1);
-	
-	//std::cout << servers.front() << std::endl;
 
  	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 		std::vector<hostport> _hostport = it->getHostports();

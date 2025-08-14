@@ -30,7 +30,7 @@ std::vector<char>::iterator myHaystack(std::vector<char> &haystack, std::vector<
 	}
 	return haystack.end();
 }
-std::string get_filename(std::string filehead)
+std::string getFilename(std::string filehead)
 {
 	std::vector<std::string> splited = strSplit(filehead, "\n");
 	for (std::vector<std::string>::iterator it = splited.begin(); it != splited.end(); ++it)
@@ -42,9 +42,6 @@ std::string get_filename(std::string filehead)
 }
 
 void	Post::parseBody(std::vector<char> &rawBody) {
-	// Program later
-	//if (rawBody.size() > server.getMax_body_size())
-	//	return ;
 	std::string			filename;
 	std::string			resourceName;
 	if (contentType == "application/x-www-form-urlencoded") {
@@ -65,9 +62,8 @@ void	Post::parseBody(std::vector<char> &rawBody) {
 			
 			std::string fileHead = makeString(lastEnd, start);
 
-			filename = get_filename(fileHead);
+			filename = getFilename(fileHead);
 
-			std::cout << filename << std::endl;
 			std::vector<char>::iterator end = myHaystack(rawBody, start, boundary);
 			if (end == rawBody.end())
 				break;
@@ -76,24 +72,18 @@ void	Post::parseBody(std::vector<char> &rawBody) {
 			start += 4;
 
 			for (; start != end - 4; ++start)
-			{
 				body.push_back(*start);
-			}
-			std::cout << "pushing done" << std::endl;
+
 			filesVector.push_back(std::make_pair(filename, body));
 			lastEnd = end;
 			start = end;
 		}
 	}
-	else if (contentType == "text/html") {
-		;
+	else {
+		std::cerr << "Content Type not supported!" << std::endl;
 	}
 
 	resource = resource.substr(1);
-	std::cout << resource << std::endl;
-
-	std::cout << "Copying the body..." << std::endl;
-	//body = rawBody;
 }
 
 Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: Request(splitedRaw)*/ {
@@ -146,7 +136,6 @@ Post::Post(const Post &model): Request(model) {
 bool checkStat(std::string resource, std::string &filename) {
 	struct stat dirBuffer;
 
-	std::cout << filename << " at " << resource << std::endl;
 	stat(resource.c_str(), &dirBuffer);
 
 	if (S_ISDIR(dirBuffer.st_mode)) {
@@ -179,10 +168,8 @@ bool checkStat(std::string resource, std::string &filename) {
 
 	stat(filename.c_str(), &resBuffer);
 
-	if (S_ISDIR(resBuffer.st_mode) || !(dirBuffer.st_mode & S_IWUSR)) {
-		std::cout << S_ISDIR(resBuffer.st_mode) << " and " << (dirBuffer.st_mode & S_IWUSR) << std::endl;
+	if (S_ISDIR(resBuffer.st_mode) || !(dirBuffer.st_mode & S_IWUSR))
 		return (false);
-	}
 	return (true);
 }
 

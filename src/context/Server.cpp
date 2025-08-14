@@ -113,8 +113,7 @@ Server::Server(std::ifstream &confFile)
 {	
 	*this = Server();
 	std::streampos startPos = confFile.tellg();
-	std::string key_words[3] = {
-	"server_name", "listen", "error" };
+	std::string key_words[3] = { "server_name", "listen", "error" };
 
 	for (std::string buffer; std::getline(confFile, buffer);)
 	{

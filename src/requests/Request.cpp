@@ -60,22 +60,6 @@ Request::Request(std::vector<std::string> splitedRaw) {
 		if (_temp == "Referer:")
 			referer = it->substr(9);		
 	}
-/* 	std::cout << "this->host " << hostPort.host << std::endl;
-	std::cout << "this->port " << hostPort.port << std::endl;
-	std::cout << "this->userAgent " << userAgent << std::endl;
-	std::cout << "this->accept" << std::endl;
-	for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); ++it)
-		std::cout << '\t' << *it << std::endl;
-	std::cout << "this->acceptEncoding" << std::endl;
-	for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); ++it)
-		std::cout << '\t' << *it << std::endl;
-	std::cout << "this->keepAlive " << keepAlive << std::endl;
-	std::cout << "this->referer " << referer << std::endl;
-	std::cout << "this->method " << method << std::endl;
-	std::cout << "this->resource " << resource << std::endl;
-	std::cout << "this->protocol " << protocol << std::endl; */
-
-	
 }
 
 Request::Request() {
@@ -208,7 +192,6 @@ std::string read_from_pipe(int fd) {
 
 	buffer[rd] = '\0';
     while (rd > 0) {
-		std::cout << buffer;
 		retval += buffer;
 		if (rd < 1024)
 			break;
@@ -216,13 +199,10 @@ std::string read_from_pipe(int fd) {
 		buffer[rd] = '\0';
     }
 	
-	std::cout << "I READ" << std::endl;
     return retval;
 }
 
-void cgi(int &status,File &responseBody, std::string resource, std::string command) {
-    std::cout << "IM IN CGI" << std::endl;
-    
+void cgi(int &status,File &responseBody, std::string resource, std::string command) {    
     int _pipe[2];
     if (pipe(_pipe) == -1) {
         std::cerr << "pipe failed" << std::endl;
@@ -264,7 +244,6 @@ void cgi(int &status,File &responseBody, std::string resource, std::string comma
 		}
 
         std::string response = read_from_pipe(_pipe[0]);
-        std::cout << HCYA << response << std::endl;
         responseBody << response;
         
         close(_pipe[0]); 
@@ -296,9 +275,8 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 }
 
 Location Request::selectContext(Location &location, std::string fatherUri) {
-
-	//std::cout << "FatherUri : " << fatherUri << std::endl;
    std::string uri = resource;
+
    if (uri[uri.size() - 1] == '/')
 	   uri.erase(uri.end() - 1);
    if (fatherUri != "/")
@@ -306,14 +284,10 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
    else
 	   fatherUri = "";
 
-   //std::cout << "im searching " << uri << std::endl;
-   //std::cout << "im in " << location.getUri() << std::endl;
-
    while(!uri.empty())
    {	
 	   for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
 	   {
-		   std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
 		   if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
 			   return (*it);
 		   if (it->getUri() == uri)
@@ -322,19 +296,14 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
 	   if (uri == "/")
 		   break;
 	   uri = trimLastWord(uri, '/');
-	   std::cout << "trimed [" << uri << "]" << std::endl;
    }
+
    return (location);
 }
 
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
 	int			status = getStatus(location);
-	File		responseBody;
-
-	getBody(status, location, responseBody);
-
-	long long contentLenght = responseBody.getSize();
 
 	std::string response;
 
@@ -342,15 +311,10 @@ void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	response += toString(status);
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
-	response += "Content Lenght: ";
-	response += toString(contentLenght);
+	response += "Content Lenght: 0";
 	response += "\r\n";
 	
 	response += "\r\n";
-
-	for (std::string line; std::getline(responseBody.getStream(), line);) {
-		response += line;
-	}
 
 	send(fd, response.c_str(), response.length(), 0);
 	close(fd);
