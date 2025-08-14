@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/stat.h>
 
 #define HMAG		"\033[95m"
 #define HCYA		"\033[96m"

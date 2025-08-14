@@ -45,45 +45,53 @@ void	Post::parseBody(std::vector<char> &rawBody) {
 	// Program later
 	//if (rawBody.size() > server.getMax_body_size())
 	//	return ;
-	std::string	resourceName;
+	std::string			filename;
+	std::string			resourceName;
 	if (contentType == "application/x-www-form-urlencoded") {
 		;
 	}
 	else if (contentType == "multipart/form-data;") {
-		std::vector<char>::iterator start;
 
- 		for (start = rawBody.begin(); start != rawBody.end(); ++start)
-			if (std::distance(start, rawBody.end()) > 4 && *start == '\r' && *(start + 1) == '\n' && *(start + 2) == '\r' && *(start + 3) == '\n')
-				break;
-		
-		std::string fileHead = makeString(rawBody.begin(), start);
+		std::vector<char>::iterator lastEnd = rawBody.begin();
+		std::vector<char>::iterator start = rawBody.begin();
 
-		filename = get_filename(fileHead);
-
-		std::cout << filename << std::endl;
-		std::vector<char>::iterator end = myHaystack(rawBody, start, boundary);
-		if (end == rawBody.end())
-			std::cout << "NO HE ENCONTRADO EL BOUNDRI" << std::endl;
-		if (start == rawBody.end())
-			return ;
-		start += 4;
-
-		for (; start != end - 4; ++start)
+		for (; start != rawBody.end(); ++start)
 		{
-			body.push_back(*start);
+			std::vector<char>	body;
+
+			for (; start != rawBody.end(); ++start)
+				if (std::distance(start, rawBody.end()) > 4 && *start == '\r' && *(start + 1) == '\n' && *(start + 2) == '\r' && *(start + 3) == '\n')
+					break;
+			
+			std::string fileHead = makeString(lastEnd, start);
+
+			filename = get_filename(fileHead);
+
+			std::cout << filename << std::endl;
+			std::vector<char>::iterator end = myHaystack(rawBody, start, boundary);
+			if (end == rawBody.end())
+				break;
+			if (start == rawBody.end())
+				break ;
+			start += 4;
+
+			for (; start != end - 4; ++start)
+			{
+				body.push_back(*start);
+			}
+			std::cout << "pushing done" << std::endl;
+			filesVector.push_back(std::make_pair(filename, body));
+			lastEnd = end;
+			start = end;
 		}
-		std::cout << "pushing done" << std::endl;
 	}
 	else if (contentType == "text/html") {
 		;
 	}
 
-	/*
-	if (!resourceName.empty())
-		body.setName(resourceName);
-	else
-		body.setName(resource.substr(1));
-	*/
+	resource = resource.substr(1);
+	std::cout << resource << std::endl;
+
 	std::cout << "Copying the body..." << std::endl;
 	//body = rawBody;
 }
@@ -132,20 +140,71 @@ Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: R
 }
 
 Post::Post(const Post &model): Request(model) {
+	
+}
 
+bool checkStat(std::string resource, std::string &filename) {
+	struct stat dirBuffer;
+
+	std::cout << filename << " at " << resource << std::endl;
+	stat(resource.c_str(), &dirBuffer);
+
+	if (S_ISDIR(dirBuffer.st_mode)) {
+		if (access(resource.c_str(), F_OK)) {
+			return (false);
+		}
+		if (filename.empty()) { // Generic file name
+			/* Cosas */;
+		} 
+		else {
+			if (resource[resource.size()] != '/')
+				resource += '/';
+			filename = resource + filename;
+		}
+	}
+	else {
+		if (filename.empty()) { // Generic file name
+			filename = resource;
+		}
+		else {
+			resource = trimLastWord(resource, '/') + '/';
+			if (access(resource.c_str(), F_OK)) {
+				return (false);
+			}
+			filename = resource + filename;
+		}
+	}
+
+	struct stat resBuffer;
+
+	stat(filename.c_str(), &resBuffer);
+
+	if (S_ISDIR(resBuffer.st_mode) || !(dirBuffer.st_mode & S_IWUSR)) {
+		std::cout << S_ISDIR(resBuffer.st_mode) << " and " << (dirBuffer.st_mode & S_IWUSR) << std::endl;
+		return (false);
+	}
+	return (true);
 }
 
 std::string	Post::updateResource(int &status) {
 	if (status != 201 && status != 204)
 		return ("");
-	std::string	resourceName;
-	resourceName = resource; // for now
-	std::filebuf	fb;
-	fb.open(resource.substr(1).c_str(), std::ios::binary | std::ios::out);
-	std::ostream	newResource(&fb);
 
-	for (std::vector<char>::iterator it = body.begin(); it != body.end(); ++it) {
-		newResource.put(*it);
+	std::string resourceName;
+	for (files::iterator it = filesVector.begin(); it != filesVector.end(); ++it) {
+		if (!checkStat(resource, it->first)) {
+			std::cerr << "File: " << it->first << " can't be written" << std::endl;
+			continue;
+		}
+
+		std::filebuf	fb;
+		fb.open(it->first.c_str(), std::ios::binary | std::ios::out);
+		std::ostream	newResource(&fb);
+
+		for (std::vector<char>::iterator fileIt = it->second.begin(); fileIt != it->second.end(); ++fileIt) {
+			newResource.put(*fileIt);
+		}
+		resourceName = it->first;
 	}
 
 	return (resourceName);

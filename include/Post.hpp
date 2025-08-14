@@ -3,14 +3,15 @@
 
 #include "Request.hpp"
 #include "File.hpp"
+#include <utility>
 
 class File;
 
 class Post: public Request {
 	private:
 		//File		body;
-		std::vector<char>	body;
-		std::string			filename;
+		typedef std::vector<std::pair<std::string, std::vector<char> > > files;
+		files				filesVector;
 		std::string			contentType;
 		std::string			boundary;
 		Post();
