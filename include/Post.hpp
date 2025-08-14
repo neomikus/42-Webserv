@@ -3,18 +3,22 @@
 
 #include "Request.hpp"
 #include "File.hpp"
+#include <utility>
 
 class File;
 
 class Post: public Request {
 	private:
-		File		body;
-		std::string	contentType;
+		//File		body;
+		typedef std::vector<std::pair<std::string, std::vector<char> > > files;
+		files				filesVector;
+		std::string			contentType;
+		std::string			boundary;
 		Post();
-		void	parseBody(std::string &rawBody);
-		std::string	updateResource();
+		void		parseBody(std::vector<char> &rawBody);
+		std::string	updateResource(int &status);
 	public:
-		Post(std::vector<std::string> splitedResponse, std::string &rawBody);
+		Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
 		//Post	&operator=(const Post &model);
 		Post(const Post &model);
 		~Post();

@@ -9,7 +9,7 @@ class File
 		std::stringstream	contents;
 		std::string			type;
 		std::string			name;
-		long long			size;
+		long long			_size;
 	public:
 		File();
 		File(const std::string filename);
@@ -20,9 +20,12 @@ class File
 		void	open(const char *filename);
 		void	write(const std::string str);
 		void	write(const char *str);
+		
+		std::string			read();
+		void				read(char *str, size_t size);
 
 		std::stringstream	&getStream() {return (contents);}
-		long long			&getSize() {return (size);}
+		long long			&getSize() {return (_size);}
 		std::string			getType() const {return(name);}
 		std::string			getName() const {return(name);}
 

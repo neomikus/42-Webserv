@@ -24,6 +24,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+
 
 #define HMAG		"\033[95m"
 #define HCYA		"\033[96m"
@@ -82,8 +84,15 @@ size_t						countWords(std::stringstream& ss);
 size_t						countWords(std::string const str);
 std::vector<std::string>	strSplit(const std::string& str, const std::string& delimiter);
 std::string					read_request(int fd);
+size_t						  cstrlen(const char *str);
 
-std::string					to_string(int n);
+
+
+std::string	makeString(std::vector<char> &vec);
+std::string	makeString(std::vector<char>::iterator start, std::vector<char>::iterator end);
+
+
+std::string					toString(int n);
 
 #include "File.hpp"
 

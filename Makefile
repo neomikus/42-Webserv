@@ -9,7 +9,7 @@ MAIN		:= main
 PARSE		:= 
 FILES		:= File
 ClASSES		:= Location Server
-UTILS	 	:= strUtils intUtils teapot
+UTILS	 	:= httpUtils strUtils intUtils teapot
 SOCKETS		:= Socket
 CONNECTIONS	:= connections Request Get Post Delete
 
@@ -20,6 +20,7 @@ PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \
 				$(addsuffix .cpp, $(addprefix utils/,	$(UTILS))) \
 				$(addsuffix .cpp, $(addprefix sockets/,	$(SOCKETS))) \
 				$(addsuffix .cpp, $(addprefix connections/,	$(CONNECTIONS)))
+
 
 SRCS 		:=	$(addprefix $(SRC_PATH), $(PLAIN_SRCS))
 OBJS 		:=	$(addprefix $(OBJ_DIR), $(PLAIN_SRCS:.cpp=.o))

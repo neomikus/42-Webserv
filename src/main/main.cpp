@@ -114,7 +114,7 @@ int	main(int argc, char *argv[], char *envp[]) {
 	
 	int	epfd = epoll_create(1);
 	
-	std::cout << servers.front() << std::endl;
+	//std::cout << servers.front() << std::endl;
 
  	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 		std::vector<hostport> _hostport = it->getHostports();

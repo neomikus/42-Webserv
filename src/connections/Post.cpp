@@ -5,32 +5,98 @@ Post::Post(): Request() {
 	contentType = "none";
 }
 
-void	Post::parseBody(std::string &rawBody) {
+std::vector<char>::iterator myHaystack(std::vector<char> &haystack, std::vector<char>::iterator begin, std::string needle)
+{
+	std::vector<char>::iterator itH = begin;
+	std::string::iterator itN = needle.begin();
+	for (; itH != haystack.end(); ++itH)
+	{
+		if(*itH == *itN)
+		{
+			std::vector<char>::iterator retval = itH;
+			for (; itN != needle.end() && itH != haystack.end() && *itH == *itN;)
+			{
+				itH++;
+				itN++;
+			}
+			if (itN == needle.end())
+				return retval;
+			else
+			{
+				itN = needle.begin();
+				itH = retval + 1;
+			}
+		}
+	}
+	return haystack.end();
+}
+std::string get_filename(std::string filehead)
+{
+	std::vector<std::string> splited = strSplit(filehead, "\n");
+	for (std::vector<std::string>::iterator it = splited.begin(); it != splited.end(); ++it)
+	{
+		if (it->find("filename=") != it->npos)
+			return it->substr((it->find("filename=") + strlen("filename=") + 1), it->size() - (it->find("filename=") + strlen("filename=") + 1) - 2); 
+	}
+	return "";
+}
+
+void	Post::parseBody(std::vector<char> &rawBody) {
 	// Program later
 	//if (rawBody.size() > server.getMax_body_size())
 	//	return ;
-	std::string	resourceName;
+	std::string			filename;
+	std::string			resourceName;
 	if (contentType == "application/x-www-form-urlencoded") {
 		;
 	}
-	else if (contentType == "application/json") {
-		;
+	else if (contentType == "multipart/form-data;") {
+
+		std::vector<char>::iterator lastEnd = rawBody.begin();
+		std::vector<char>::iterator start = rawBody.begin();
+
+		for (; start != rawBody.end(); ++start)
+		{
+			std::vector<char>	body;
+
+			for (; start != rawBody.end(); ++start)
+				if (std::distance(start, rawBody.end()) > 4 && *start == '\r' && *(start + 1) == '\n' && *(start + 2) == '\r' && *(start + 3) == '\n')
+					break;
+			
+			std::string fileHead = makeString(lastEnd, start);
+
+			filename = get_filename(fileHead);
+
+			std::cout << filename << std::endl;
+			std::vector<char>::iterator end = myHaystack(rawBody, start, boundary);
+			if (end == rawBody.end())
+				break;
+			if (start == rawBody.end())
+				break ;
+			start += 4;
+
+			for (; start != end - 4; ++start)
+			{
+				body.push_back(*start);
+			}
+			std::cout << "pushing done" << std::endl;
+			filesVector.push_back(std::make_pair(filename, body));
+			lastEnd = end;
+			start = end;
+		}
 	}
 	else if (contentType == "text/html") {
 		;
 	}
 
-	if (!resourceName.empty())
-		body.setName(resourceName);
-	else
-		body.setName(resource.substr(1));
-	if (rawBody.empty())
-		std::cout << "I'm actually empty dumbass" << std::endl;
+	resource = resource.substr(1);
+	std::cout << resource << std::endl;
+
 	std::cout << "Copying the body..." << std::endl;
-	body << rawBody;
+	//body = rawBody;
 }
 
-Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody)/*: Request(splitedRaw)*/ {
+Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: Request(splitedRaw)*/ {
 	parseMethodResourceProtocol(splitedRaw[0]);
 	if (error)
 		return ;
@@ -62,52 +128,94 @@ Post::Post(std::vector<std::string> splitedRaw, std::string &rawBody)/*: Request
 		}
 		if (_temp == "Referer:")
 			referer = it->substr(9);		
-		if (_temp == "Content-Type:")
-			contentType = it->substr(13);	
+		if (_temp == "Content-Type:") {
+			tokens >> contentType;
+			tokens >> _temp;
+			if (_temp.substr(0, cstrlen("boundary=")) == "boundary=") {
+				boundary = _temp.substr(cstrlen("boundary="));
+			}
+		}
 	}
 	parseBody(rawBody);
-	std::cout << "this->host " << hostPort.host << std::endl;
-	std::cout << "this->port " << hostPort.port << std::endl;
-	std::cout << "this->userAgent " << userAgent << std::endl;
-	std::cout << "this->accept" << std::endl;
-	for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); ++it)
-		std::cout << '\t' << *it << std::endl;
-	std::cout << "this->acceptEncoding" << std::endl;
-	for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); ++it)
-		std::cout << '\t' << *it << std::endl;
-	std::cout << "this->keepAlive " << keepAlive << std::endl;
-	std::cout << "this->referer " << referer << std::endl;
-	std::cout << "this->method " << method << std::endl;
-	std::cout << "this->resource " << resource << std::endl;
-	std::cout << "this->protocol " << protocol << std::endl;
-
-	std::cout << std::endl;
-	std::cout << "this->body " << body << std::endl;
-	std::cout << std::endl << std::endl;
 }
 
 Post::Post(const Post &model): Request(model) {
-
+	
 }
 
-std::string	Post::updateResource() {
-	std::string	resourceName;
-	std::filebuf fb;
-	fb.open(resource.substr(1).c_str(), std::ios::out);
-	resourceName = resource; // for now
-	std::ostream	newResource(&fb);
+bool checkStat(std::string resource, std::string &filename) {
+	struct stat dirBuffer;
 
-	body.getStream();
+	std::cout << filename << " at " << resource << std::endl;
+	stat(resource.c_str(), &dirBuffer);
+
+	if (S_ISDIR(dirBuffer.st_mode)) {
+		if (access(resource.c_str(), F_OK)) {
+			return (false);
+		}
+		if (filename.empty()) { // Generic file name
+			/* Cosas */;
+		} 
+		else {
+			if (resource[resource.size()] != '/')
+				resource += '/';
+			filename = resource + filename;
+		}
+	}
+	else {
+		if (filename.empty()) { // Generic file name
+			filename = resource;
+		}
+		else {
+			resource = trimLastWord(resource, '/') + '/';
+			if (access(resource.c_str(), F_OK)) {
+				return (false);
+			}
+			filename = resource + filename;
+		}
+	}
+
+	struct stat resBuffer;
+
+	stat(filename.c_str(), &resBuffer);
+
+	if (S_ISDIR(resBuffer.st_mode) || !(dirBuffer.st_mode & S_IWUSR)) {
+		std::cout << S_ISDIR(resBuffer.st_mode) << " and " << (dirBuffer.st_mode & S_IWUSR) << std::endl;
+		return (false);
+	}
+	return (true);
+}
+
+std::string	Post::updateResource(int &status) {
+	if (status != 201 && status != 204)
+		return ("");
+
+	std::string resourceName;
+	for (files::iterator it = filesVector.begin(); it != filesVector.end(); ++it) {
+		if (!checkStat(resource, it->first)) {
+			std::cerr << "File: " << it->first << " can't be written" << std::endl;
+			continue;
+		}
+
+		std::filebuf	fb;
+		fb.open(it->first.c_str(), std::ios::binary | std::ios::out);
+		std::ostream	newResource(&fb);
+
+		for (std::vector<char>::iterator fileIt = it->second.begin(); fileIt != it->second.end(); ++fileIt) {
+			newResource.put(*fileIt);
+		}
+		resourceName = it->first;
+	}
+
 	return (resourceName);
 }
 
 void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
-	std::string newResource = updateResource();
-	int	status = getStatus(location);
+	int			status = getStatus(location);
+	std::string newResource = updateResource(status);
 	File		responseBody;
 
-	std::cout << HMAG << "STATUS = " << status << std::endl;
 	getBody(status, location, responseBody);
 
 	long long contentLenght = responseBody.getSize();
@@ -115,14 +223,14 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	std::string response;
 
 	response += "HTTP/1.1 "; // This is always true
-	response += to_string(status);
+	response += toString(status);
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
 	response += "Content Lenght: ";
-	response += to_string(contentLenght);
+	response += toString(contentLenght);
 	response += "\r\n";
 	
-	if (status == 201) {
+	if (status == 201) {	
 		response += "Location: ";
 		response += newResource;
 		response += "\r\n";

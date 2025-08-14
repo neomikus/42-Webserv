@@ -134,3 +134,27 @@ std::vector<std::string> strSplit(const std::string& str, const std::string& del
     
 	return tokens;
 }
+
+size_t	cstrlen(const char *str) {
+	int size = 0;
+	while (str[size])
+		size++;
+	return (size);
+}
+
+std::string makeString(std::vector<char> &vec) {
+	std::string	retval;
+	for (std::vector<char>::iterator it = vec.begin(); it != vec.end() ; ++it) {
+		retval += *it;
+	}
+	return (retval);
+}
+
+std::string makeString(std::vector<char>::iterator start, std::vector<char>::iterator end) {
+	std::string	retval;
+
+	for (std::vector<char>::iterator it = start; it != end ; ++it) {
+		retval += *it;
+	}
+	return (retval);
+}
