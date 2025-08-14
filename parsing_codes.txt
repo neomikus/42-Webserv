@@ -1,0 +1,14 @@
+error_codes:
+1  -> something outside server
+2  -> semicolon not found.
+3  -> server { no bueno
+4  -> <value> empty.
+5  -> location { no bueno.
+6  -> location <value> empty and no {.
+7  -> server context keyword found in location context.
+8  -> error_page needs an error_page.
+9  -> error_page
+10 ->
+11 ->
+12 ->
+13 ->

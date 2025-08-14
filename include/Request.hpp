@@ -10,10 +10,11 @@ class Request
 	private:
 		std::vector<Server> candidates;
 	protected:
-		bool						error; // necesary : (firstline)method resource protocol
-		std::string					method;
-		std::string					resource;
-		std::string					protocol; // This is maybe not needed
+		bool								error; // necesary : (firstline)method resource protocol
+		std::string							method;
+		std::map<std::string, std::string>	query;
+		std::string							resource;
+		std::string							protocol; // This is maybe not needed
 							  // Can be checked in constructor if it's HTTP/1.1 or not
 
 		hostport					hostPort;
@@ -25,18 +26,24 @@ class Request
 		std::string					referer;
 		// Sec fetch: Do later
 
-		void						parseMethodResourceProtocol(const std::string line);
-		int							getStatus(const Server &server);
-		void						getBody(int &status, const Server &server, File &responseBody);
+		void						parseMethodResourceProtocol(std::string line);
+		int							getStatus(Location &currentLocation);
+		void						getBody(int &status, Location &currentLocation, File &responseBody);
 		void						getErrorPages(std::string &error_page, File &responseBody);
+		Location 					selectContext(Location &location, std::string fatherUri);
+
 	public:
 		
 		Request();
-		Request(const Request &model);
 		Request(std::vector<std::string> splitedRaw);
+		Request(const Request &model);
+		Request	&operator=(const Request &model);
 		virtual ~Request();
 		Server	&selectServer(std::vector<Server> &servers);
-		void	response(int fd, std::list<int> &clients, const Server &server); // May return int for response code or for error check?
+		virtual void	response(int fd, std::list<int> &clients, Server &server); // May return int for response code or for error check?
+
 };
+
+std::string	getStatusText(int status);
 
 #endif

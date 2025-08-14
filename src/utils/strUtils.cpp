@@ -1,5 +1,25 @@
 #include "webserv.hpp"
 
+std::string cgiToStr(int choice)
+{
+	switch (choice)
+	{
+	case 0:
+		return std::string("BASH");
+	case 1:
+		return std::string("PHP");
+	case 2:
+		return std::string("PYTHON");
+	case 3:
+		return std::string("GO");
+	case 4:
+		return std::string("NONE");
+	default:
+		break;
+	}
+	return("");
+}
+
 
 size_t countWords(std::stringstream& ss) {
     size_t count = 0;
@@ -20,7 +40,7 @@ size_t countWords(std::string const str) {
 
 bool strIsDigit(std::string const str)
 {
-	for (std::string::const_iterator it = str.begin(); it != str.end(); it++)
+	for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
 		if (!std::isdigit(*it))
 			return (false);
 	return(true);
@@ -29,7 +49,7 @@ bool strIsDigit(std::string const str)
 
 std::string ltrim(std::string str)
 {
-	for (std::string::iterator it = str.begin(); it != str.end(); it++)
+	for (std::string::iterator it = str.begin(); it != str.end(); ++it)
 	{
 		if (*it != ' ' && *it != '\t')
 		{
@@ -41,7 +61,7 @@ std::string ltrim(std::string str)
 }
 std::string rtrim(std::string str)
 {
-	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; it--)
+	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; --it)
 	{
 		if (*it != ' ' && *it != '\t')
 		{
@@ -52,9 +72,52 @@ std::string rtrim(std::string str)
 	return std::string("");
 }
 
-std::string strTrim(std::string str) {return(rtrim(ltrim(str))); 
+std::string strTrim(std::string str) {return(rtrim(ltrim(str))); }
+
+
+
+std::string ltrim(std::string str, char delimiter)
+{
+	for (std::string::iterator it = str.begin(); it != str.end(); ++it)
+	{
+		if (*it != delimiter)
+		{
+			str.erase(str.begin(), it);
+			return str;
+		}
+	}
+	return std::string("");
+}
+std::string rtrim(std::string str, char delimiter)
+{
+	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; --it)
+	{
+		if (*it != delimiter)
+		{
+			str.erase(it + 1, str.end());
+			return str;
+		}
+	}
+	return std::string("");
 }
 
+std::string strTrim(std::string str, char delimiter) {return(rtrim(ltrim(str, delimiter), delimiter)); 
+}
+
+std::string trimLastWord(std::string str, char delimiter)
+{
+	for (std::string::iterator it = str.end() - 1; it != str.begin() - 1; --it)
+	{
+		if (*it == delimiter)
+		{
+			str.erase(it, str.end());
+			if (str.empty())
+				return std::string("/");
+			return (str);
+		}
+	}
+	return std::string("");
+}
 
 std::vector<std::string> strSplit(const std::string& str, const std::string& delimiter) {
 	std::vector<std::string> tokens;
@@ -70,4 +133,28 @@ std::vector<std::string> strSplit(const std::string& str, const std::string& del
 	tokens.push_back(str.substr(start));
     
 	return tokens;
+}
+
+size_t	cstrlen(const char *str) {
+	int size = 0;
+	while (str[size])
+		size++;
+	return (size);
+}
+
+std::string makeString(std::vector<char> &vec) {
+	std::string	retval;
+	for (std::vector<char>::iterator it = vec.begin(); it != vec.end() ; ++it) {
+		retval += *it;
+	}
+	return (retval);
+}
+
+std::string makeString(std::vector<char>::iterator start, std::vector<char>::iterator end) {
+	std::string	retval;
+
+	for (std::vector<char>::iterator it = start; it != end ; ++it) {
+		retval += *it;
+	}
+	return (retval);
 }

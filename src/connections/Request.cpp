@@ -13,6 +13,16 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 	buffer >> method;
 	buffer >> resource;
 	buffer >> protocol;
+
+	std::vector<std::string>	queries = strSplit(resource.substr(resource.find("?") + 1, resource.size()), "&");
+	for (std::vector<std::string>::iterator it = queries.begin(); it != queries.end(); ++it) {
+		std::vector<std::string>	currentQuery = strSplit(*it, "=");
+		if (currentQuery.size() != 2)
+			continue;
+		std::pair<std::string, std::string>	temp(currentQuery.front(), currentQuery.back());
+	}
+	
+	resource = resource.substr(0, resource.find("?"));
 }
 
 
@@ -21,7 +31,7 @@ Request::Request(std::vector<std::string> splitedRaw) {
 	parseMethodResourceProtocol(splitedRaw[0]);
 	if (error)
 		return ;
-	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); it++)
+	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
 	{
 		std::stringstream	tokens;
 		tokens << *it;
@@ -50,20 +60,20 @@ Request::Request(std::vector<std::string> splitedRaw) {
 		if (_temp == "Referer:")
 			referer = it->substr(9);		
 	}
-	std::cout << "this->host " << hostPort.host << std::endl;
+/* 	std::cout << "this->host " << hostPort.host << std::endl;
 	std::cout << "this->port " << hostPort.port << std::endl;
 	std::cout << "this->userAgent " << userAgent << std::endl;
 	std::cout << "this->accept" << std::endl;
-	for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); it++)
+	for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); ++it)
 		std::cout << '\t' << *it << std::endl;
 	std::cout << "this->acceptEncoding" << std::endl;
-	for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); it++)
+	for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); ++it)
 		std::cout << '\t' << *it << std::endl;
 	std::cout << "this->keepAlive " << keepAlive << std::endl;
 	std::cout << "this->referer " << referer << std::endl;
 	std::cout << "this->method " << method << std::endl;
 	std::cout << "this->resource " << resource << std::endl;
-	std::cout << "this->protocol " << protocol << std::endl;
+	std::cout << "this->protocol " << protocol << std::endl; */
 
 	
 }
@@ -92,35 +102,23 @@ Request::Request(const Request &model) {
 }
 
 
+Request	&Request::operator=(const Request &model) {
+	this->error = model.error;
+	this->method = model.method;
+	this->resource = model.resource;
+	this->protocol = model.protocol;
+	this->hostPort = model.hostPort;
+	this->userAgent = model.userAgent;
+	this->accept = model.accept;
+	this->acceptEncoding = model.acceptEncoding;
+	this->keepAlive = model.keepAlive;
+	this->referer = model.referer;
+	return (*this);
+}
+
+
 Request::~Request() {
 	
-}
-
-long	getBodySize(std::fstream &requestBody) {
-	std::streampos pagePos = requestBody.tellg();
-	requestBody.seekg(0, std::ios::end);
-	pagePos = requestBody.tellg() - pagePos;
-	requestBody.seekg(std::ios::beg);
-	return (static_cast<long>(pagePos));
-}
-
-std::string	getStatusText(int status) {
-	switch (status)
-	{
-		case 200:
-			return ("OK\r\n");
-		case 404:
-			return ("Not Found\r\n");
-		case 405:
-			return ("Method Not Allowed\r\n");
-		case 418:
-			return ("I'm a teapot\r\n");
-		case 501:
-			return ("Not Implemented\r\n");
-		default:
-			break;
-	}
-	return ("\r\n");
 }
 
 bool	checkAllowedMethods(std::string &method, allowed_methods methods) {
@@ -128,7 +126,7 @@ bool	checkAllowedMethods(std::string &method, allowed_methods methods) {
 		return (false);
 	if (method == "GET" && methods._get == false)
 		return (false);
-	if (method == "POST" && methods._delete == false)
+	if (method == "POST" && methods._post == false)
 		return (false);
 	if (method == "DELETE" && methods._delete == false)
 		return (false);
@@ -137,9 +135,9 @@ bool	checkAllowedMethods(std::string &method, allowed_methods methods) {
 
 Server	&Request::selectServer(std::vector<Server> &servers) {
 
-	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
+	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 		std::vector<hostport> hostports = it->getHostports();
-		for (std::vector<hostport>::iterator it2 = hostports.begin(); it2 != hostports.end(); it2++) {
+		for (std::vector<hostport>::iterator it2 = hostports.begin(); it2 != hostports.end(); ++it2) {
 			if ((hostPort.host == it2->host || it2->host == "0.0.0.0") && (hostPort.port == it2->port || it2->port == -1))
 				candidates.push_back(*it);
 		}
@@ -148,7 +146,7 @@ Server	&Request::selectServer(std::vector<Server> &servers) {
 	if (candidates.empty())
 		return (*servers.begin());
 
-	for (std::vector<Server>::iterator it = candidates.begin(); it != candidates.end(); it++) {
+	for (std::vector<Server>::iterator it = candidates.begin(); it != candidates.end(); ++it) {
 		if (it->getServer_name() == hostPort.host) {
 			return (*it);
 		}
@@ -156,38 +154,39 @@ Server	&Request::selectServer(std::vector<Server> &servers) {
 	return (*candidates.begin());
 }
 
-int	Request::getStatus(const Server &server) {
+int	Request::getStatus(Location &currentLocation) {
 	if (error)
 		return (400);
 	if (method != "PUT" && method != "HEAD" &&
-		method != "CONNECT" && method != "TRACE" && method != "PATCH" &&
-		method != "GET" && method != "DELETE" && method != "PUT")
+		method != "CONNECT" && method != "TRACE" && method != "POST" &&
+		method != "PATCH" && method != "GET" && method != "DELETE")
 		return (501);
-	if (!checkAllowedMethods(method, server.getMethods()))
+	if (!checkAllowedMethods(method, currentLocation.getMethods()))
 		return (405);
-	if (access(resource.substr(1).c_str(), F_OK)) {
+	if (method != "POST" && access(resource.substr(1).c_str(), F_OK)) {
 		if (resource.substr(1) == "teapot")
 			return (418);
 		return (404);
 	}
 	// Save request body size in parsing!!!
-	//if (server.getMax_body_size() > request_body_size)
+	//if (currentLocation.getMax_body_size() > request_body_size)
 	//	return (413);
-
+	if (method == "POST")
+		return (201);
 	return (200);
 }
 
 std::string checkErrorPages(std::vector<error_page> error_pages, int &status) {
-	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); it++) {
-		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); it2++) {
+	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
+		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); ++it2) {
 			if (*it2 == status) {
-				if (it->to_replace > 199)
+				if (it->to_replace > 99)
 					status = it->to_replace;
 				return (it->page);
 			}
 		}
 	}
-	return ("");
+	return (DEFAULT_ERROR_PAGE);
 }
 
 void	Request::getErrorPages(std::string &page, File &responseBody) {
@@ -197,42 +196,155 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 		responseBody.open(page);
 }
 
-void	Request::getBody(int &status, const Server &server, File &responseBody) {
+std::string read_from_pipe(int fd) {
+    char buffer[1024];
+    std::string retval;
+    ssize_t rd = read(fd, buffer, sizeof(buffer));
+
+	if (rd == -1) {
+		std::cerr << "Read failed!" << std::endl;
+		return ("");
+	}
+
+	buffer[rd] = '\0';
+    while (rd > 0) {
+		std::cout << buffer;
+		retval += buffer;
+		if (rd < 1024)
+			break;
+		rd = read(fd, buffer, 1024);
+		buffer[rd] = '\0';
+    }
+	
+	std::cout << "I READ" << std::endl;
+    return retval;
+}
+
+void cgi(int &status,File &responseBody, std::string resource, std::string command) {
+    std::cout << "IM IN CGI" << std::endl;
+    
+    int _pipe[2];
+    if (pipe(_pipe) == -1) {
+        std::cerr << "pipe failed" << std::endl;
+        return;
+    }
+
+    pid_t child = fork();
+    if (child == -1) {
+        std::cerr << "fork failed" << std::endl;
+        close(_pipe[0]);
+        close(_pipe[1]);
+        return;
+    }
+
+    if (child == 0) { 
+        close(_pipe[0]); 
+        dup2(_pipe[1], STDOUT_FILENO); 
+        close(_pipe[1]);
+
+		std::string file = resource;
+		if (file[0] == '/')
+			file = file.substr(1);
+        char *argv[] = {const_cast<char*>(command.c_str()), const_cast<char*>(file.c_str()), NULL};
+
+        execve(argv[0], argv, global_envp);
+        
+        std::cerr << "execve failed" << std::endl;
+        exit(0);
+    }
+
+    else {
+		int	childStatus;
+        close(_pipe[1]); 
+        waitpid(child, &childStatus, 0);
+		if (childStatus != 0)
+		{
+			status = 500;
+			return;
+		}
+
+        std::string response = read_from_pipe(_pipe[0]);
+        std::cout << HCYA << response << std::endl;
+        responseBody << response;
+        
+        close(_pipe[0]); 
+    }
+}
+
+void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
+	
 	if (status == 200) {
-		responseBody.open(resource.substr(1, resource.find("?") - 1));
+		if (currentLocation.getCgi() != "")
+			cgi(status, responseBody, resource, currentLocation.getCgi());
+		else
+			responseBody.open(resource.substr(1, resource.find("?") - 1));
 		return;
-	}
-	if (status == 418) {
+	} else if (status == 201) {
+		;
+	} else if (status == 204) {
+		; // Nothing to return!!!
+	} else if (status == 418) {
 		teapotGenerator(responseBody);
-		return;
-	}
-	if (status / 100 == 4 || status / 100 == 5) {
-		std::string page = checkErrorPages(server.getError_pages(), status);
+	} else if (status / 100 == 4 || status / 100 == 5) {
+		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
 		if (!page.empty()) {
 			getErrorPages(page, responseBody);
 			return;
 		}
+  } else
+    responseBody.open(DEFAULT_ERROR_PAGE);
+
+Location Request::selectContext(Location &location, std::string fatherUri) {
+	std::string uri = resource;
+	if (uri[uri.size() - 1] == '/')
+		uri.erase(uri.end() - 1);
+	if (fatherUri != "/")
+		uri = uri.substr(fatherUri.size());
+	else
+		fatherUri = "";
+
+	while(!uri.empty())
+	{	
+		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
+		{
+      /* TO CHECK
+xabicode
+			std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
+			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
+				return (*it);
+=======
+			//std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
+mikucode
+			if (it->getUri() == uri)
+				return (selectContext(*it, fatherUri + it->getUri()));
+		}
+    */
+		if (uri == "/")
+			break;
+		uri = trimLastWord(uri, '/');
+		//std::cout << "trimed [" << uri << "]" << std::endl;
 	}
-	responseBody.open(DEFAULT_ERROR_PAGE);
+
+	return (location);
 }
 
-void	Request::response(int fd, std::list<int> &clients, const Server &server) {
-	int	status = getStatus(server);
+void	Request::response(int fd, std::list<int> &clients, Server &server) {
+	Location 	location = selectContext(server.getVLocation(), "");
+	int			status = getStatus(location);
 	File		responseBody;
 
-	std::cout << HMAG << "STATUS = " << status << std::endl;
-	getBody(status, server, responseBody);
+	getBody(status, location, responseBody);
 
 	long long contentLenght = responseBody.getSize();
 
 	std::string response;
 
 	response += "HTTP/1.1 "; // This is always true
-	response += to_string(status);
+	response += toString(status);
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
 	response += "Content Lenght: ";
-	response += to_string(contentLenght);
+	response += toString(contentLenght);
 	response += "\r\n";
 	
 	response += "\r\n";

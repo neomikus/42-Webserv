@@ -1,6 +1,6 @@
 #include "webserv.hpp"
 
-std::string	to_string(int n) {
+std::string	toString(int n) {
 	std::ostringstream s;
 	s << n;
 

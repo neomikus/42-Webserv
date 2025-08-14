@@ -4,12 +4,11 @@
 #include "Get.hpp"
 #include "Post.hpp"
 #include "Delete.hpp"
-#include "Generic.hpp"
 
 bool	checkfds(int fd, std::list<int> fdList) {
 	if (fdList.empty())
 		return (false);
-	for (std::list<int>::iterator it = fdList.begin(); it != fdList.end(); it++)
+	for (std::list<int>::iterator it = fdList.begin(); it != fdList.end(); ++it)
 	{
 		if (fd == *it)
 			return (true);
@@ -17,23 +16,23 @@ bool	checkfds(int fd, std::list<int> fdList) {
 	return (false);
 }
 
-std::string	read_request(int fd) {
+std::vector<char>	read_request(int fd) {
 	char buffer[1024];
-	std::string retval;
+	std::vector<char> retval;
 	int rd = recv(fd, buffer, 1024, 0);
+	
 	if (rd == -1) {
 		std::cerr << "Read failed!" << std::endl;
+		return (retval);
 	}
-	buffer[rd] = '\0';
 	while (rd > 0) {
-		std::cout << buffer;
-		retval += buffer;
-		if (rd < 1024)
-			break;
-		rd = recv(fd, buffer, 1024, 0);
-		buffer[rd] = '\0';
+		//std::cout << buffer;
+		for (int i = 0; i < rd; i++) {
+			retval.push_back(buffer[i]);
+		}
+		rd = recv(fd, buffer, 1024, MSG_DONTWAIT);
 	}
-
+	std::cout << std::endl << std::endl;
 	return (retval);
 }
 
@@ -52,39 +51,57 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 	}
 }
 
-Request *makeRequest(std::string &rawResponse)
+std::vector<char> getBody(std::vector<char> &rawResponse, std::vector<char>::iterator &bodyStart) {
+	std::vector<char> retval;
+	//for (std::vector<char>::iterator it = std::find(rawResponse.begin(), rawResponse.end(), '\r'); it != rawResponse.end(); it = std::find(it + 1, rawResponse.end(), '\r'))
+	for (std::vector<char>::iterator it = rawResponse.begin(); it != rawResponse.end(); ++it)
+	{
+		(void)bodyStart;
+		if (std::distance(it, rawResponse.end()) < 4)
+			break;
+		if (*it == '\r' && *(it + 1) == '\n' && *(it + 2) == '\r' && *(it + 3) == '\n') {
+			it += 4;
+			bodyStart = it;
+			for (std::vector<char>::iterator it2 = it; it2 != rawResponse.end(); ++it2) {
+				retval.push_back(*it2);
+			}
+			break;
+		}
+	}
+	return (retval);
+}
+
+Request *makeRequest(std::vector<char> &rawResponse)
 {
-	Request *req = NULL;
+	Request 			*req;
 	std::stringstream	buffer;
 	std::string			_temp;
-	std::vector<std::string>	splitedResponse = strSplit(rawResponse, "\n");
+	std::vector<char>::iterator	bodyStart;
+	std::vector<char>	rawBody = getBody(rawResponse, bodyStart);
+	std::cout << rawBody.size() << std::endl;
+	std::string			rawHeader = makeString(rawResponse.begin(), bodyStart);
+	std::vector<std::string>	splitedResponse = strSplit(rawHeader, "\n");
 
 	buffer << splitedResponse[0];
 	buffer >> _temp;
-	if (_temp != "GET" && _temp != "POST" && _temp != "DELETE")
-		req = new Request(splitedResponse);
-
 	if (_temp == "GET")
 	{
 		req = new Get(splitedResponse);
 		std::cout << HMAG;
-
 	}
 	else if (_temp == "POST")
 	{
-		req = new Post(splitedResponse);
+		req = new Post(splitedResponse, rawBody);
 		std::cout << HGRE;
-	}	
-	else
+		
+	}
+	else if (_temp == "DELETE")
 	{
 		req = new Delete(splitedResponse);
 		std::cout << HRED;
-	}
-	
-
-	std::cout  << _temp << std::endl;
-
-	std::cout << "make_request out" << std::endl;
+	}	
+	else
+		req = new Request(splitedResponse);
 
 	return (req);
 }
@@ -94,16 +111,17 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 
 	struct epoll_event events[5];
 
-	while (true) {
+	while (!sigstop)
+	{
 		int evt_count = epoll_wait(epfd, events, 5, 200);
-		for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
+		for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 			for (int i = 0; i < evt_count; i++) {
-				if (checkfds(events[i].data.fd, it->getSockets())) {
+
+				if (checkfds(events[i].data.fd, it->getSockets()))
 					connect(epfd, events[i].data.fd, clients);
-				}
+
 				if (checkfds(events[i].data.fd, clients)) {
-					std::string rawResponse = read_request(events[i].data.fd);
-					
+					std::vector<char> rawResponse = read_request(events[i].data.fd);
 					Request *request = makeRequest(rawResponse);
 					request->response(events[i].data.fd, clients, request->selectServer(servers));
 					delete request;
@@ -112,8 +130,8 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 		}
 	}
 	
-	for (std::list<int>::iterator it = clients.begin(); it != clients.end(); it++) {
-		send(*it, "Connection closed by server\n", strlen("Connection closed by server\n"), 0);
+	for (std::list<int>::iterator it = clients.begin(); it != clients.end(); ++it) {
+		send(*it, "Connection closed by server\n", cstrlen("Connection closed by server\n"), 0);
 		close(*it);
 	}
 }
