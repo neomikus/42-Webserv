@@ -142,9 +142,9 @@ size_t	cstrlen(const char *str) {
 	return (size);
 }
 
-std::string makeString(std::vector<char> &vec) {
+std::string makeString(const std::vector<char> vec) {
 	std::string	retval;
-	for (std::vector<char>::iterator it = vec.begin(); it != vec.end() ; ++it) {
+	for (std::vector<char>::const_iterator it = vec.begin(); it != vec.end() ; ++it) {
 		retval += *it;
 	}
 	return (retval);
