@@ -293,39 +293,38 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 		}
   } else
     responseBody.open(DEFAULT_ERROR_PAGE);
+}
 
 Location Request::selectContext(Location &location, std::string fatherUri) {
-	std::string uri = resource;
-	if (uri[uri.size() - 1] == '/')
-		uri.erase(uri.end() - 1);
-	if (fatherUri != "/")
-		uri = uri.substr(fatherUri.size());
-	else
-		fatherUri = "";
 
-	while(!uri.empty())
-	{	
-		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
-		{
-      /* TO CHECK
-xabicode
-			std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
-			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
-				return (*it);
-=======
-			//std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
-mikucode
-			if (it->getUri() == uri)
-				return (selectContext(*it, fatherUri + it->getUri()));
-		}
-    */
-		if (uri == "/")
-			break;
-		uri = trimLastWord(uri, '/');
-		//std::cout << "trimed [" << uri << "]" << std::endl;
-	}
+	//std::cout << "FatherUri : " << fatherUri << std::endl;
+   std::string uri = resource;
+   if (uri[uri.size() - 1] == '/')
+	   uri.erase(uri.end() - 1);
+   if (fatherUri != "/")
+	   uri = uri.substr(fatherUri.size());
+   else
+	   fatherUri = "";
 
-	return (location);
+   //std::cout << "im searching " << uri << std::endl;
+   //std::cout << "im in " << location.getUri() << std::endl;
+
+   while(!uri.empty())
+   {	
+	   for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
+	   {
+		   std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
+		   if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
+			   return (*it);
+		   if (it->getUri() == uri)
+			   return (selectContext(*it, fatherUri + it->getUri()));
+	   }
+	   if (uri == "/")
+		   break;
+	   uri = trimLastWord(uri, '/');
+	   std::cout << "trimed [" << uri << "]" << std::endl;
+   }
+   return (location);
 }
 
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
@@ -355,5 +354,6 @@ void	Request::response(int fd, std::list<int> &clients, Server &server) {
 
 	send(fd, response.c_str(), response.length(), 0);
 	close(fd);
-	clients.erase(std::find(clients.begin(), clients.end(), fd));
+	(void)clients;
+	//clients.erase(std::find(clients.begin(), clients.end(), fd));
 }

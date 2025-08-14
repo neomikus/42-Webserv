@@ -247,7 +247,8 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 
 	send(fd, response.c_str(), response.length(), 0);
 	close(fd);
-	clients.erase(std::find(clients.begin(), clients.end(), fd));
+	(void)clients;
+	//clients.erase(std::find(clients.begin(), clients.end(), fd));
 }
 
 Post::~Post(){}
