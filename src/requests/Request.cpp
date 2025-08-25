@@ -250,6 +250,15 @@ void cgi(int &status,File &responseBody, std::string resource, std::string comma
     }
 }
 
+void	makeForbiddenError(File &responseBody) {
+
+	std::string body = "{\n";
+	body += "\"error\": \"insufficient permissions\",";
+	body += "\"message\": \"File permission error\"\n";
+	body += "}\n";
+	responseBody.write(body);
+}
+
 void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
 	
 	if (status == 200) {
@@ -259,7 +268,7 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 			responseBody.open(resource.substr(1, resource.find("?") - 1));
 		return;
 	} else if (status == 201) {
-		;
+		writeContent(responseBody);
 	} else if (status == 204) {
 		; // Nothing to return!!!
 	} else if (status == 418) {
@@ -268,10 +277,14 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
 		if (!page.empty()) {
 			getErrorPages(page, responseBody);
-			return;
+		} else if (status == 403) {
+			std::cout << "I'm here!!!" << std::endl;
+			makeForbiddenError(responseBody);
 		}
-  } else
-    responseBody.open(DEFAULT_ERROR_PAGE);
+	} else {
+		std::cout << "Shouldn't be here!!!" << std::endl;
+		responseBody.open(DEFAULT_ERROR_PAGE);
+	}
 }
 
 Location Request::selectContext(Location &location, std::string fatherUri) {

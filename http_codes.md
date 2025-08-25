@@ -7,7 +7,7 @@
 - [x] 200 OK
 - [ ] 201 Created
 - [ ] 202 Accepted?
-- [ ] 204 No Content?
+- [x] 204 No Content
 - [ ] 205 Reset Content?
 
 <h2>3XX</h2>
@@ -25,7 +25,7 @@ Still investigating this
 - [ ] 408 Request Timeout?
 - [ ] 411 Lenght Required
 - [ ] 413 Payload Too Large?
-- [ ] 418 I'm a teapot (Por el meme)
+- [x] 418 I'm a teapot (Por el meme)
 - [ ] 421 Misdirected Request? (Might be useful for a request to a wrong server???)
 - [ ] 494 Request header too large? (Nginx specific, not standard)
 - [ ] 497 HTTP Request Sent to HTTPS Port? (Nginx specific, not standard) (Port = 443) (Since we don't work with HTTPS every request at port 443 shoulld fail)

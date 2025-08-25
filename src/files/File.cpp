@@ -2,6 +2,7 @@
 
 File::File() {
 	type = "none";
+	_size = 0;
 }
 
 File::File(const std::string filename) {

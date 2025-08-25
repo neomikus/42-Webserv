@@ -3,7 +3,6 @@
 
 #include "Request.hpp"
 #include "File.hpp"
-#include <utility>
 
 class File;
 
@@ -13,9 +12,13 @@ class Post: public Request {
 		files				filesVector;
 		std::string			contentType;
 		std::string			boundary;
+		std::string			newResourceName;
 		Post();
 		void		parseBody(std::vector<char> &rawBody);
-		std::string	updateResource(int &status);
+		void		parseMultipartData(std::vector<char> &rawBody);
+		void		parseFormData(std::string rawBody);
+		void		updateResource(int &status);
+		void		writeContent(File &fileBody);
 	public:
 		Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
 		Post	&operator=(const Post &model);

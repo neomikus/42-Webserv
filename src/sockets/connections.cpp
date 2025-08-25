@@ -20,7 +20,6 @@ std::vector<char>	read_request(int fd) {
 	char buffer[1024];
 	std::vector<char> retval;
 	int rd = recv(fd, buffer, 1024, 0);
-	
 	if (rd == -1) {
 		std::cerr << "Read failed!" << std::endl;
 		return (retval);

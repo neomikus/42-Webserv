@@ -18,7 +18,7 @@ class Request
 							  // Can be checked in constructor if it's HTTP/1.1 or not
 
 		hostport					hostPort;
-		std::string userAgent; // I don't know if this is useful to us or not, maybe for cookies?
+		std::string					userAgent; // I don't know if this is useful to us or not, maybe for cookies?
 		std::vector<std::string>	accept; // May be renamed acceptFormat?
 		// Accept-Language is horrible
 		std::vector<std::string>	acceptEncoding;
@@ -29,6 +29,7 @@ class Request
 		void						parseMethodResourceProtocol(std::string line);
 		int							getStatus(Location &currentLocation);
 		void						getBody(int &status, Location &currentLocation, File &responseBody);
+		virtual	void				writeContent(File &fileBody) {(void)fileBody;};
 		void						getErrorPages(std::string &error_page, File &responseBody);
 		Location 					selectContext(Location &location, std::string fatherUri);
 

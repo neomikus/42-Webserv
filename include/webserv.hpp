@@ -25,6 +25,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <utility>
 
 
 #define HMAG		"\033[95m"
@@ -87,7 +88,7 @@ size_t						cstrlen(const char *str);
 
 
 
-std::string	makeString(std::vector<char> &vec);
+std::string	makeString(const std::vector<char> vec);
 std::string	makeString(std::vector<char>::iterator start, std::vector<char>::iterator end);
 
 
