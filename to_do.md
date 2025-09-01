@@ -12,7 +12,7 @@
 	- [ ] CGI está bien hecho?
 	- [ ] Max allowed size for client requests
 	- [ ] Terminar de implementar root
-	- [ ] Implementar index
+	- [x] Implementar index (Mica)
 	- [ ] Chunked requests?
 	- [ ] DELETE
 	- [ ] autoindex
