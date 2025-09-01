@@ -269,6 +269,15 @@ void	Post::updateResource(int &status) {
 	}
 }
 
+void	Post::getBody(int &status, Location &currentLocation, File &responseBody) {
+	(void)currentLocation;
+	if (status == 201) {
+		writeContent(responseBody);
+	} else if (status == 204) {
+		; // Nothing to return!!!
+	}
+}
+
 void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
 	int			status = getStatus(location);

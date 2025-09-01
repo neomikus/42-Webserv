@@ -12,7 +12,8 @@
 
 <h2>3XX</h2>
 
-Still investigating this
+- [ ] 301 Moved Permanently
+- [ ] 302 Found
 
 <h2>4XX</h2>
 

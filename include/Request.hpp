@@ -27,8 +27,9 @@ class Request
 
 		void						parseMethodResourceProtocol(std::string line);
 		int							getStatus(Location &currentLocation);
-		void						getBody(int &status, Location &currentLocation, File &responseBody);
+		virtual void				getBody(int &status, Location &currentLocation, File &responseBody);
 		virtual	void				writeContent(File &fileBody) {(void)fileBody;};
+		std::string					checkErrorPages(std::vector<error_page> error_pages, int &status);
 		void						getErrorPages(std::string &error_page, File &responseBody);
 		Location 					selectContext(Location &location, std::string fatherUri);
 	
@@ -45,5 +46,6 @@ class Request
 };
 
 std::string	getStatusText(int status);
+void cgi(int &status,File &responseBody, std::string resource, std::string command);
 
 #endif

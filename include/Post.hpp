@@ -21,6 +21,7 @@ class Post: public Request {
 		void		parsePlainData(std::vector<char> rawBody);
 		void		updateResource(int &status);
 		void		writeContent(File &fileBody);
+		void		getBody(int &status, Location &currentLocation, File &responseBody);
 	public:
 		Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
 		Post	&operator=(const Post &model);

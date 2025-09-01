@@ -6,6 +6,7 @@ CPPFLAGS = -Wall -Wextra -Werror -Wshadow -std=c++98 -Iinclude -g3
 
 # SRCS #
 MAIN		:= main
+CGI			:= cgi
 FILES		:= File
 CONTEXT		:= Location Server
 UTILS	 	:= httpUtils statUtils strUtils intUtils teapot
@@ -13,8 +14,9 @@ SOCKETS		:= Socket connections
 REQUESTS	:= Request Get Post Delete
 
 PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \
-				$(addsuffix .cpp, $(addprefix context/,	$(CONTEXT))) \
+				$(addsuffix .cpp, $(addprefix cgi/,	$(CGI))) \
 				$(addsuffix .cpp, $(addprefix files/,	$(FILES))) \
+				$(addsuffix .cpp, $(addprefix context/,	$(CONTEXT))) \
 				$(addsuffix .cpp, $(addprefix utils/,	$(UTILS))) \
 				$(addsuffix .cpp, $(addprefix sockets/,	$(SOCKETS))) \
 				$(addsuffix .cpp, $(addprefix requests/,	$(REQUESTS)))

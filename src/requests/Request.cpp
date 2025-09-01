@@ -24,12 +24,6 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 	
 	resource = resource.substr(1, resource.find("?"));
 
-	if (checkDirectory(resource)) {
-		if (resource[resource.size() - 1] != '/') {
-			resource += '/';
-		}
-	}
-	std::cout << resource << std::endl;
 }
 
 
@@ -181,7 +175,7 @@ int	Request::getStatus(Location &currentLocation) {
 	return (200);
 }
 
-std::string checkErrorPages(std::vector<error_page> error_pages, int &status) {
+std::string Request::checkErrorPages(std::vector<error_page> error_pages, int &status) {
 	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
 		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); ++it2) {
 			if (*it2 == status) {
@@ -199,113 +193,6 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 		responseBody.open(DEFAULT_ERROR_PAGE);
 	else
 		responseBody.open(page);
-}
-
-std::string read_from_pipe(int fd) {
-    char buffer[BUFFER_SIZE + 1];
-    std::string retval;
-    ssize_t rd = read(fd, buffer, sizeof(buffer));
-
-	if (rd == -1) {
-		std::cerr << "Read failed!" << std::endl;
-		return ("");
-	}
-
-	buffer[rd] = '\0';
-    while (rd > 0) {
-		retval += buffer;
-		if (rd < 1024)
-			break;
-		rd = read(fd, buffer, 1024);
-		buffer[rd] = '\0';
-    }
-	
-    return retval;
-}
-
-void cgi(int &status,File &responseBody, std::string resource, std::string command) {    
-    int _pipe[2];
-    if (pipe(_pipe) == -1) {
-        std::cerr << "pipe failed" << std::endl;
-        return;
-    }
-
-    pid_t child = fork();
-    if (child == -1) {
-        std::cerr << "fork failed" << std::endl;
-        close(_pipe[0]);
-        close(_pipe[1]);
-        return;
-    }
-
-    if (child == 0) { 
-        close(_pipe[0]); 
-        dup2(_pipe[1], STDOUT_FILENO); 
-        close(_pipe[1]);
-
-		std::string file = resource;
-		if (file[0] == '/')
-			file = file.substr(1);
-        char *argv[] = {const_cast<char*>(command.c_str()), const_cast<char*>(file.c_str()), NULL};
-
-        execve(argv[0], argv, global_envp);
-        
-        std::cerr << "execve failed" << std::endl;
-        exit(0);
-    }
-
-    else {
-		int	childStatus;
-        close(_pipe[1]); 
-        waitpid(child, &childStatus, 0);
-		if (childStatus != 0)
-		{
-			status = 500;
-			return;
-		}
-
-        std::string response = read_from_pipe(_pipe[0]);
-        responseBody.write(response.c_str());
-        
-        close(_pipe[0]); 
-    }
-}
-
-void	makeForbiddenError(File &responseBody) {
-
-	std::string body = "{\n";
-	body += "\"error\": \"insufficient permissions\",";
-	body += "\"message\": \"File permission error\"\n";
-	body += "}\n";
-	responseBody.write(body.c_str());
-}
-
-void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
-	
-	if (status == 200) {
-		if (currentLocation.getCgi() != "")
-			cgi(status, responseBody, resource, currentLocation.getCgi());
-		else if (!checkDirectory(resource))
-			responseBody.open(resource);
-		else {
-			; // We'll see how we implement directories
-		}
-	} else if (status == 201) {
-		writeContent(responseBody);
-	} else if (status == 204) {
-		; // Nothing to return!!!
-	} else if (status == 418) {
-		teapotGenerator(responseBody);
-	} else if (status / 100 == 4 || status / 100 == 5) {
-		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
-		if (!page.empty()) {
-			getErrorPages(page, responseBody);
-		} else if (status == 403) {
-			makeForbiddenError(responseBody);
-		}
-	} else {
-		responseBody.open(DEFAULT_ERROR_PAGE);
-	}
 }
 
 Location Request::selectContext(Location &location, std::string fatherUri) {
@@ -333,6 +220,14 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
    }
 
    return (location);
+}
+
+void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
+	std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+	if (!page.empty())
+		getErrorPages(page, responseBody);
+	else
+		responseBody.open(DEFAULT_ERROR_PAGE);
 }
 
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
