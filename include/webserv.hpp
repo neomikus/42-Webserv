@@ -17,6 +17,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cerrno>
+#include <unistd.h>
 #include <fcntl.h>
 #include <cstdlib>
 #include <list>
@@ -51,6 +52,8 @@ extern int	errorCode;
 extern std::string errorLine;
 extern char **global_envp;
 
+
+#define BUFFER_SIZE 1024
 
 #include "Socket.hpp"
 

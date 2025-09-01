@@ -181,7 +181,7 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 }
 
 std::string read_from_pipe(int fd) {
-    char buffer[1024];
+    char buffer[BUFFER_SIZE + 1];
     std::string retval;
     ssize_t rd = read(fd, buffer, sizeof(buffer));
 
@@ -244,7 +244,7 @@ void cgi(int &status,File &responseBody, std::string resource, std::string comma
 		}
 
         std::string response = read_from_pipe(_pipe[0]);
-        responseBody << response;
+        responseBody.write(response.c_str());
         
         close(_pipe[0]); 
     }
@@ -256,7 +256,7 @@ void	makeForbiddenError(File &responseBody) {
 	body += "\"error\": \"insufficient permissions\",";
 	body += "\"message\": \"File permission error\"\n";
 	body += "}\n";
-	responseBody.write(body);
+	responseBody.write(body.c_str());
 }
 
 void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {

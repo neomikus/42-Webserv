@@ -64,10 +64,9 @@ void	Post::parseMultipartData(std::vector<char> &rawBody) {
 			break ;
 		start += 4;
 
-		for (; start != end - 4; ++start)
-			body.push_back(*start);
+		File	newFile(filename, start, end - 4);
 
-		filesVector.push_back(std::make_pair(filename, body));
+		filesVector.push_back(newFile);
 		lastEnd = end;
 		start = end;
 	}
@@ -101,13 +100,11 @@ void	Post::parseFormData(std::string rawBody) {
 	body += "}";
 	body += "\n";
 
-	std::vector<char>	bodyVec;
-	for (size_t i = 0; body[i]; i++) {
-		bodyVec.push_back(body[i]);
-	}
+	File	newFile(filename);
 
-	filesVector.push_back(std::make_pair(filename, bodyVec));
-	
+	newFile.write(body.c_str());
+
+	filesVector.push_back(newFile);
 }
 
 void	Post::parseBody(std::vector<char> &rawBody) {
@@ -233,16 +230,16 @@ void	Post::updateResource(int &status) {
 		status = 204;
 
 	for (files::iterator it = filesVector.begin(); it != filesVector.end(); ++it) {
-		if (!checkStat(resource, it->first, status)) {
-			std::cerr << "File: " << it->first << " can't be written" << std::endl;
+		if (!checkStat(resource, it->getName(), status)) {
+			std::cerr << "File: " << it->getName() << " can't be written" << std::endl;
 			break;
 		}
 
 		std::filebuf	fb;
-		fb.open(it->first.c_str(), std::ios::binary | std::ios::out);
+		fb.open(it->getName().c_str(), std::ios::binary | std::ios::out);
 		std::ostream	newResource(&fb);
 
-		for (std::vector<char>::iterator fileIt = it->second.begin(); fileIt != it->second.end(); ++fileIt) {
+		for (std::vector<char>::iterator fileIt = it->getBody().begin(); fileIt != it->getBody().end(); ++fileIt) {
 			newResource.put(*fileIt);
 		}
 	}
@@ -271,7 +268,7 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	response += toString(contentLenght);
 	response += "\r\n";
 	
-	if (status == 201) {	
+	if (status == 201) {
 		response += "Location: ";
 		response += newResourceName;
 		response += "\r\n";
@@ -284,9 +281,7 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	// If the created resource is big, send metadata (or nothing, fuck it at this point) (Code 201)
 	// If !body, then code 204
 	
-	for (std::string line; std::getline(responseBody.getStream(), line);) {
-		response += line;
-	}
+	response += makeString(responseBody.getBody());
 	
 	std::cout << response << std::endl;
 	send(fd, response.c_str(), response.length(), 0);

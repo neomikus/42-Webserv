@@ -34,9 +34,7 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	
 	response += "\r\n";
 
-	for (std::string line; std::getline(responseBody.getStream(), line);) {
-		response += line;
-	}
+	response += makeString(responseBody.getBody());
 
 	send(fd, response.c_str(), response.length(), 0);
 	close(fd);

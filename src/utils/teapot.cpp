@@ -2,9 +2,9 @@
 #include "File.hpp"
 
 void	teapotGenerator(File &responseBody) {
-	responseBody << "<!DOCTYPE html>" << "\n";
-	responseBody << "<h1> 🫖 418 - I'm a Teapot!!!!!! 🫖 </h1>" << "\n";
-	responseBody << "<p>🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖</p>" << "\n";
-	responseBody << "<p>🫖 The requested teapot has been returned succesfully!!!!! 🫖</p>" << "\n";
-	responseBody << "<strong>🫖 ENJOY YOUR TEAPOT!!!! 🫖</strong>" << "\n";
+	responseBody.write("<!DOCTYPE html>\n");
+	responseBody.write("<h1> 🫖 418 - I'm a Teapot!!!!!! 🫖 </h1>\n");
+	responseBody.write("<p>🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖</p>\n");
+	responseBody.write("<p>🫖 The requested teapot has been returned succesfully!!!!! 🫖</p>\n");
+	responseBody.write("<strong>🫖 ENJOY YOUR TEAPOT!!!! 🫖</strong>\n");
 }
