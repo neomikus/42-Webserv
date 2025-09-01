@@ -16,7 +16,6 @@
 	- [ ] Chunked requests?
 	- [ ] DELETE
 	- [ ] autoindex
-	- [ ] Default file to serve when the requested resource is a directory?
 	- [ ] Collection endpoint (upload file to directory)
 	- [ ] Redefinir como funciona interface:port
 	- [ ] HTTP redirects
