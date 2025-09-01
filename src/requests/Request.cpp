@@ -22,7 +22,14 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 		std::pair<std::string, std::string>	temp(currentQuery.front(), currentQuery.back());
 	}
 	
-	resource = resource.substr(0, resource.find("?"));
+	resource = resource.substr(1, resource.find("?"));
+
+	if (checkDirectory(resource)) {
+		if (resource[resource.size() - 1] != '/') {
+			resource += '/';
+		}
+	}
+	std::cout << resource << std::endl;
 }
 
 
@@ -138,6 +145,16 @@ Server	&Request::selectServer(std::vector<Server> &servers) {
 	return (*candidates.begin());
 }
 
+bool	checkPermissions(std::string resource) {
+	struct stat resBuffer;
+
+	stat(resource.c_str(), &resBuffer);
+
+	if (!(resBuffer.st_mode & S_IRUSR))
+		return (false);
+	return (true);
+}
+
 int	Request::getStatus(Location &currentLocation) {
 	if (error)
 		return (400);
@@ -145,13 +162,17 @@ int	Request::getStatus(Location &currentLocation) {
 		method != "CONNECT" && method != "TRACE" && method != "POST" &&
 		method != "PATCH" && method != "GET" && method != "DELETE")
 		return (501);
+	if (protocol != "HTTP/1.0" && protocol != "HTTP/1.1")
+		return (505);
 	if (!checkAllowedMethods(method, currentLocation.getMethods()))
 		return (405);
-	if (method != "POST" && access(resource.substr(1).c_str(), F_OK)) {
-		if (resource.substr(1) == "teapot")
+	if (method != "POST" && access(resource.c_str(), F_OK)) {
+		if (resource == "teapot")
 			return (418);
 		return (404);
 	}
+	if (!checkPermissions(resource))
+		return (403);
 	// Save request body size in parsing!!!
 	//if (currentLocation.getMax_body_size() > request_body_size)
 	//	return (413);
@@ -264,9 +285,11 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 	if (status == 200) {
 		if (currentLocation.getCgi() != "")
 			cgi(status, responseBody, resource, currentLocation.getCgi());
-		else
-			responseBody.open(resource.substr(1, resource.find("?") - 1));
-		return;
+		else if (!checkDirectory(resource))
+			responseBody.open(resource);
+		else {
+			; // We'll see how we implement directories
+		}
 	} else if (status == 201) {
 		writeContent(responseBody);
 	} else if (status == 204) {
@@ -278,17 +301,15 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 		if (!page.empty()) {
 			getErrorPages(page, responseBody);
 		} else if (status == 403) {
-			std::cout << "I'm here!!!" << std::endl;
 			makeForbiddenError(responseBody);
 		}
 	} else {
-		std::cout << "Shouldn't be here!!!" << std::endl;
 		responseBody.open(DEFAULT_ERROR_PAGE);
 	}
 }
 
 Location Request::selectContext(Location &location, std::string fatherUri) {
-   std::string uri = resource;
+   std::string uri = "/" + resource;
 
    if (uri[uri.size() - 1] == '/')
 	   uri.erase(uri.end() - 1);
@@ -316,7 +337,7 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
 
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
-	int			status = getStatus(location);
+	int	status = getStatus(location);
 
 	std::string response;
 

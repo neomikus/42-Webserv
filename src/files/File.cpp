@@ -12,31 +12,29 @@ File::File(const std::string filename,
 }
 
 File::File(const std::string filename) {
-	int fd = ::open(filename.c_str(), O_RDONLY);
-	char buffer[BUFFER_SIZE + 1];
-	name = filename;
+	std::ifstream	file;
 
-	for (int rd = ::read(fd, buffer, BUFFER_SIZE); rd > 0; rd = ::read(fd, buffer, BUFFER_SIZE)) {
-		buffer[rd] = '\0';
-		write(buffer);
-		_size += rd;
-	}
+	file.open(filename.c_str(), std::ios::binary);
 
-	close(fd);
+    file.seekg(0, std::ios::end);
+    _size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+	body = std::vector<char>(_size);
+	file.read((char*) &body[0], _size);
 }
 
 File::File(const char *filename) {
-	int fd = ::open(filename, O_RDONLY);
-	char buffer[BUFFER_SIZE + 1];
-	name = filename;
+	std::ifstream	file;
 
-	for (int rd = ::read(fd, buffer, BUFFER_SIZE); rd > 0; rd = ::read(fd, buffer, BUFFER_SIZE)) {
-		buffer[rd] = '\0';
-		write(buffer);
-		_size += rd;
-	}
+	file.open(filename, std::ios::binary);
 
-	close(fd);
+    file.seekg(0, std::ios::end);
+    _size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+	body = std::vector<char>(_size);
+	file.read((char*) &body[0], _size);
 }
 
 File::~File() {
@@ -44,31 +42,29 @@ File::~File() {
 }
 
 void	File::open(const std::string filename) {
-	int fd = ::open(filename.c_str(), O_RDONLY);
-	char buffer[BUFFER_SIZE + 1];
-	name = filename;
+	std::ifstream	file;
 
-	for (int rd = ::read(fd, buffer, BUFFER_SIZE); rd > 0; rd = ::read(fd, buffer, BUFFER_SIZE)) {
-		buffer[rd] = '\0';
-		write(buffer);
-		_size += rd;
-	}
+	file.open(filename.c_str(), std::ios::binary);
 
-	close(fd);
+    file.seekg(0, std::ios::end);
+    _size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+	body = std::vector<char>(_size);
+	file.read((char*) &body[0], _size);
 }
 
 void	File::open(const char *filename) {
-	int fd = ::open(filename, O_RDONLY);
-	char buffer[BUFFER_SIZE + 1];
-	name = filename;
+	std::ifstream	file;
 
-	for (int rd = ::read(fd, buffer, BUFFER_SIZE); rd > 0; rd = ::read(fd, buffer, BUFFER_SIZE)) {
-		buffer[rd] = '\0';
-		write(buffer);
-		_size += rd;
-	}
+	file.open(filename, std::ios::binary);
 
-	close(fd);
+    file.seekg(0, std::ios::end);
+    _size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+	body = std::vector<char>(_size);
+	file.read((char*) &body[0], _size);
 }
 
 void	File::write(fileIterator &start, fileIterator &end) {
@@ -79,18 +75,17 @@ void	File::write(fileIterator &start, fileIterator &end) {
 }
 
 void	File::write(const char *str) {
-	for (size_t i = 0; str[i]; i++) {
+	for (size_t i = 0; str[i]; i++)
 		body.push_back(str[i]);
-	}
-	
+
 	_size += cstrlen(str);
 }
 
 void	File::toDisk(std::string filename) {
 	int fd = ::open(filename.c_str(), O_CREAT | O_WRONLY);
 	
-	for (long long i = 0; i < _size; i++)
-		::write(fd, &body[i], 1);
-
+	for (fileIterator it = body.begin(); it != body.end(); ++it) {
+		::write(fd, &*it, 1);
+	}
 	close(fd);
 }

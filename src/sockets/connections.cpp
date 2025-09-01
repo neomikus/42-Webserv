@@ -42,6 +42,7 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 	if (clientfd == -1) {
 		std::cerr << "Connection refused" << std::endl;
 	} else {
+		std::cerr << "Connection accepted" << std::endl;
 		clients.push_back(clientfd);
 		epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &clientConfig);
 	}

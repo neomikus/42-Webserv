@@ -1,0 +1,314 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --section-border: ligth-dark(black, ivory);
+    --letter-green:   #6ca965;
+    --letter-yellow:  #c8b653;
+    --letter-gray:    light-dark(#787c7f, #3a3a3c);
+    --letter-gray-inverted:    light-dark(#3a3a3c, #787c7f);
+}
+
+html {
+    color-scheme: light dark;
+}
+
+html:has(#mode-switcher #light:checked) {
+    color-scheme: light;
+}
+
+html:has(#mode-switcher #dark:checked) {
+    color-scheme: dark;
+}
+
+.body {
+    /*background-color: #f8f8f8;
+    */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+a {
+    color: green;
+    text-decoration: none;
+}
+
+a:visited {
+    color: darkgreen;
+}
+
+.header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--section-border);
+}
+
+#mode-switcher {
+    display: none;
+}
+
+.light-icon {
+    fill: white;
+}
+
+.switch-modes {
+    width: 64px;
+    height: 64px;
+	background: none;
+	color: inherit;
+	border: none;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+	outline: inherit;
+    justify-self: right;
+    margin-left: auto;
+}
+
+.game {
+    display: flex;
+    flex-flow: column nowrap;
+    gap: 20px;
+    height: fit-content;
+    min-height: 60vh;
+    margin: auto;
+    margin-bottom: 5%;
+}
+
+.word-div {
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    justify-items: center;
+    margin-top: 1px;
+    gap: 5px;
+}
+
+.word {
+    display: none;
+    height: 0;
+    width: 0;
+}
+
+.space {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+/* TODO: make it mobile friendly */
+
+.letter {
+    border: lightgray solid 1px;
+    aspect-ratio: 1 / 1;
+    width: 80px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 36px;
+    text-transform: uppercase;
+    color: light-dark(black, #d3d3d3);
+}
+
+@keyframes wrong-word {
+    5% {
+        border: 2px solid crimson;
+    }
+    100% {
+        border: 1px solid lightgray;
+    }
+}
+
+@keyframes flip {
+    100% {transform: rotate(360deg);}
+}
+
+@keyframes rumble {
+    0% {translate: 5px;}
+    50% {translate: -5px;}
+    100% {translate: 0px;}
+}
+
+.letter.wrong-word {
+    animation: wrong-word 1s;
+}
+
+.letter.rumble {
+    animation: rumble 0.2s;
+}
+
+.letter.flip {
+    animation: flip 1s;
+}
+
+.letter.correct {
+    color: white;
+    background-color: var(--letter-green);
+}
+
+.letter.misplaced {
+    color: white;
+    background-color: var(--letter-yellow);
+}
+
+.letter.wrong {
+    color: white;
+    background-color: var(--letter-gray);
+}
+
+.letter.title {
+    border: 2px solid (light-dark(black, #d3d3d3));
+    aspect-ratio: 1 / 1;
+    width: 36px;
+    font-size: 24px;
+    margin-left: 2px;
+    text-align: center;
+    padding: 2px;
+}
+
+
+.virtual-keyboard {
+    display: none;
+}
+
+.footer {
+    display: flex;
+    flex-direction: column;
+    border-top: 0.5px solid black;
+    height: 180px;
+    margin: auto;
+    width: 98%;
+    padding: 10px 5px;
+}
+
+.text {
+    display: inline-block;
+    margin: 0;
+}
+
+.image {
+    max-width: 50px;
+    aspect-ratio: 1 / 1;
+    fill: white;
+    margin: 0px 10px;
+}
+
+.footer a {
+    width: fit-content;
+    height: fit-content;
+    margin: 0;
+}
+
+.link-button {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background-color: #0e1111;
+    color: ivory;
+    width: fit-content;
+    padding: 10px 0;
+    border-radius: 20px;
+}
+
+.disclaimer span {
+    font-size: 9px;
+}
+
+.hidden {
+    display: none;
+}
+
+.invisible {
+    visibility: hidden;
+}
+
+@media(max-width:800px) {
+    .link-button {
+        display: none;
+    }
+
+    .letter {
+        width: 10%;
+    }
+
+    .game {
+        gap: 5px;
+        min-height: 50vh;
+        margin: auto;
+        width: 100%;
+    }
+
+    .virtual-keyboard {
+        display: grid;
+        grid-auto-flow: row wrap;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 5px;
+        row-gap: 10px;
+        padding: 10px 30px;
+        justify-items: center;
+        justify-content: center;
+        width: 80%;
+        margin: auto;
+    }
+
+    .virtual-keyboard-row {
+        padding: auto;
+        margin: auto;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+    }
+
+    .virtual-keyboard .letter {
+        width: 24px;
+        height: 40px;
+        font-size: 14px;
+        margin: auto;
+        border-radius: 4px;
+        background-color: var(--letter-gray-inverted);
+        color: white;
+    }
+
+    .virtual-keyboard .letter.double {
+        width: 50px;
+        font-size: 24px;
+        text-align: center;
+        padding: auto;
+    }
+    
+    .virtual-keyboard .letter.wrong {
+        background-color: var(--letter-gray);
+    }
+    
+    .virtual-keyboard .letter.misplaced {
+        background-color: var(--letter-yellow);
+    }
+    
+    .virtual-keyboard .letter.correct {
+        background-color: var(--letter-green);
+    }
+
+}
+
+@media(max-width:600px) {
+    .virtual-keyboard .letter {
+        width: 20px;
+        height: 32px;
+        font-size: 12px;
+        margin: auto;
+        border-radius: 4px;
+        background-color: var(--letter-gray-inverted);
+        color: white;
+    }
+
+    .virtual-keyboard .letter.double {
+        width: 30px;
+        font-size: 12px;
+        text-align: center;
+        padding: auto;
+    }
+}

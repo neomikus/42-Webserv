@@ -7,6 +7,8 @@ class Get: public Request {
 	private:
 
 		Get();
+		void	checkIndex(Location &location);
+
 	public:
 		Get(std::vector<std::string> splitedResponse);
 		Get(const Get &model);

@@ -8,7 +8,7 @@ CPPFLAGS = -Wall -Wextra -Werror -Wshadow -std=c++98 -Iinclude -g3
 MAIN		:= main
 FILES		:= File
 CONTEXT		:= Location Server
-UTILS	 	:= httpUtils strUtils intUtils teapot
+UTILS	 	:= httpUtils statUtils strUtils intUtils teapot
 SOCKETS		:= Socket connections
 REQUESTS	:= Request Get Post Delete
 

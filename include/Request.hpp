@@ -8,14 +8,13 @@
 class Request
 {
 	private:
-		std::vector<Server> candidates;
+		std::vector<Server> 				candidates;
 	protected:
 		bool								error; // necesary : (firstline)method resource protocol
 		std::string							method;
 		std::map<std::string, std::string>	query;
 		std::string							resource;
-		std::string							protocol; // This is maybe not needed
-							  // Can be checked in constructor if it's HTTP/1.1 or not
+		std::string							protocol;
 
 		hostport					hostPort;
 		std::string					userAgent; // I don't know if this is useful to us or not, maybe for cookies?
@@ -32,7 +31,7 @@ class Request
 		virtual	void				writeContent(File &fileBody) {(void)fileBody;};
 		void						getErrorPages(std::string &error_page, File &responseBody);
 		Location 					selectContext(Location &location, std::string fatherUri);
-
+	
 	public:
 		
 		Request();

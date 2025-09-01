@@ -107,20 +107,44 @@ void	Post::parseFormData(std::string rawBody) {
 	filesVector.push_back(newFile);
 }
 
+std::string	getFileType(std::string contentType) {
+	if (contentType == "text/css")
+		return(".css");
+	if (contentType == "text/csv")
+		return(".csv");
+	if (contentType == "text/html")
+		return(".html");
+	if (contentType == "text/javascript")
+		return(".js");
+	if (contentType == "text/plain")
+		return(".txt");
+	if (contentType == "text/xml" || contentType == "application/xml")
+		return(".xml");
+	if (contentType == "application/json")
+		return(".json");
+	if (contentType == "application/pdf")
+		return (".pdf");
+	return ("");
+};
+
+void	Post::parsePlainData(std::vector<char> rawBody) {
+	std::string	filename = "temp" + getFileType(contentType);
+	File	newFile(filename);
+
+	newFile.getBody() = rawBody;
+	filesVector.push_back(newFile);
+}
+
 void	Post::parseBody(std::vector<char> &rawBody) {
 
-		std::cout << contentType << std::endl;
 	if (contentType == "application/x-www-form-urlencoded") {
 		parseFormData(makeString(rawBody));
 	}
 	else if (contentType == "multipart/form-data") {
 		parseMultipartData(rawBody);
+	} else {
+		parsePlainData(rawBody);
 	}
-	else {
-		; // Treat the rest as text formats (JSON, etc) and if it fails it fails
-	}
-
-	resource = resource.substr(1);
 }
 
 Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: Request(splitedRaw)*/ {
@@ -253,9 +277,6 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 
 	getBody(status, location, responseBody);
 
-	std::cout << "Status: " << status << std::endl;
-	std::cout << responseBody.getSize() << std::endl;
-
 	long long contentLenght = responseBody.getSize();
 
 	std::string response;
@@ -274,16 +295,14 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 		response += "\r\n";
 	}
 
-	
 	response += "\r\n";
 	
 	// If the created resource is small, send it after creation (code 201)
-	// If the created resource is big, send metadata (or nothing, fuck it at this point) (Code 201)
+	// If the created resource is big, send succesful upload (or nothing, fuck it at this point) (Code 201)
 	// If !body, then code 204
 	
 	response += makeString(responseBody.getBody());
 	
-	std::cout << response << std::endl;
 	send(fd, response.c_str(), response.length(), 0);
 	close(fd);
 	clients.erase(std::find(clients.begin(), clients.end(), fd));

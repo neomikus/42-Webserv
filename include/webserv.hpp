@@ -88,14 +88,17 @@ size_t						countWords(std::stringstream& ss);
 size_t						countWords(std::string const str);
 std::vector<std::string>	strSplit(const std::string& str, const std::string& delimiter);
 size_t						cstrlen(const char *str);
-
-
+size_t						cstrcat(char *dst, const char *src);
 
 std::string	makeString(const std::vector<char> vec);
 std::string	makeString(std::vector<char>::iterator start, std::vector<char>::iterator end);
 
+char		*makeCString(const std::vector<char> vec);
+char		*makeCString(std::vector<char>::iterator start, std::vector<char>::iterator end);
 
 std::string					toString(int n);
+
+bool	checkDirectory(std::string resource);
 
 #include "File.hpp"
 

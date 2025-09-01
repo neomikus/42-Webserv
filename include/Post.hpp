@@ -18,6 +18,7 @@ class Post: public Request {
 		void		parseBody(std::vector<char> &rawBody);
 		void		parseMultipartData(std::vector<char> &rawBody);
 		void		parseFormData(std::string rawBody);
+		void		parsePlainData(std::vector<char> rawBody);
 		void		updateResource(int &status);
 		void		writeContent(File &fileBody);
 	public:
