@@ -240,8 +240,9 @@ bool checkStat(std::string resource, std::string &filename, int &status) {
 		status = 404;
 		return (false);
 	}
-	if (!(dirBuffer.st_mode & S_IWUSR)) {
+	if (!(dirBuffer.st_mode & S_IWUSR) || (!access(filename.c_str(), F_OK) && !(resBuffer.st_mode & S_IWUSR))) {
 		status = 403;
+		return (false);
 	}
 	return (true);
 }
@@ -275,6 +276,12 @@ void	Post::getBody(int &status, Location &currentLocation, File &responseBody) {
 		writeContent(responseBody);
 	} else if (status == 204) {
 		; // Nothing to return!!!
+	} else {
+		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+		if (!page.empty())
+			getErrorPages(page, responseBody);
+		else
+			responseBody.open(DEFAULT_ERROR_PAGE);
 	}
 }
 

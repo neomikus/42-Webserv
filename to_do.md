@@ -15,7 +15,7 @@
 	- [x] Implementar index (Mica)
 	- [ ] Chunked requests?
 	- [ ] DELETE
-	- [ ] autoindex
+	- [x] autoindex
 	- [ ] Collection endpoint (upload file to directory)
 	- [ ] Redefinir como funciona interface:port
 	- [ ] HTTP redirects
