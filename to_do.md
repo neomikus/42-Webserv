@@ -14,7 +14,7 @@
 	- [ ] Terminar de implementar root
 	- [x] Implementar index (Mica)
 	- [ ] Chunked requests?
-	- [ ] DELETE
+	- [x] DELETE
 	- [x] autoindex
 	- [ ] Collection endpoint (upload file to directory)
 	- [ ] Redefinir como funciona interface:port
