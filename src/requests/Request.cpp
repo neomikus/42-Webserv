@@ -160,12 +160,12 @@ int	Request::getStatus(Location &currentLocation) {
 		return (505);
 	if (!checkAllowedMethods(method, currentLocation.getMethods()))
 		return (405);
-	if (method != "POST" && access(resource.c_str(), F_OK)) {
+	if (method != "POST" && !resource.empty() && access(resource.c_str(), F_OK)) {
 		if (resource == "teapot")
 			return (418);
 		return (404);
 	}
-	if (!checkPermissions(resource))
+	if (!resource.empty() && !checkPermissions(resource))
 		return (403);
 	// Save request body size in parsing!!!
 	//if (currentLocation.getMax_body_size() > request_body_size)
