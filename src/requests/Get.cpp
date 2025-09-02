@@ -34,10 +34,25 @@ bool	Get::checkIndex(Location &location, File &responseBody) {
 	return (false);
 }
 
+File	generateAutoIndex(std::string directory) {
+	File	retval;
+	DIR		*dirPTR = opendir(directory.c_str());
+
+	for (dirent *current = readdir(dirPTR); current; current = readdir(dirPTR)) {
+		delete current;
+	}
+	
+
+	closedir(dirPTR);
+	return (retval);
+}
+
 bool	Get::checkAutoindex(Location &location, File &responseBody) {
-	(void)location;
-	(void)responseBody;
-	return (true);
+	if (location.getAutoindex()) {
+		responseBody = generateAutoIndex(resource);
+		return (true);
+	}
+	return (false);
 }
 
 void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
@@ -53,6 +68,7 @@ void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
 				return;
 			if (checkAutoindex(currentLocation, responseBody))
 				return;
+			// Should return an error if none is true
 		}
 	} else if (status == 418) {
 		teapotGenerator(responseBody);
