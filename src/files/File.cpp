@@ -5,26 +5,36 @@ File::File() {
 	_size = 0;
 }
 
-File::File(const std::string filename) {
-	std::ifstream file(filename.c_str(), std::ios::binary);
+File::File(const std::string filename, 
+	fileIterator start, fileIterator end) {
+	name = filename;
+	write(start, end);
+}
 
-	for (std::string line; std::getline(file, line);) {
-		contents.write((line + '\n').c_str(), cstrlen((line + '\n').c_str()));
-		_size += line.size();
-	}
-	
-	file.close();
+File::File(const std::string filename) {
+	std::ifstream	file;
+
+	file.open(filename.c_str(), std::ios::binary);
+
+    file.seekg(0, std::ios::end);
+    _size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+	body = std::vector<char>(_size);
+	file.read((char*) &body[0], _size);
 }
 
 File::File(const char *filename) {
-	std::ifstream file(filename, std::ios::binary);
+	std::ifstream	file;
 
-	for (std::string line; std::getline(file, line);) {
-		contents.write((line + '\n').c_str(), cstrlen((line + '\n').c_str()));
-		_size += line.size();
-	}
-	
-	file.close();
+	file.open(filename, std::ios::binary);
+
+    file.seekg(0, std::ios::end);
+    _size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+	body = std::vector<char>(_size);
+	file.read((char*) &body[0], _size);
 }
 
 File::~File() {
@@ -32,66 +42,50 @@ File::~File() {
 }
 
 void	File::open(const std::string filename) {
-	std::ifstream file(filename.c_str(), std::ios::binary);
+	std::ifstream	file;
 
-	for (std::string line; std::getline(file, line);) {
-		contents.write((line + '\n').c_str(), cstrlen((line + '\n').c_str()));
-		_size += line.size();
-	}
-	
-	file.close();
+	file.open(filename.c_str(), std::ios::binary);
+
+    file.seekg(0, std::ios::end);
+    _size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+	body = std::vector<char>(_size);
+	file.read((char*) &body[0], _size);
 }
 
 void	File::open(const char *filename) {
-	std::ifstream file(filename, std::ios::binary);
+	std::ifstream	file;
 
-	for (std::string line; std::getline(file, line);) {
-		contents.write((line + '\n').c_str(), cstrlen((line + '\n').c_str()));
-		_size += line.size();
-	}
-	
-	file.close();
+	file.open(filename, std::ios::binary);
+
+    file.seekg(0, std::ios::end);
+    _size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+	body = std::vector<char>(_size);
+	file.read((char*) &body[0], _size);
 }
 
-void	File::write(const std::string str) {
-	contents.write(str.c_str(), cstrlen(str.c_str()));
-	_size += str.size();
+void	File::write(fileIterator &start, fileIterator &end) {
+	_size = std::distance(start, end);
+	
+	for (; start != end; ++start)
+		body.push_back(*start);
 }
 
 void	File::write(const char *str) {
-	contents.write(str, cstrlen(str));
+	for (size_t i = 0; str[i]; i++)
+		body.push_back(str[i]);
+
 	_size += cstrlen(str);
 }
 
-std::string	File::read() {
-	char *str = new char[_size];
-	contents.read(str, _size);
-	std::string	retval = str;
-	delete[] str;
-	return (retval);
-}
-
-void	File::read(char *str, size_t size) {
-	contents.read(str, size);
-}
-
-
-File	&operator<<(File &model, const std::string &str) {
-	model.getStream().write(str.c_str(), cstrlen(str.c_str()));
-	model.getSize() += str.size();
-	return (model);
-}
-
-File	&operator<<(File &model, const char *str) {
-	model.getStream().write(str, cstrlen(str));
-	model.getSize() += cstrlen(str);
-	return (model);
-}
-
-std::ostream	&operator<<(std::ostream &stream, File &model) {
-	char *str = new char[model.getSize()];
-	model.getStream().read(str, model.getSize());
-	stream << str;
-	delete[] str;
-	return (stream);
+void	File::toDisk(std::string filename) {
+	int fd = ::open(filename.c_str(), O_CREAT | O_WRONLY);
+	
+	for (fileIterator it = body.begin(); it != body.end(); ++it) {
+		::write(fd, &*it, 1);
+	}
+	close(fd);
 }

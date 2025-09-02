@@ -17,7 +17,7 @@ bool	checkfds(int fd, std::list<int> fdList) {
 }
 
 std::vector<char>	read_request(int fd) {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE + 1];
 	std::vector<char> retval;
 	int rd = recv(fd, buffer, 1024, 0);
 	if (rd == -1) {
@@ -42,7 +42,7 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 	if (clientfd == -1) {
 		std::cerr << "Connection refused" << std::endl;
 	} else {
-		std::cerr << "Connection accepted!" << std::endl;
+		std::cerr << "Connection accepted" << std::endl;
 		clients.push_back(clientfd);
 		epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &clientConfig);
 	}

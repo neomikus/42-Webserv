@@ -64,10 +64,9 @@ void	Post::parseMultipartData(std::vector<char> &rawBody) {
 			break ;
 		start += 4;
 
-		for (; start != end - 4; ++start)
-			body.push_back(*start);
+		File	newFile(filename, start, end - 4);
 
-		filesVector.push_back(std::make_pair(filename, body));
+		filesVector.push_back(newFile);
 		lastEnd = end;
 		start = end;
 	}
@@ -101,29 +100,51 @@ void	Post::parseFormData(std::string rawBody) {
 	body += "}";
 	body += "\n";
 
-	std::vector<char>	bodyVec;
-	for (size_t i = 0; body[i]; i++) {
-		bodyVec.push_back(body[i]);
-	}
+	File	newFile(filename);
 
-	filesVector.push_back(std::make_pair(filename, bodyVec));
-	
+	newFile.write(body.c_str());
+
+	filesVector.push_back(newFile);
+}
+
+std::string	getFileType(std::string contentType) {
+	if (contentType == "text/css")
+		return(".css");
+	if (contentType == "text/csv")
+		return(".csv");
+	if (contentType == "text/html")
+		return(".html");
+	if (contentType == "text/javascript")
+		return(".js");
+	if (contentType == "text/plain")
+		return(".txt");
+	if (contentType == "text/xml" || contentType == "application/xml")
+		return(".xml");
+	if (contentType == "application/json")
+		return(".json");
+	if (contentType == "application/pdf")
+		return (".pdf");
+	return ("");
+};
+
+void	Post::parsePlainData(std::vector<char> rawBody) {
+	std::string	filename = "temp" + getFileType(contentType);
+	File	newFile(filename);
+
+	newFile.getBody() = rawBody;
+	filesVector.push_back(newFile);
 }
 
 void	Post::parseBody(std::vector<char> &rawBody) {
 
-		std::cout << contentType << std::endl;
 	if (contentType == "application/x-www-form-urlencoded") {
 		parseFormData(makeString(rawBody));
 	}
 	else if (contentType == "multipart/form-data") {
 		parseMultipartData(rawBody);
+	} else {
+		parsePlainData(rawBody);
 	}
-	else {
-		; // Treat the rest as text formats (JSON, etc) and if it fails it fails
-	}
-
-	resource = resource.substr(1);
 }
 
 Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: Request(splitedRaw)*/ {
@@ -233,18 +254,27 @@ void	Post::updateResource(int &status) {
 		status = 204;
 
 	for (files::iterator it = filesVector.begin(); it != filesVector.end(); ++it) {
-		if (!checkStat(resource, it->first, status)) {
-			std::cerr << "File: " << it->first << " can't be written" << std::endl;
+		if (!checkStat(resource, it->getName(), status)) {
+			std::cerr << "File: " << it->getName() << " can't be written" << std::endl;
 			break;
 		}
 
 		std::filebuf	fb;
-		fb.open(it->first.c_str(), std::ios::binary | std::ios::out);
+		fb.open(it->getName().c_str(), std::ios::binary | std::ios::out);
 		std::ostream	newResource(&fb);
 
-		for (std::vector<char>::iterator fileIt = it->second.begin(); fileIt != it->second.end(); ++fileIt) {
+		for (std::vector<char>::iterator fileIt = it->getBody().begin(); fileIt != it->getBody().end(); ++fileIt) {
 			newResource.put(*fileIt);
 		}
+	}
+}
+
+void	Post::getBody(int &status, Location &currentLocation, File &responseBody) {
+	(void)currentLocation;
+	if (status == 201) {
+		writeContent(responseBody);
+	} else if (status == 204) {
+		; // Nothing to return!!!
 	}
 }
 
@@ -255,9 +285,6 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	File		responseBody;
 
 	getBody(status, location, responseBody);
-
-	std::cout << "Status: " << status << std::endl;
-	std::cout << responseBody.getSize() << std::endl;
 
 	long long contentLenght = responseBody.getSize();
 
@@ -271,24 +298,20 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	response += toString(contentLenght);
 	response += "\r\n";
 	
-	if (status == 201) {	
+	if (status == 201) {
 		response += "Location: ";
 		response += newResourceName;
 		response += "\r\n";
 	}
 
-	
 	response += "\r\n";
 	
 	// If the created resource is small, send it after creation (code 201)
-	// If the created resource is big, send metadata (or nothing, fuck it at this point) (Code 201)
+	// If the created resource is big, send succesful upload (or nothing, fuck it at this point) (Code 201)
 	// If !body, then code 204
 	
-	for (std::string line; std::getline(responseBody.getStream(), line);) {
-		response += line;
-	}
+	response += makeString(responseBody.getBody());
 	
-	std::cout << response << std::endl;
 	send(fd, response.c_str(), response.length(), 0);
 	close(fd);
 	clients.erase(std::find(clients.begin(), clients.end(), fd));

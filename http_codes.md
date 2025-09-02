@@ -5,20 +5,20 @@
 <h2>2XX</h2>
 
 - [x] 200 OK
-- [ ] 201 Created
+- [x] 201 Created
 - [ ] 202 Accepted?
 - [x] 204 No Content
 - [ ] 205 Reset Content?
 
 <h2>3XX</h2>
 
-Still investigating this
+- [ ] 301 Moved Permanently
+- [ ] 302 Found
 
 <h2>4XX</h2>
 
 - [x] 400 Bad Request
-- [ ] 401 Unauthorized?
-- [ ] 403 Forbidden
+- [x] 403 Forbidden
 - [x] 404 Not Found
 - [x] 405 Method Not Allowed
 - [ ] 406 Not Acceptable
@@ -35,7 +35,6 @@ Still investigating this
 
 - [ ] 500 Internal Server Error?  (Should probably not happen in our webserver)
 - [x] 501 Not Implemented
-- [ ] 503 Service Unavailable? (This also shouldn't happen)
-- [ ] 505 HTTP Version Not Supported
+- [x] 505 HTTP Version Not Supported
 - [ ] 507 Insufficient Storage? (Would be actually cool for POST lmao (Technically part of WebDAV))
 - [ ] 

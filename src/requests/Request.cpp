@@ -22,7 +22,8 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 		std::pair<std::string, std::string>	temp(currentQuery.front(), currentQuery.back());
 	}
 	
-	resource = resource.substr(0, resource.find("?"));
+	resource = resource.substr(1, resource.find("?"));
+
 }
 
 
@@ -138,6 +139,16 @@ Server	&Request::selectServer(std::vector<Server> &servers) {
 	return (*candidates.begin());
 }
 
+bool	checkPermissions(std::string resource) {
+	struct stat resBuffer;
+
+	stat(resource.c_str(), &resBuffer);
+
+	if (!(resBuffer.st_mode & S_IRUSR))
+		return (false);
+	return (true);
+}
+
 int	Request::getStatus(Location &currentLocation) {
 	if (error)
 		return (400);
@@ -145,13 +156,17 @@ int	Request::getStatus(Location &currentLocation) {
 		method != "CONNECT" && method != "TRACE" && method != "POST" &&
 		method != "PATCH" && method != "GET" && method != "DELETE")
 		return (501);
+	if (protocol != "HTTP/1.0" && protocol != "HTTP/1.1")
+		return (505);
 	if (!checkAllowedMethods(method, currentLocation.getMethods()))
 		return (405);
-	if (method != "POST" && access(resource.substr(1).c_str(), F_OK)) {
-		if (resource.substr(1) == "teapot")
+	if (method != "POST" && access(resource.c_str(), F_OK)) {
+		if (resource == "teapot")
 			return (418);
 		return (404);
 	}
+	if (!checkPermissions(resource))
+		return (403);
 	// Save request body size in parsing!!!
 	//if (currentLocation.getMax_body_size() > request_body_size)
 	//	return (413);
@@ -160,7 +175,7 @@ int	Request::getStatus(Location &currentLocation) {
 	return (200);
 }
 
-std::string checkErrorPages(std::vector<error_page> error_pages, int &status) {
+std::string Request::checkErrorPages(std::vector<error_page> error_pages, int &status) {
 	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
 		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); ++it2) {
 			if (*it2 == status) {
@@ -180,115 +195,8 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 		responseBody.open(page);
 }
 
-std::string read_from_pipe(int fd) {
-    char buffer[1024];
-    std::string retval;
-    ssize_t rd = read(fd, buffer, sizeof(buffer));
-
-	if (rd == -1) {
-		std::cerr << "Read failed!" << std::endl;
-		return ("");
-	}
-
-	buffer[rd] = '\0';
-    while (rd > 0) {
-		retval += buffer;
-		if (rd < 1024)
-			break;
-		rd = read(fd, buffer, 1024);
-		buffer[rd] = '\0';
-    }
-	
-    return retval;
-}
-
-void cgi(int &status,File &responseBody, std::string resource, std::string command) {    
-    int _pipe[2];
-    if (pipe(_pipe) == -1) {
-        std::cerr << "pipe failed" << std::endl;
-        return;
-    }
-
-    pid_t child = fork();
-    if (child == -1) {
-        std::cerr << "fork failed" << std::endl;
-        close(_pipe[0]);
-        close(_pipe[1]);
-        return;
-    }
-
-    if (child == 0) { 
-        close(_pipe[0]); 
-        dup2(_pipe[1], STDOUT_FILENO); 
-        close(_pipe[1]);
-
-		std::string file = resource;
-		if (file[0] == '/')
-			file = file.substr(1);
-        char *argv[] = {const_cast<char*>(command.c_str()), const_cast<char*>(file.c_str()), NULL};
-
-        execve(argv[0], argv, global_envp);
-        
-        std::cerr << "execve failed" << std::endl;
-        exit(0);
-    }
-
-    else {
-		int	childStatus;
-        close(_pipe[1]); 
-        waitpid(child, &childStatus, 0);
-		if (childStatus != 0)
-		{
-			status = 500;
-			return;
-		}
-
-        std::string response = read_from_pipe(_pipe[0]);
-        responseBody << response;
-        
-        close(_pipe[0]); 
-    }
-}
-
-void	makeForbiddenError(File &responseBody) {
-
-	std::string body = "{\n";
-	body += "\"error\": \"insufficient permissions\",";
-	body += "\"message\": \"File permission error\"\n";
-	body += "}\n";
-	responseBody.write(body);
-}
-
-void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
-	
-	if (status == 200) {
-		if (currentLocation.getCgi() != "")
-			cgi(status, responseBody, resource, currentLocation.getCgi());
-		else
-			responseBody.open(resource.substr(1, resource.find("?") - 1));
-		return;
-	} else if (status == 201) {
-		writeContent(responseBody);
-	} else if (status == 204) {
-		; // Nothing to return!!!
-	} else if (status == 418) {
-		teapotGenerator(responseBody);
-	} else if (status / 100 == 4 || status / 100 == 5) {
-		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
-		if (!page.empty()) {
-			getErrorPages(page, responseBody);
-		} else if (status == 403) {
-			std::cout << "I'm here!!!" << std::endl;
-			makeForbiddenError(responseBody);
-		}
-	} else {
-		std::cout << "Shouldn't be here!!!" << std::endl;
-		responseBody.open(DEFAULT_ERROR_PAGE);
-	}
-}
-
 Location Request::selectContext(Location &location, std::string fatherUri) {
-   std::string uri = resource;
+   std::string uri = "/" + resource;
 
    if (uri[uri.size() - 1] == '/')
 	   uri.erase(uri.end() - 1);
@@ -314,9 +222,17 @@ Location Request::selectContext(Location &location, std::string fatherUri) {
    return (location);
 }
 
+void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
+	std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+	if (!page.empty())
+		getErrorPages(page, responseBody);
+	else
+		responseBody.open(DEFAULT_ERROR_PAGE);
+}
+
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
-	int			status = getStatus(location);
+	int	status = getStatus(location);
 
 	std::string response;
 

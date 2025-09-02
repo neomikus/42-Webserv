@@ -5,37 +5,36 @@
 
 class File
 {
-	private:
-		std::stringstream	contents;
+	private:		
+		std::vector<char>	body;
 		std::string			type;
 		std::string			name;
 		long long			_size;
+	
 	public:
+		typedef	std::vector<char>::iterator fileIterator;
 		File();
 		File(const std::string filename);
 		File(const char *filename);
+		File(const std::string filename, 
+			fileIterator start, fileIterator end);
 		~File();
 
 		void	open(const std::string filename);
 		void	open(const char *filename);
-		void	write(const std::string str);
+		void	write(fileIterator &start, fileIterator &end);
 		void	write(const char *str);
 		
-		std::string			read();
-		void				read(char *str, size_t size);
+		void	toDisk(std::string filename);
 
-		std::stringstream	&getStream() {return (contents);}
+		std::vector<char>	&getBody() {return (body);}
 		long long			&getSize() {return (_size);}
-		std::string			getType() const {return(name);}
+		std::string			getType() const {return(type);}
+		std::string			&getName() {return(name);}
 		std::string			getName() const {return(name);}
 
 		void				setType(std::string newType) {type = newType;}
 		void				setName(std::string newName) {name = newName;}
-
 };
-
-File			&operator<<(File &model, const std::string &str);
-File			&operator<<(File &model, const char *str);
-std::ostream	&operator<<(std::ostream &stream, File &model);	
 
 #endif
