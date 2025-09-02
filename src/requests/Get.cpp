@@ -58,7 +58,6 @@ std::string	getFileElement(std::string current, std::string path) {
 	std::string	type;
 
 	stat((path + current).c_str(), &fileBuffer);
-	std::cout << (path + current).c_str() << ": " << fileBuffer.st_size << std::endl;
 
 	if (S_ISDIR(fileBuffer.st_mode))
 		type = "directory";
@@ -100,9 +99,9 @@ File	generateAutoIndex(std::string directory) {
 
 	contents << "<!DOCTYPE html>" << std::endl;
 	contents << "<head> <meta charset='UTF-8'> <meta name='viewport' content='width=device-width, initial-scale=1.0'> <title>Autoindex</title> <style>" << std::endl;
-	contents << "body{margin-left: 30px; font-size: 18px;} header{border-bottom: 0.5px solid black; padding: 0; margin: 0; margin-bottom: 20px;} h1{margin: 10px; margin-left: 10px;}" << std::endl; 
+	contents << "body{margin: 30px; font-size: 18px;} header{border-bottom: 0.5px solid black; padding: 0; margin: 0; margin-bottom: 20px;} h1{margin: 10px; margin-left: 10px;}" << std::endl; 
 	contents << "a{color:inherit; text-decoration: none;} a:vistied{color:inherit;} a:hover{text-decoration: underline;}" << std::endl;
-	contents << "table{border-collapse: collapse; display:grid; grid-template-rows: repeat(3, 1fr); width: 100%;} .header{font-size: 1.2em; font-weight: bold; } td:first-child{width: 20%; text-align: left;} td{margin: auto; text-align: center;} tr{margin-bottom: 2px; border-bottom: 1px solid gray;}" << std::endl;
+	contents << "table{border-collapse: collapse; display:grid; grid-template-rows: repeat(3, 1fr); width: 100%; max-height: 50px;} .header{font-size: 1.2em; font-weight: bold; } td:first-child{width: 20%; text-align: left;} td{margin: auto; text-align: center;} tr{margin-bottom: 2px; border-bottom: 1px solid gray;}" << std::endl;
 	contents << ".directory{color: green;} .directory::before{font-family: 'Font Awesome 5 Free'; font-weight: 900; content: '\\f07c  ';}" << std::endl;
 	contents << ".file{color: crimson;} .file::before{font-family: 'Font Awesome 5 Free'; font-weight: 900; content: '\\f15b  ';}" << std::endl;
 	contents << "</style></head>" << std::endl;	
@@ -208,6 +207,10 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 		response += resource.substr(resource.find_last_of('/') + 1) + "/";
 		response += "\r\n";
 	}
+
+	response += "Content-Type: ";
+	response += responseBody.getType();
+	response += "\r\n";
 
 	response += "\r\n";
 	response += makeString(responseBody.getBody());

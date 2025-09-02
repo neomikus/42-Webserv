@@ -1,5 +1,20 @@
 #include "File.hpp"
 
+// TECHNICALLY NOT APPROVED BY THE SUBJECT
+#include <magic.h>
+#define MAGIC_DATABASE "/usr/share/file/misc/magic.mgc"
+
+std::string	getMIME(std::string filename) {
+	std::string	retval("application/octet-stream");
+	magic_t	magic = magic_open(MAGIC_MIME_TYPE);
+	magic_load(magic, MAGIC_DATABASE);
+	const char *mime = magic_file(magic, filename.c_str());
+	if (mime)
+		retval = mime;
+	magic_close(magic);
+	return (retval);
+}
+
 File::File() {
 	type = "none";
 	_size = 0;
@@ -22,6 +37,7 @@ File::File(const std::string filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
+	type = getMIME(filename);
 }
 
 File::File(const char *filename) {
@@ -35,6 +51,7 @@ File::File(const char *filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
+	type = getMIME(filename);
 }
 
 File::~File() {
@@ -52,6 +69,7 @@ void	File::open(const std::string filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
+	type = getMIME(filename);
 }
 
 void	File::open(const char *filename) {
@@ -65,6 +83,7 @@ void	File::open(const char *filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
+	type = getMIME(filename);
 }
 
 void	File::write(fileIterator &start, fileIterator &end) {

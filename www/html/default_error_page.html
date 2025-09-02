@@ -20,8 +20,10 @@
 			document.getElementById("error").innerHTML = "400 - Bad Request";
 		else if (response.status == 404)
 			document.getElementById("error").innerHTML = "404 - Not Found";
-		else if (response.status = 405)
+		else if (response.status == 405)
 			document.getElementById("error").innerHTML = "405 - Method Not Allowed";
+		else
+			document.getElementById("error").innerHTML = "500 - Internal Server Error";
 	})
 	.catch(error => {
 		console.error('Error fetching the page:', error);
