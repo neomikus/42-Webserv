@@ -1,20 +1,5 @@
 #include "File.hpp"
 
-// TECHNICALLY NOT APPROVED BY THE SUBJECT
-#include <magic.h>
-#define MAGIC_DATABASE "/usr/share/file/misc/magic.mgc"
-
-std::string	getMIME(std::string filename) {
-	std::string	retval("application/octet-stream");
-	magic_t	magic = magic_open(MAGIC_MIME_TYPE);
-	magic_load(magic, MAGIC_DATABASE);
-	const char *mime = magic_file(magic, filename.c_str());
-	if (mime)
-		retval = mime;
-	magic_close(magic);
-	return (retval);
-}
-
 File::File() {
 	type = "none";
 	_size = 0;
@@ -37,7 +22,10 @@ File::File(const std::string filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
-	type = getMIME(filename);
+	if (filename.find_last_of(".") != filename.npos)
+		type = getMIME(filename.substr(filename.find_last_of(".")), false);
+	else
+		type = "text/plain";
 }
 
 File::File(const char *filename) {
@@ -51,7 +39,11 @@ File::File(const char *filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
-	type = getMIME(filename);
+
+	if (std::string(filename).find_last_of(".") != std::string(filename).npos)
+		type = getMIME(std::string(filename).substr(std::string(filename).find_last_of(".")), false);
+	else
+		type = "text/plain";
 }
 
 File::~File() {
@@ -69,7 +61,10 @@ void	File::open(const std::string filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
-	type = getMIME(filename);
+	if (filename.find_last_of(".") != filename.npos)
+		type = getMIME(filename.substr(filename.find_last_of(".")), false);
+	else
+		type = "text/plain";
 }
 
 void	File::open(const char *filename) {
@@ -83,7 +78,10 @@ void	File::open(const char *filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
-	type = getMIME(filename);
+	if (std::string(filename).find_last_of(".") != std::string(filename).npos)
+		type = getMIME(std::string(filename).substr(std::string(filename).find_last_of(".")), false);
+	else
+		type = "text/plain";
 }
 
 void	File::write(fileIterator &start, fileIterator &end) {

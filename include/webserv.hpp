@@ -107,4 +107,6 @@ class File;
 
 void	teapotGenerator(File &responseBody);
 
+std::string	getMIME(std::string needle, bool reverse);
+
 #endif

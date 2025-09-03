@@ -2,12 +2,12 @@ NAME		:=	webserv
 OBJ_DIR		:=	obj/
 SRC_PATH	:=	src/
 CC			:=	c++
-CPPFLAGS = -Wall -Wextra -Werror -Wshadow -lmagic -std=c++98 -Iinclude
+CPPFLAGS = -Wall -Wextra -Werror -Wshadow -std=c++98 -Iinclude
 
 # SRCS #
 MAIN		:= main
 CGI			:= cgi
-FILES		:= File
+FILES		:= File mime
 CONTEXT		:= Location Server
 UTILS	 	:= httpUtils statUtils strUtils intUtils teapot
 SOCKETS		:= Socket connections
