@@ -106,6 +106,7 @@ bool	checkDirectory(std::string resource);
 class File;
 
 void	teapotGenerator(File &responseBody);
+File	generateAutoIndex(std::string resource, std::string directory);
 
 std::string	getMIME(std::string needle, bool reverse);
 

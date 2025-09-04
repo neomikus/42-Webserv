@@ -11,7 +11,7 @@
 	- [ ] Códigos de Error restantes
 	- [ ] CGI está bien hecho?
 	- [ ] Max allowed size for client requests
-	- [ ] Terminar de implementar root
+	- [x] Terminar de implementar root
 	- [x] Implementar index (Mica)
 	- [ ] Chunked requests?
 	- [x] DELETE
