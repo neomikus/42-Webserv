@@ -201,28 +201,26 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 Location Request::selectContext(Location &location, std::string fatherUri) {
    std::string uri = "/" + resource;
 
-   if (uri[uri.size() - 1] == '/')
-	   uri.erase(uri.end() - 1);
-   if (fatherUri != "/")
-	   uri = uri.substr(fatherUri.size());
-   else
-	   fatherUri = "";
+	if (uri[uri.size() - 1] == '/')
+		uri.erase(uri.end() - 1);
+	if (fatherUri != "/")
+		uri = uri.substr(fatherUri.size());
+	else
+		fatherUri = "";
 
-   while(!uri.empty())
-   {	
-	   for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
-	   {
-		   if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
-			   return (*it);
-		   if (it->getUri() == uri)
-			   return (selectContext(*it, fatherUri + it->getUri()));
-	   }
-	   if (uri == "/")
-		   break;
-	   uri = trimLastWord(uri, '/');
-   }
+	while (!uri.empty() && uri != "/")
+	{
+		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
+		{
+			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
+				return (*it);
+			if (it->getUri() == uri)
+				return (selectContext(*it, fatherUri + it->getUri()));
+		}
+		uri = trimLastWord(uri, '/');
+	}
 
-   return (location);
+	return (location);
 }
 
 void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
@@ -251,7 +249,7 @@ void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
 	response += "Content Lenght: ";
-    response += responseBody.getSize();
+	response += responseBody.getSize();
 	response += "\r\n";
 	
 	response += "\r\n";

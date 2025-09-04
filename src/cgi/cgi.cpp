@@ -3,8 +3,9 @@
 std::string read_from_pipe(int fd) {
     char buffer[BUFFER_SIZE + 1];
     std::string retval;
-    ssize_t rd = read(fd, buffer, sizeof(buffer));
 
+    ssize_t rd = read(fd, buffer, sizeof(buffer));
+    
 	if (rd == -1) {
 		std::cerr << "Read failed!" << std::endl;
 		return ("");
@@ -38,7 +39,7 @@ void cgi(int &status,File &responseBody, std::string resource, std::string comma
     }
 
     if (child == 0) { 
-        close(_pipe[0]); 
+        close(_pipe[0]);
         dup2(_pipe[1], STDOUT_FILENO); 
         close(_pipe[1]);
 

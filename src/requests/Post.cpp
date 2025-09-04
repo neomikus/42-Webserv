@@ -230,7 +230,7 @@ bool checkStat(std::string resource, std::string &filename, int &status) {
 void	Post::updateResource(int &status) {
 	if (status != 201 && status != 204)
 		return;
-
+	
 	if (contentType == "multipart/form-data")
 		status = 204;
 
@@ -267,6 +267,9 @@ void	Post::getBody(int &status, Location &currentLocation, File &responseBody) {
 
 void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
+	if (!location.getRoot().empty())
+		resource = location.getRoot() + "/" + resource;
+
 	int			status = getStatus(location);
 	updateResource(status);
 	File		responseBody;

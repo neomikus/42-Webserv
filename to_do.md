@@ -19,7 +19,7 @@
 	- [ ] Collection endpoint (upload file to directory)
 	- [ ] Redefinir como funciona interface:port
 	- [ ] HTTP redirects
-	- [ ] Comprobar recv/poll relation
+	- [x] Comprobar recv/poll relation
 	- [ ] Comprobar send/poll relation
 	- [ ] Get connection info when connecting to client socket
 	- [ ] inet_addr to something allowed by the subject

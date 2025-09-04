@@ -16,28 +16,28 @@ bool	checkfds(int fd, std::list<int> fdList) {
 	return (false);
 }
 
-std::vector<char>	read_request(int fd) {
+int	read_request(int fd, std::vector<char> &rawResponse) {
 	char buffer[BUFFER_SIZE + 1];
-	std::vector<char> retval;
 	int rd = recv(fd, buffer, 1024, 0);
 	if (rd == -1) {
 		std::cerr << "Read failed!" << std::endl;
-		return (retval);
+		return (true);
 	}
-	while (rd > 0) {
-		for (int i = 0; i < rd; i++) {
-			retval.push_back(buffer[i]);
-		}
-		rd = recv(fd, buffer, 1024, MSG_DONTWAIT);
+
+	for (int i = 0; i < rd; i++) {
+		rawResponse.push_back(buffer[i]);
 	}
-	return (retval);
+
+	if (rd == BUFFER_SIZE)
+		return (false);
+	return (true);
 }
 
 void	connect(int epfd, int fd, std::list<int> &clients) {
 	socklen_t	len;
 	int clientfd = accept(fd, NULL, &len);
 	epoll_event	clientConfig;
-	clientConfig.events = EPOLLOUT;
+	clientConfig.events = EPOLLIN;
 	clientConfig.data.fd = clientfd;
 	if (clientfd == -1) {
 		std::cerr << "Connection refused" << std::endl;
@@ -97,6 +97,7 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 
 	struct epoll_event events[5];
 
+	std::vector<char> rawResponse;
 	while (!sigstop)
 	{
 		int evt_count = epoll_wait(epfd, events, 5, 200);
@@ -107,10 +108,12 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 					connect(epfd, events[i].data.fd, clients);
 
 				if (checkfds(events[i].data.fd, clients)) {
-					std::vector<char> rawResponse = read_request(events[i].data.fd);
-					Request *request = makeRequest(rawResponse);
-					request->response(events[i].data.fd, clients, request->selectServer(servers));
-					delete request;
+					if ((events[i].events & EPOLLIN) && read_request(events[i].data.fd, rawResponse)) {
+						Request *request = makeRequest(rawResponse);
+						request->response(events[i].data.fd, clients, request->selectServer(servers));
+						rawResponse.clear();
+						delete request;
+					}
 				}
 			}
 		}

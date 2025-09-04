@@ -44,7 +44,7 @@ bool	Get::checkAutoindex(Location &location, File &responseBody) {
 
 void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
 	if (status == 200) {
-		if (currentLocation.getCgi() != "")
+		if (currentLocation.getCgi() != "" && !checkDirectory(resource))
 			cgi(status, responseBody, resource, currentLocation.getCgi());
 		else if (!resource.empty() && !checkDirectory(resource))
 			responseBody.open(resource);
@@ -96,9 +96,15 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 		response += "\r\n";
 	}
 
-	response += "Content-Type: ";
-	response += responseBody.getType();
-	response += "\r\n";
+	if (location.getCgi() == "" || checkDirectory(resource)) {
+		response += "Content-Type: ";
+		response += responseBody.getType();
+		response += "\r\n";
+	} else {
+		response += "Content-Type: ";
+		response += "text/html";
+		response += "\r\n";
+	}
 
 	response += "\r\n";
 	response += makeString(responseBody.getBody());
