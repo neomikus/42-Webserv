@@ -11,11 +11,11 @@
 	- [ ] Códigos de Error restantes
 	- [ ] CGI está bien hecho?
 	- [ ] Max allowed size for client requests
-	- [ ] Terminar de implementar root
+	- [x] Terminar de implementar root
 	- [x] Implementar index (Mica)
 	- [ ] Chunked requests?
-	- [ ] DELETE
-	- [ ] autoindex
+	- [x] DELETE
+	- [x] autoindex
 	- [ ] Collection endpoint (upload file to directory)
 	- [ ] Redefinir como funciona interface:port
 	- [ ] HTTP redirects

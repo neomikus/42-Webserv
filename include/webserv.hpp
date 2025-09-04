@@ -26,6 +26,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <utility>
 
 
@@ -105,5 +106,8 @@ bool	checkDirectory(std::string resource);
 class File;
 
 void	teapotGenerator(File &responseBody);
+File	generateAutoIndex(std::string resource, std::string directory);
+
+std::string	getMIME(std::string needle, bool reverse);
 
 #endif

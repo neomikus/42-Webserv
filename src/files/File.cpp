@@ -22,6 +22,10 @@ File::File(const std::string filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
+	if (filename.find_last_of(".") != filename.npos)
+		type = getMIME(filename.substr(filename.find_last_of(".")), false);
+	else
+		type = "text/plain";
 }
 
 File::File(const char *filename) {
@@ -35,6 +39,11 @@ File::File(const char *filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
+
+	if (std::string(filename).find_last_of(".") != std::string(filename).npos)
+		type = getMIME(std::string(filename).substr(std::string(filename).find_last_of(".")), false);
+	else
+		type = "text/plain";
 }
 
 File::~File() {
@@ -52,6 +61,10 @@ void	File::open(const std::string filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
+	if (filename.find_last_of(".") != filename.npos)
+		type = getMIME(filename.substr(filename.find_last_of(".")), false);
+	else
+		type = "text/plain";
 }
 
 void	File::open(const char *filename) {
@@ -65,6 +78,10 @@ void	File::open(const char *filename) {
 
 	body = std::vector<char>(_size);
 	file.read((char*) &body[0], _size);
+	if (std::string(filename).find_last_of(".") != std::string(filename).npos)
+		type = getMIME(std::string(filename).substr(std::string(filename).find_last_of(".")), false);
+	else
+		type = "text/plain";
 }
 
 void	File::write(fileIterator &start, fileIterator &end) {

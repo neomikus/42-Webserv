@@ -13,8 +13,8 @@ Get::Get(const Get &model): Request(model) {
 
 Get::~Get(){}
 
-bool	Get::checkRedirect(int &status) {
-	if (*resource.rbegin() != '/') {
+bool	Get::checkRedirect(Location &location, int &status) {
+	if (!resource.substr(location.getRoot().size()).empty() && *resource.rbegin() != '/') {
 		status = 301;
 		return (true);
 	}
@@ -35,24 +35,28 @@ bool	Get::checkIndex(Location &location, File &responseBody) {
 }
 
 bool	Get::checkAutoindex(Location &location, File &responseBody) {
-	(void)location;
-	(void)responseBody;
-	return (true);
+	if (location.getAutoindex()) {
+		responseBody = generateAutoIndex(resource.substr(location.getRoot().size()), resource);
+		return (true);
+	}
+	return (false);
 }
 
 void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
 	if (status == 200) {
 		if (currentLocation.getCgi() != "")
 			cgi(status, responseBody, resource, currentLocation.getCgi());
-		else if (!checkDirectory(resource))
+		else if (!resource.empty() && !checkDirectory(resource))
 			responseBody.open(resource);
 		else {
-			if (checkRedirect(status))
+			if (checkRedirect(currentLocation, status))
 				return;
 			if (checkIndex(currentLocation, responseBody))
 				return;
 			if (checkAutoindex(currentLocation, responseBody))
 				return;
+			status = 404;
+			getBody(status, currentLocation, responseBody);
 		}
 	} else if (status == 418) {
 		teapotGenerator(responseBody);
@@ -67,6 +71,8 @@ void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
 
 void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
+	if (!location.getRoot().empty())
+		resource = location.getRoot() + "/" + resource;
 	int	status = getStatus(location);
 	File		responseBody;
 
@@ -86,9 +92,13 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	
 	if (status == 301) {
 		response += "Location: ";
-		response += resource.substr(resource.find_last_of('/') + 1) + "/";
+		response += resource.substr(resource.find_last_of('/') + 1) + "/" ;
 		response += "\r\n";
 	}
+
+	response += "Content-Type: ";
+	response += responseBody.getType();
+	response += "\r\n";
 
 	response += "\r\n";
 	response += makeString(responseBody.getBody());

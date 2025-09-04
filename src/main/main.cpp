@@ -75,7 +75,6 @@ int	main(int argc, char *argv[], char *envp[]) {
 		return (1);
 	}
 
-	
 	std::vector<Server> servers;
 	
 	std::ifstream		confFile(argv[1]);

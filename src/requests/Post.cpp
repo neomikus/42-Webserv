@@ -107,28 +107,8 @@ void	Post::parseFormData(std::string rawBody) {
 	filesVector.push_back(newFile);
 }
 
-std::string	getFileType(std::string contentType) {
-	if (contentType == "text/css")
-		return(".css");
-	if (contentType == "text/csv")
-		return(".csv");
-	if (contentType == "text/html")
-		return(".html");
-	if (contentType == "text/javascript")
-		return(".js");
-	if (contentType == "text/plain")
-		return(".txt");
-	if (contentType == "text/xml" || contentType == "application/xml")
-		return(".xml");
-	if (contentType == "application/json")
-		return(".json");
-	if (contentType == "application/pdf")
-		return (".pdf");
-	return ("");
-};
-
 void	Post::parsePlainData(std::vector<char> rawBody) {
-	std::string	filename = "temp" + getFileType(contentType);
+	std::string	filename = "temp" + getMIME(contentType, true);
 	File	newFile(filename);
 
 	newFile.getBody() = rawBody;
@@ -240,8 +220,9 @@ bool checkStat(std::string resource, std::string &filename, int &status) {
 		status = 404;
 		return (false);
 	}
-	if (!(dirBuffer.st_mode & S_IWUSR)) {
+	if (!(dirBuffer.st_mode & S_IWUSR) || (!access(filename.c_str(), F_OK) && !(resBuffer.st_mode & S_IWUSR))) {
 		status = 403;
+		return (false);
 	}
 	return (true);
 }
@@ -275,6 +256,12 @@ void	Post::getBody(int &status, Location &currentLocation, File &responseBody) {
 		writeContent(responseBody);
 	} else if (status == 204) {
 		; // Nothing to return!!!
+	} else {
+		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+		if (!page.empty())
+			getErrorPages(page, responseBody);
+		else
+			responseBody.open(DEFAULT_ERROR_PAGE);
 	}
 }
 

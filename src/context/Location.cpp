@@ -296,7 +296,6 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 	level = nest;
 	uri = value;
 	cgi_option = "";
-	autoindex = false;
 	
 	std::string key_words[11] = {
 	"error_page", "location", "autoindex", "root", "index", "cgi", "allowed_methods", "client_max_body_size", "listen", "server_name", "error"};

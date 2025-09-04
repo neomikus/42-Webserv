@@ -7,7 +7,7 @@ class Get: public Request {
 	private:
 
 		Get();
-		bool	checkRedirect(int &status);
+		bool	checkRedirect(Location &location, int &status);
 		bool	checkIndex(Location &location, File &responseBody);
 		bool	checkAutoindex(Location &location, File &responseBody);
 		void	getBody(int &status, Location &currentLocation, File &responseBody);
