@@ -13,8 +13,9 @@ Get::Get(const Get &model): Request(model) {
 
 Get::~Get(){}
 
-bool	Get::checkRedirect(int &status) {
-	if (!resource.empty() && *resource.rbegin() != '/') {
+bool	Get::checkRedirect(Location &location, int &status) {
+	if (!resource.substr(location.getRoot().size()).empty() && *resource.rbegin() != '/') {
+		std::cout << resource.substr(location.getRoot().size()) << std::endl;
 		status = 301;
 		return (true);
 	}
@@ -188,7 +189,7 @@ void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
 		else if (!resource.empty() && !checkDirectory(resource))
 			responseBody.open(resource);
 		else {
-			if (checkRedirect(status))
+			if (checkRedirect(currentLocation, status))
 				return;
 			if (checkIndex(currentLocation, responseBody))
 				return;
@@ -210,6 +211,8 @@ void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
 
 void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
+	if (!location.getRoot().empty())
+		resource = location.getRoot() + resource;
 	int	status = getStatus(location);
 	File		responseBody;
 
@@ -229,7 +232,7 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	
 	if (status == 301) {
 		response += "Location: ";
-		response += resource.substr(resource.find_last_of('/') + 1) + "/";
+		response += resource.substr(resource.find_last_of('/') + 1 + location.getRoot().size()) + "/";
 		response += "\r\n";
 	}
 

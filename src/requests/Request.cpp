@@ -235,6 +235,9 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
+	if (!location.getRoot().empty())
+		resource = location.getRoot() + resource;
+	
 	int	status = getStatus(location);
 
 	File		responseBody;
