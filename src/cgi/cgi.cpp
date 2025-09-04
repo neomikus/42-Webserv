@@ -50,13 +50,14 @@ void cgi(int &status,File &responseBody, std::string resource, std::string comma
         execve(argv[0], argv, global_envp);
         
         std::cerr << "execve failed" << std::endl;
-        exit(0);
+        exit(1);
     }
 
     else {
 		int	childStatus;
         close(_pipe[1]); 
-        waitpid(child, &childStatus, 0);
+        if (waitpid(child, &childStatus, 0) == -1)
+            std::cerr << "algo ha pasado con el niño" << std::endl;
 		if (childStatus != 0)
 		{
 			status = 500;
@@ -68,4 +69,5 @@ void cgi(int &status,File &responseBody, std::string resource, std::string comma
         
         close(_pipe[0]); 
     }
+    std::cout << "Termine el cgi" << std::endl;
 }
