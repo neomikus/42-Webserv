@@ -62,7 +62,7 @@ Request::Request(std::vector<std::string> splitedRaw) {
 				keepAlive = true;
 		}
 		if (_temp == "Referer:")
-			referer = it->substr(9);		
+			referer = it->substr(9);
 	}
 }
 

@@ -24,7 +24,7 @@ class Post: public Request {
 		void		getBody(int &status, Location &currentLocation, File &responseBody);
 	public:
 		Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
-		Post	&operator=(const Post &model);
+		Post		&operator=(const Post &model);
 		Post(const Post &model);
 		~Post();
 

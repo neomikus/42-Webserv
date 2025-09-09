@@ -52,21 +52,22 @@ void	Post::parseMultipartData(std::vector<char> &rawBody) {
 		for (; start != rawBody.end(); ++start)
 			if (std::distance(start, rawBody.end()) > 4 && *start == '\r' && *(start + 1) == '\n' && *(start + 2) == '\r' && *(start + 3) == '\n')
 				break;
-		
-		std::string fileHead = makeString(lastEnd, start);
 
+		std::string fileHead = makeString(lastEnd, start);
 		std::string	filename = getFilename(fileHead);
 
 		std::vector<char>::iterator end = myHaystack(rawBody, start, boundary);
-		if (end == rawBody.end())
-			break;
 		if (start == rawBody.end())
-			break ;
+			break;
 		start += 4;
 
-		File	newFile(filename, start, end - 4);
+		File	newFile(filename, start, end - 4);		
 
 		filesVector.push_back(newFile);
+		
+		if (end == rawBody.end())
+			break;
+	
 		lastEnd = end;
 		start = end;
 	}
@@ -100,8 +101,10 @@ void	Post::parseFormData(std::string rawBody) {
 	body += "}";
 	body += "\n";
 
-	File	newFile(filename);
+	File	newFile;
 
+	newFile.setName(filename);
+	newFile.setType("application/json");
 	newFile.write(body.c_str());
 
 	filesVector.push_back(newFile);
@@ -109,8 +112,9 @@ void	Post::parseFormData(std::string rawBody) {
 
 void	Post::parsePlainData(std::vector<char> rawBody) {
 	std::string	filename = "temp" + getMIME(contentType, true);
-	File	newFile(filename);
+	File	newFile;
 
+	newFile.setName(filename);
 	newFile.getBody() = rawBody;
 	filesVector.push_back(newFile);
 }
@@ -169,6 +173,7 @@ Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: R
 		}
 	}
 	parseBody(rawBody);
+
 }
 
 Post::Post(const Post &model): Request(model) {
@@ -233,7 +238,7 @@ void	Post::updateResource(int &status) {
 	
 	if (contentType == "multipart/form-data")
 		status = 204;
-
+		
 	for (files::iterator it = filesVector.begin(); it != filesVector.end(); ++it) {
 		if (!checkStat(resource, it->getName(), status)) {
 			std::cerr << "File: " << it->getName() << " can't be written" << std::endl;
@@ -247,11 +252,13 @@ void	Post::updateResource(int &status) {
 		for (std::vector<char>::iterator fileIt = it->getBody().begin(); fileIt != it->getBody().end(); ++fileIt) {
 			newResource.put(*fileIt);
 		}
+
+		std::cout << it->getName() << std::endl;
+		newResourceName = it->getName();
 	}
 }
 
 void	Post::getBody(int &status, Location &currentLocation, File &responseBody) {
-	(void)currentLocation;
 	if (status == 201) {
 		writeContent(responseBody);
 	} else if (status == 204) {
@@ -291,6 +298,20 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	if (status == 201) {
 		response += "Location: ";
 		response += newResourceName;
+		response += "\r\n";
+	} else if (status == 204) {
+		response += "Location: ";
+		response += trimLastWord(newResourceName, '/') + "/";
+		response += "\r\n";
+	}
+
+	if (location.getCgi() == "" || !checkDirectory(resource)) {
+		response += "Content-Type: ";
+		response += responseBody.getType();
+		response += "\r\n";
+	} else {
+		response += "Content-Type: ";
+		response += "text/html";
 		response += "\r\n";
 	}
 

@@ -21,9 +21,9 @@ class Request
 		std::vector<std::string>	accept; // May be renamed acceptFormat?
 		// Accept-Language is horrible
 		std::vector<std::string>	acceptEncoding;
+		std::string					transferEncoding;
 		bool						keepAlive; // Connection: keep-alive = true, Connection: close = false
 		std::string					referer;
-		// Sec fetch: Do later
 
 		void						parseMethodResourceProtocol(std::string line);
 		int							getStatus(Location &currentLocation);

@@ -139,6 +139,7 @@ File	generateAutoIndex(std::string resource, std::string directory) {
 	contents << "</table></body>" << std::endl;
 
 	retval.write(contents.str().c_str());
+	retval.setType("text/html");
 	closedir(dirPTR);
 	return (retval);
 }

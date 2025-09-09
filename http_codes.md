@@ -21,7 +21,7 @@
 - [x] 403 Forbidden
 - [x] 404 Not Found
 - [x] 405 Method Not Allowed
-- [ ] 406 Not Acceptable
+- [x] 406 Not Acceptable
 - [ ] 408 Request Timeout?
 - [ ] 411 Lenght Required
 - [ ] 413 Payload Too Large?

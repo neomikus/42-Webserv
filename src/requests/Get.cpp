@@ -42,6 +42,30 @@ bool	Get::checkAutoindex(Location &location, File &responseBody) {
 	return (false);
 }
 
+bool	Get::checkAcceptedFormats(File &responseBody) {
+	std::string mime = responseBody.getType();
+
+	if (mime == "none" || accept.empty() || std::find(accept.begin(), accept.end(), "*/*") != accept.end())
+		return (true);
+	if (std::find(accept.begin(), accept.end(), mime) != accept.end())
+		return (true);
+	if (std::find(accept.begin(), accept.end(), mime.substr(0, mime.find_last_of("/")) + "/*") != accept.end())
+		return (true);
+	return (false);
+}
+
+void	Get::acceptedFormats(int &status, Location &currentLocation, File &responseBody) {
+	if (!checkAcceptedFormats(responseBody)) {
+		if (status == 200)
+			status = 406;
+		if (std::find(accept.begin(), accept.end(), "text/html") != accept.end() ||
+			std::find(accept.begin(), accept.end(), "text/*") != accept.end())
+			getBody(status, currentLocation, responseBody);
+		else
+			responseBody = File();
+	}
+}
+
 void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
 	if (status == 200) {
 		if (currentLocation.getCgi() != "" && !checkDirectory(resource))
@@ -77,6 +101,7 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	File		responseBody;
 
 	getBody(status, location, responseBody);
+	acceptedFormats(status, location, responseBody);
 
 	long long contentLenght = responseBody.getSize();
 
@@ -96,7 +121,7 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 		response += "\r\n";
 	}
 
-	if (location.getCgi() == "" || checkDirectory(resource)) {
+	if (location.getCgi() == "" || !checkDirectory(resource)) {
 		response += "Content-Type: ";
 		response += responseBody.getType();
 		response += "\r\n";
