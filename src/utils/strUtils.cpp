@@ -195,3 +195,11 @@ char *makeCString(std::vector<char>::iterator start, std::vector<char>::iterator
 	retval[i] = '\0';
 	return (retval);
 }
+
+std::string	getTime() {
+	time_t currentTime = time(0);
+	std::cout << currentTime << std::endl;
+	std::stringstream temp;
+	temp << currentTime;
+	return (temp.str());
+}

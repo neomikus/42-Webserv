@@ -73,11 +73,14 @@ void	Post::parseMultipartData(std::vector<char> &rawBody) {
 	}
 }
 
+/*
+	Need to see if using timestamps as filenames or more RESTful UUIDs
+	https://digitalbunker.dev/understanding-how-uuids-are-generated/
+	https://en.wikipedia.org/wiki/Universally_unique_identifier
+*/
 void	Post::parseFormData(std::string rawBody) {
 	std::string	body;
-	std::string	filename = "temp.json";
-
-	/* DEFINE FILE NAME HERE */
+	std::string	filename = getTime() + ".json";
 
 	body = "{";
 	body += "\n";
@@ -104,8 +107,8 @@ void	Post::parseFormData(std::string rawBody) {
 	File	newFile;
 
 	newFile.setName(filename);
-	newFile.setType("application/json");
 	newFile.write(body.c_str());
+	newFile.setType("application/json");
 
 	filesVector.push_back(newFile);
 }
@@ -196,10 +199,10 @@ bool checkStat(std::string resource, std::string &filename, int &status) {
 			return (false);
 		}
 		if (filename.empty()) { // Generic file name
-			/* Cosas */;
+			filename = getTime();
 		} 
 		else {
-			if (resource[resource.size()] != '/')
+			if (resource[resource.size() - 1] != '/')
 				resource += '/';
 			filename = resource + filename;
 		}
@@ -209,7 +212,7 @@ bool checkStat(std::string resource, std::string &filename, int &status) {
 			filename = resource;
 		}
 		else {
-			resource = trimLastWord(resource, '/') + '/';
+			resource = trimLastWord(resource, '/');
 			if (access(resource.c_str(), F_OK)) {
 				return (false);
 			}
@@ -253,7 +256,6 @@ void	Post::updateResource(int &status) {
 			newResource.put(*fileIt);
 		}
 
-		std::cout << it->getName() << std::endl;
 		newResourceName = it->getName();
 	}
 }
