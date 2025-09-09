@@ -63,6 +63,9 @@ Request::Request(std::vector<std::string> splitedRaw) {
 		}
 		if (_temp == "Referer:")
 			referer = it->substr(9);
+		if (_temp == "Content-Lenght:") {
+			contentLenght = atol(_temp.substr(cstrlen("Content-Lenght: ")).c_str());
+		}
 	}
 }
 
@@ -74,6 +77,7 @@ Request::Request() {
 	userAgent = "";
 	keepAlive = false;
 	referer = "";
+	contentLenght = -1;
 }
 
 Request::Request(const Request &model) {
@@ -163,6 +167,8 @@ int	Request::getStatus(Location &currentLocation) {
 		return (505);
 	if (!checkAllowedMethods(method, currentLocation.getMethods()))
 		return (405);
+	if (transferEncoding != "chunked" && contentLenght == -1)
+		return (411);
 	if (method != "POST" && !resource.empty() && access(resource.c_str(), F_OK)) {
 		if (resource == "teapot")
 			return (418);

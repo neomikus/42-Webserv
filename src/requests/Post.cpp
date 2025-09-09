@@ -154,8 +154,9 @@ Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: R
 		}
 		if (_temp == "User-Agent:")
 			userAgent = it->substr(12);
-		if (_temp == "Accept:")
-			accept = strSplit(it->substr(8), ",");
+		if (_temp == "Accept:") {
+			accept = strSplit(it->substr(cstrlen("Accept:")), ",");
+		}
 		if (_temp == "Accept-Encoding:")
 			acceptEncoding = strSplit(it->substr(17), ", ");
 		if (_temp == "Connection:")
@@ -174,6 +175,7 @@ Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: R
 				boundary = _temp.substr(cstrlen("boundary="));
 			}
 		}
+		std::cout << _temp << std::endl;
 	}
 	parseBody(rawBody);
 
