@@ -54,7 +54,7 @@ void    Delete::getBody(int &status, Location &currentLocation, File &responseBo
 	}
 }
 
-void	Delete::response(int fd, std::list<int> &clients, Server &server) {
+void	Delete::response(int fd, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
 	int	status = getStatus(location);
     deleteResource(status);
@@ -84,5 +84,4 @@ void	Delete::response(int fd, std::list<int> &clients, Server &server) {
 
 	send(fd, response.c_str(), response.length(), 0);
 	close(fd);
-	(void)clients;
 }

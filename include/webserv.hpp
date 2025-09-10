@@ -52,7 +52,7 @@ extern int	errorCode;
 extern std::string errorLine;
 extern char **global_envp;
 
-
+#define EPOLL_EVENT_COUNT 100
 #define BUFFER_SIZE 1024
 
 #include "Socket.hpp"

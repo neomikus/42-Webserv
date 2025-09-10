@@ -43,6 +43,8 @@ Request::Request(std::vector<std::string> splitedRaw) {
 		std::string _temp;
 		tokens >> _temp;
 
+		std::cout << *it << std::endl;
+
 		if (_temp == "Host:")
 		{
 			hostPort.host = it->substr(6, it->find(':', 6) - 6);
@@ -63,6 +65,9 @@ Request::Request(std::vector<std::string> splitedRaw) {
 		}
 		if (_temp == "Referer:")
 			referer = it->substr(9);
+		if (_temp == "Content-Length:") {
+			contentLength = atol(it->substr(cstrlen("Content-Length: ")).c_str());
+		}
 	}
 }
 
@@ -74,6 +79,7 @@ Request::Request() {
 	userAgent = "";
 	keepAlive = false;
 	referer = "";
+	contentLength = -1;
 }
 
 Request::Request(const Request &model) {
@@ -163,6 +169,10 @@ int	Request::getStatus(Location &currentLocation) {
 		return (505);
 	if (!checkAllowedMethods(method, currentLocation.getMethods()))
 		return (405);
+	// Fix later
+	if (false && transferEncoding != "chunked" && contentLength == -1) {
+		return (411);
+	}
 	if (method != "POST" && !resource.empty() && access(resource.c_str(), F_OK)) {
 		if (resource == "teapot")
 			return (418);
@@ -231,7 +241,7 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 		responseBody.open(DEFAULT_ERROR_PAGE);
 }
 
-void	Request::response(int fd, std::list<int> &clients, Server &server) {
+void	Request::response(int fd, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + resource;
@@ -257,7 +267,4 @@ void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	response += makeString(responseBody.getBody());
 
 	send(fd, response.c_str(), response.length(), 0);
-	close(fd);
-	(void)clients;
-	//clients.erase(std::find(clients.begin(), clients.end(), fd));
 }
