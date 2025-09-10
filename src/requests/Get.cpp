@@ -44,9 +44,7 @@ bool	Get::checkAutoindex(Location &location, File &responseBody) {
 
 void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
 	if (status == 200) {
-		if (currentLocation.getCgi() != "")
-			cgi(status, responseBody, resource, currentLocation.getCgi());
-		else if (!resource.empty() && !checkDirectory(resource))
+		if (!resource.empty() && !checkDirectory(resource))
 			responseBody.open(resource);
 		else {
 			if (checkRedirect(currentLocation, status))
@@ -74,35 +72,51 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
 	int	status = getStatus(location);
-	File		responseBody;
-
-	getBody(status, location, responseBody);
-
-	long long contentLenght = responseBody.getSize();
-
 	std::string response;
 
-	response += "HTTP/1.1 "; // This is always true
-	response += toString(status);
-	response += " " + getStatusText(status);
-	// I don't know how much we need to add to the response?
-	response += "Content Lenght: ";
-	response += toString(contentLenght);
-	response += "\r\n";
-	
-	if (status == 301) {
-		response += "Location: ";
-		response += resource.substr(resource.find_last_of('/') + 1) + "/" ;
+	if (location.getCgi() != "" && !checkDirectory(resource))
+	{
+		std::string cgi_response;
+		cgi_response = cgi(status, resource, location.getCgi());
+		response += "HTTP/1.1 "; // This is always true
+		response += toString(status);
+		response += " " + getStatusText(status);
+		// I don't know how much we need to add to the response?
+		response += "Content Lenght: ";
+		response += toString(cgi_response.size());
 		response += "\r\n";
+		response += cgi_response;
 	}
+	else
+	{
+		File		responseBody;
 
-	response += "Content-Type: ";
-	response += responseBody.getType();
-	response += "\r\n";
+		getBody(status, location, responseBody);
 
-	response += "\r\n";
-	response += makeString(responseBody.getBody());
+		long long contentLenght = responseBody.getSize();
 
+
+		response += "HTTP/1.1 "; // This is always true
+		response += toString(status);
+		response += " " + getStatusText(status);
+		// I don't know how much we need to add to the response?
+		response += "Content Lenght: ";
+		response += toString(contentLenght);
+		response += "\r\n";
+		
+		if (status == 301) {
+			response += "Location: ";
+			response += resource.substr(resource.find_last_of('/') + 1) + "/" ;
+			response += "\r\n";
+		}
+
+		response += "Content-Type: ";
+		response += responseBody.getType();
+		response += "\r\n";
+
+		response += "\r\n";
+		response += makeString(responseBody.getBody());
+	}
 	send(fd, response.c_str(), response.size(), 0);
 	close(fd);
 	clients.erase(std::find(clients.begin(), clients.end(), fd));

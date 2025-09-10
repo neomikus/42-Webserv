@@ -46,6 +46,6 @@ class Request
 };
 
 std::string	getStatusText(int status);
-void cgi(int &status,File &responseBody, std::string resource, std::string command);
+std::string cgi(int &status, std::string resource, std::string command);
 
 #endif
