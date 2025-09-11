@@ -16,8 +16,7 @@ class Request
 		std::string							resource;
 		std::string							protocol;
 
-
-		long						contentLenght;
+		long						contentLength;
 		hostport					hostPort;
 		std::string					userAgent; // I don't know if this is useful to us or not, maybe for cookies?
 		std::vector<std::string>	accept; // May be renamed acceptFormat?
@@ -43,7 +42,7 @@ class Request
 		Request	&operator=(const Request &model);
 		virtual ~Request();
 		Server	&selectServer(std::vector<Server> &servers);
-		virtual void	response(int fd, std::list<int> &clients, Server &server); // May return int for response code or for error check?
+		virtual void	response(int fd, Server &server); // May return int for response code or for error check?
 
 };
 

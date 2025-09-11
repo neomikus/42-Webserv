@@ -45,8 +45,9 @@ bool	Get::checkAutoindex(Location &location, File &responseBody) {
 bool	Get::checkAcceptedFormats(File &responseBody) {
 	std::string mime = responseBody.getType();
 
-	std::cout << accept.front() << std::endl;
-	if (mime == "none" || std::find(accept.begin(), accept.end(), std::string("*/*")) != accept.end()) {
+	return (true); // Fix later
+
+	if (mime == "none" || accept.empty() || std::find(accept.begin(), accept.end(), "*/*") != accept.end())
 		return (true);
 	}
 	if (std::find(accept.begin(), accept.end(), mime) != accept.end())
@@ -95,7 +96,7 @@ void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
 	}
 }
 
-void	Get::response(int fd, std::list<int> &clients, Server &server) {
+void	Get::response(int fd, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
@@ -105,7 +106,7 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	getBody(status, location, responseBody);
 	acceptedFormats(status, location, responseBody);
 
-	long long contentLenght = responseBody.getSize();
+	long long responseLenght = responseBody.getSize();
 
 	std::string response;
 
@@ -114,7 +115,7 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
 	response += "Content Lenght: ";
-	response += toString(contentLenght);
+	response += toString(responseLenght);
 	response += "\r\n";
 	
 	if (status == 301) {
@@ -137,6 +138,4 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	response += makeString(responseBody.getBody());
 
 	send(fd, response.c_str(), response.size(), 0);
-	close(fd);
-	clients.erase(std::find(clients.begin(), clients.end(), fd));
 }

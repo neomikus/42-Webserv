@@ -92,27 +92,48 @@ Request *makeRequest(std::vector<char> &rawResponse)
 	return (req);
 }
 
+void	handleEvent(int epfd, int evtfd) {
+	epoll_event	config;
+
+	config.events = EPOLLOUT;
+	config.data.fd = evtfd;
+	epoll_ctl(epfd, EPOLL_CTL_MOD, evtfd, &config);
+}
+
+void	closeConnection(int epfd, int evtfd, std::list<int> &clients) {
+	epoll_ctl(epfd, EPOLL_CTL_DEL, evtfd, NULL);
+	close(evtfd);
+	clients.erase(std::find(clients.begin(), clients.end(), evtfd));
+}
+
 void	acceptConnections(int epfd, std::vector<Server> &servers) {
 	std::list<int>	clients;
 
-	struct epoll_event events[5];
+	struct epoll_event events[EPOLL_EVENT_COUNT];
 
 	std::vector<char> rawResponse;
+	Request *request = NULL;
 	while (!sigstop)
 	{
-		int evt_count = epoll_wait(epfd, events, 5, 200);
+		int evt_count = epoll_wait(epfd, events, EPOLL_EVENT_COUNT, -1);
 		for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 			for (int i = 0; i < evt_count; i++) {
-
 				if (checkfds(events[i].data.fd, it->getSockets()))
 					connect(epfd, events[i].data.fd, clients);
 
 				if (checkfds(events[i].data.fd, clients)) {
 					if ((events[i].events & EPOLLIN) && read_request(events[i].data.fd, rawResponse)) {
-						Request *request = makeRequest(rawResponse);
-						request->response(events[i].data.fd, clients, request->selectServer(servers));
+						request = makeRequest(rawResponse);
+						handleEvent(epfd, events[i].data.fd);
+					} else if (events[i].events & EPOLLOUT) {
+						request->response(events[i].data.fd, request->selectServer(servers));
 						rawResponse.clear();
 						delete request;
+						closeConnection(epfd, events[i].data.fd, clients);
+					} else if (events[i].events & EPOLLHUP || events[i].events & EPOLLERR) {
+						closeConnection(epfd, events[i].data.fd, clients);
+						if (request)
+							delete request;
 					}
 				}
 			}
@@ -120,7 +141,8 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 	}
 	
 	for (std::list<int>::iterator it = clients.begin(); it != clients.end(); ++it) {
-		send(*it, "Connection closed by server\n", cstrlen("Connection closed by server\n"), 0);
+		send(*it, "Connection closed by server\r\n", cstrlen("Connection closed by server\r\n"), 0);
+		epoll_ctl(epfd, EPOLL_CTL_DEL, *it, NULL);
 		close(*it);
 	}
 }

@@ -122,5 +122,13 @@ int	main(int argc, char *argv[], char *envp[]) {
 	}
 
 	acceptConnections(epfd, servers);
+
+	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
+		// Change to loop later
+		epoll_ctl(epfd, EPOLL_CTL_DEL, it->getSockets().front(), NULL);
+	}
+
+	close(epfd);
+
 	return (0);
 }

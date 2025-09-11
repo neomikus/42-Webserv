@@ -28,7 +28,7 @@ class Post: public Request {
 		Post(const Post &model);
 		~Post();
 
-		void	response(int fd, std::list<int> &clients, Server &server);
+		void	response(int fd, Server &server);
 };
 
 #endif

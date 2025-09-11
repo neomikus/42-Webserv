@@ -13,7 +13,7 @@ class Delete: public Request {
 		Delete(std::vector<std::string> splitedResponse);
 		Delete(const Delete &model);
 		~Delete();
-		void	response(int fd, std::list<int> &clients, Server &server);
+		void	response(int fd, Server &server);
 };
 
 #endif

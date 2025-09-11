@@ -276,18 +276,20 @@ void	Post::getBody(int &status, Location &currentLocation, File &responseBody) {
 	}
 }
 
-void	Post::response(int fd, std::list<int> &clients, Server &server) {
+void	Post::response(int fd, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
 
+		
 	int			status = getStatus(location);
 	updateResource(status);
 	File		responseBody;
-
+		
+	std::cout << "Status: " << status << std::endl;
 	getBody(status, location, responseBody);
 
-	long long contentLenght = responseBody.getSize();
+	long long responseLenght = responseBody.getSize();
 
 	std::string response;
 
@@ -296,7 +298,7 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
 	response += "Content Lenght: ";
-	response += toString(contentLenght);
+	response += toString(responseLenght);
 	response += "\r\n";
 	
 	if (status == 201) {
@@ -328,8 +330,6 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	response += makeString(responseBody.getBody());
 	
 	send(fd, response.c_str(), response.length(), 0);
-	close(fd);
-	clients.erase(std::find(clients.begin(), clients.end(), fd));
 }
 
 Post::~Post(){}

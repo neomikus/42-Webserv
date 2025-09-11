@@ -18,7 +18,7 @@ class Get: public Request {
 		Get(const Get &model);
 		~Get();
 	
-		void	response(int fd, std::list<int> &clients, Server &server);
+		void	response(int fd, Server &server);
 };
 
 #endif
