@@ -26,6 +26,7 @@ class Request
 		std::string					referer;
 
 		void						parseMethodResourceProtocol(std::string line);
+		bool						checkPermissions();
 		int							getStatus(Location &currentLocation);
 		virtual void				getBody(int &status, Location &currentLocation, File &responseBody);
 		virtual	void				writeContent(File &fileBody) {(void)fileBody;};

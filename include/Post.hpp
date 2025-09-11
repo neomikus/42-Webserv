@@ -15,10 +15,11 @@ class Post: public Request {
 		std::string			boundary;
 		std::string			newResourceName;
 		Post();
-		void		parseBody(std::vector<char> &rawBody);
+		void		parseChunkedData(std::vector<char> &rawBody);
 		void		parseMultipartData(std::vector<char> &rawBody);
 		void		parseFormData(std::string rawBody);
 		void		parsePlainData(std::vector<char> rawBody);
+		void		parseBody(std::vector<char> &rawBody);
 		void		updateResource(int &status);
 		void		writeContent(File &fileBody);
 		void		getBody(int &status, Location &currentLocation, File &responseBody);

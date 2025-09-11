@@ -2,6 +2,7 @@
 #include "Request.hpp"
 #include "Server.hpp"
 #include "File.hpp"
+#include "Post.hpp"
 
 void	Request::parseMethodResourceProtocol(const std::string line)
 {
@@ -96,6 +97,9 @@ Request::Request(std::vector<std::string> splitedRaw) {
 		if (it->find("Content-Lenght") != it->npos) {
 			contentLength = atol(strTrim(it->substr(cstrlen("Content-Length:"))).c_str());
 		}
+		if (it->find("Transfer-Encoding") != it->npos) {
+			transferEncoding = strTrim(it->substr(cstrlen("Transfer-Encoding:")));
+		}
 	}
 }
 
@@ -108,6 +112,7 @@ Request::Request() {
 	userAgent = "";
 	keepAlive = false;
 	referer = "";
+	transferEncoding = "";
 	contentLength = -1;
 }
 
@@ -173,7 +178,7 @@ Server	&Request::selectServer(std::vector<Server> &servers) {
 	return (*candidates.begin());
 }
 
-bool	checkPermissions(std::string resource) {
+bool	Request::checkPermissions() {
 	struct stat resBuffer;
 
 	stat(resource.c_str(), &resBuffer);
@@ -202,7 +207,7 @@ int	Request::getStatus(Location &currentLocation) {
 			return (418);
 		return (404);
 	}
-	if (!resource.empty() && !checkPermissions(resource))
+	if (method != "POST" && !resource.empty() && !checkPermissions())
 		return (403);
 	// Save request body size in parsing!!!
 	//if (currentLocation.getMax_body_size() > request_body_size)

@@ -5,6 +5,14 @@ Post::Post(): Request() {
 	contentType = "none";
 }
 
+std::vector<char> makeChunk(std::vector<char>::iterator begin, std::vector<char>::iterator end) {
+	std::vector<char> chunk;
+	for (; begin != end; ++begin) {
+		chunk.push_back(*begin);
+	}
+	return (chunk);
+}
+
 std::vector<char>::iterator myHaystack(std::vector<char> &haystack, std::vector<char>::iterator begin, std::string needle)
 {
 	std::vector<char>::iterator itH = begin;
@@ -30,6 +38,52 @@ std::vector<char>::iterator myHaystack(std::vector<char> &haystack, std::vector<
 	}
 	return haystack.end();
 }
+
+bool	finalChunk(std::vector<char> &chunk) {
+	if (chunk.empty())
+		return (false);
+	if (chunk[0] != '0')
+		return (false);
+	if (chunk[1] != '\r' || chunk[2] != '\n')
+		return (false);
+	return (true);
+}
+
+void	Post::parseChunkedData(std::vector<char> &rawBody) {
+	std::string	totalSize;
+
+	std::vector<char>::iterator it = rawBody.begin();
+	for (; *it != '\n'; ++it) {
+		totalSize += *it;
+	}
+	
+	std::vector<char>::iterator start = it + 1;
+	std::vector<char>::iterator end;
+	File	currentFile;
+
+	for (std::vector<char> currentChunk; ;) {
+		std::string	size;
+		
+
+		for (; *start != '\r' && *start != '\n'; ++start) {
+			size += *start;
+		}
+		
+		if (strtol(size.c_str(), NULL, 16) == 0)
+			break;
+		
+		start += 2;
+		end = start;
+		std::advance(end, strtol(size.c_str(), NULL, 16));
+
+		currentChunk = makeChunk(start, end);
+
+		currentFile.write(currentChunk.begin(), currentChunk.end());
+		start = end + 2;
+	}
+	filesVector.push_back(currentFile);
+}
+
 std::string getFilename(std::string filehead)
 {
 	std::vector<std::string> splited = strSplit(filehead, "\n");
@@ -124,10 +178,11 @@ void	Post::parsePlainData(std::vector<char> rawBody) {
 
 void	Post::parseBody(std::vector<char> &rawBody) {
 
-	if (contentType == "application/x-www-form-urlencoded") {
+	if (transferEncoding == "chunked") {
+		parseChunkedData(rawBody);
+	} else if (contentType == "application/x-www-form-urlencoded") {
 		parseFormData(makeString(rawBody));
-	}
-	else if (contentType == "multipart/form-data") {
+	} else if (contentType == "multipart/form-data") {
 		parseMultipartData(rawBody);
 	} else {
 		parsePlainData(rawBody);
@@ -142,6 +197,8 @@ Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: R
 		return ;
 	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
 	{
+		*it = strTrim(*it, '\r');
+
 		if (it->find("Host") != it->npos) {
 			hostPort.host = strTrim(it->substr(0, it->find(':')));
 			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
@@ -164,6 +221,9 @@ Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: R
 			if (it->find("boundary=") != it->npos) {
 				boundary = it->substr(it->find(";") + cstrlen("boundary="));
 			}
+		}
+		if (it->find("Transfer-Encoding") != it->npos) {
+			transferEncoding = strTrim(it->substr(cstrlen("Transfer-Encoding:")));
 		}
 	}
 	parseBody(rawBody);
@@ -210,10 +270,10 @@ bool checkStat(std::string resource, std::string &filename, int &status) {
 				resource += '/';
 			filename = resource + filename;
 		}
-	}
-	else {
+	} else {
 		if (filename.empty()) { // Generic file name
 			filename = resource;
+			resource = trimLastWord(resource, '/') + "/";
 		}
 		else {
 			resource = trimLastWord(resource, '/');
@@ -232,6 +292,7 @@ bool checkStat(std::string resource, std::string &filename, int &status) {
 		status = 404;
 		return (false);
 	}
+
 	if (!(dirBuffer.st_mode & S_IWUSR) || (!access(filename.c_str(), F_OK) && !(resBuffer.st_mode & S_IWUSR))) {
 		status = 403;
 		return (false);
@@ -245,7 +306,7 @@ void	Post::updateResource(int &status) {
 	
 	//if (contentType == "multipart/form-data")
 	//	status = 204;
-		
+
 	for (files::iterator it = filesVector.begin(); it != filesVector.end(); ++it) {
 		if (!checkStat(resource, it->getName(), status)) {
 			std::cerr << "File: " << it->getName() << " can't be written" << std::endl;
@@ -253,6 +314,7 @@ void	Post::updateResource(int &status) {
 		}
 
 		std::filebuf	fb;
+
 		fb.open(it->getName().c_str(), std::ios::binary | std::ios::out);
 		std::ostream	newResource(&fb);
 
