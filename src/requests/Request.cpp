@@ -29,7 +29,7 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 	resource = ltrim(resource, '/');
 }
 
-
+/*
 Request::Request(std::vector<std::string> splitedRaw) {
 	*this = Request();
 	parseMethodResourceProtocol(splitedRaw[0]);
@@ -70,6 +70,35 @@ Request::Request(std::vector<std::string> splitedRaw) {
 		}
 	}
 }
+*/
+
+Request::Request(std::vector<std::string> splitedRaw) {
+	*this = Request();
+	parseMethodResourceProtocol(splitedRaw[0]);
+	if (error)
+		return ;
+	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
+	{
+		if (it->find("Host") != it->npos) {
+			hostPort.host = strTrim(it->substr(0, it->find(':')));
+			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
+		}
+		if (it->find("User-Agent") != it->npos)
+			userAgent = strTrim(it->substr(cstrlen("User-Agent:")));
+		if (it->find("Accept") != it->npos)
+			accept = strSplit(strTrim(it->substr(cstrlen("Accept:"))), ",");
+		if (it->find("Connection") != it->npos) {
+			if (strTrim(it->substr(cstrlen("Connection:"))) == "keep-alive")
+				keepAlive = true;
+		}
+		if (it->find("Referer") != it->npos)
+			referer = strTrim(it->substr(cstrlen("Referer")));
+		if (it->find("Content-Lenght") != it->npos) {
+			contentLength = atol(strTrim(it->substr(cstrlen("Content-Length:"))).c_str());
+		}
+	}
+}
+
 
 Request::Request() {
 	error = false;
@@ -90,11 +119,9 @@ Request::Request(const Request &model) {
 	this->hostPort = model.hostPort;
 	this->userAgent = model.userAgent;
 	this->accept = model.accept;
-	this->acceptEncoding = model.acceptEncoding;
 	this->keepAlive = model.keepAlive;
 	this->referer = model.referer;
 }
-
 
 Request	&Request::operator=(const Request &model) {
 	this->error = model.error;
@@ -104,12 +131,10 @@ Request	&Request::operator=(const Request &model) {
 	this->hostPort = model.hostPort;
 	this->userAgent = model.userAgent;
 	this->accept = model.accept;
-	this->acceptEncoding = model.acceptEncoding;
 	this->keepAlive = model.keepAlive;
 	this->referer = model.referer;
 	return (*this);
 }
-
 
 Request::~Request() {
 	
@@ -169,8 +194,7 @@ int	Request::getStatus(Location &currentLocation) {
 		return (505);
 	if (!checkAllowedMethods(method, currentLocation.getMethods()))
 		return (405);
-	// Fix later
-	if (false && transferEncoding != "chunked" && contentLength == -1) {
+	if (method == "POST" && transferEncoding != "chunked" && contentLength == -1) {
 		return (411);
 	}
 	if (method != "POST" && !resource.empty() && access(resource.c_str(), F_OK)) {

@@ -78,6 +78,7 @@ Request *makeRequest(std::vector<char> &rawResponse)
 	std::string			rawHeader = makeString(rawResponse.begin(), bodyStart);
 	std::vector<std::string>	splitedResponse = strSplit(rawHeader, "\n");
 
+
 	buffer << splitedResponse[0];
 	buffer >> _temp;
 	if (_temp == "GET")

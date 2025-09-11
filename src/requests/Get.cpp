@@ -49,7 +49,6 @@ bool	Get::checkAcceptedFormats(File &responseBody) {
 
 	if (mime == "none" || accept.empty() || std::find(accept.begin(), accept.end(), "*/*") != accept.end())
 		return (true);
-	}
 	if (std::find(accept.begin(), accept.end(), mime) != accept.end())
 		return (true);
 	if (std::find(accept.begin(), accept.end(), mime.substr(0, mime.find_last_of("/")) + "/*") != accept.end())

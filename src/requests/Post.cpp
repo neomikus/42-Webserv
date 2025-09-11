@@ -135,54 +135,56 @@ void	Post::parseBody(std::vector<char> &rawBody) {
 }
 
 Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: Request(splitedRaw)*/ {
+	*this = Post();
+
 	parseMethodResourceProtocol(splitedRaw[0]);
 	if (error)
 		return ;
 	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
 	{
-		std::stringstream	tokens;
-		tokens << *it;
-
-		std::string _temp;
-		tokens >> _temp;
-
-		if (_temp == "Host:")
-		{
-			hostPort.host = it->substr(6, it->find(':', 6) - 6);
+		if (it->find("Host") != it->npos) {
+			hostPort.host = strTrim(it->substr(0, it->find(':')));
 			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
-
 		}
-		if (_temp == "User-Agent:")
-			userAgent = it->substr(12);
-		if (_temp == "Accept:") {
-			accept = strSplit(it->substr(cstrlen("Accept:")), ",");
-		}
-		if (_temp == "Accept-Encoding:")
-			acceptEncoding = strSplit(it->substr(17), ", ");
-		if (_temp == "Connection:")
-		{
-			tokens >> _temp;
-			if (_temp == "keep-alive")
+		if (it->find("User-Agent") != it->npos)
+			userAgent = strTrim(it->substr(cstrlen("User-Agent:")));
+		if (it->find("Accept") != it->npos)
+			accept = strSplit(strTrim(it->substr(cstrlen("Accept:"))), ",");
+		if (it->find("Connection") != it->npos) {
+			if (strTrim(it->substr(cstrlen("Connection:"))) == "keep-alive")
 				keepAlive = true;
 		}
-		if (_temp == "Referer:")
-			referer = it->substr(9);		
-		if (_temp == "Content-Type:") {
-			tokens >> contentType;
-			contentType = rtrim(contentType, ';');
-			tokens >> _temp;
-			if (_temp.substr(0, cstrlen("boundary=")) == "boundary=") {
-				boundary = _temp.substr(cstrlen("boundary="));
+		if (it->find("Referer") != it->npos)
+			referer = strTrim(it->substr(cstrlen("Referer")));
+		if (it->find("Content-Length") != it->npos) {
+			contentLength = atol(strTrim(it->substr(cstrlen("Content-Length:"))).c_str());
+		}
+		if (it->find("Content-Type") != it->npos) {
+			contentType = strTrim(it->substr(cstrlen("Content-Type:"), it->find(";") - cstrlen("Content-Type:")));
+			if (it->find("boundary=") != it->npos) {
+				boundary = it->substr(it->find(";") + cstrlen("boundary="));
 			}
 		}
-		std::cout << _temp << std::endl;
 	}
 	parseBody(rawBody);
-
 }
 
 Post::Post(const Post &model): Request(model) {
-	
+	this->contentType = model.contentType;
+}
+
+Post	&Post::operator=(const Post &model) {
+	this->error = model.error;
+	this->method = model.method;
+	this->resource = model.resource;
+	this->protocol = model.protocol;
+	this->hostPort = model.hostPort;
+	this->userAgent = model.userAgent;
+	this->accept = model.accept;
+	this->keepAlive = model.keepAlive;
+	this->referer = model.referer;
+	this->contentType = model.contentType;
+	return (*this);
 }
 
 void	Post::writeContent(File &fileBody) {
@@ -241,8 +243,8 @@ void	Post::updateResource(int &status) {
 	if (status != 201 && status != 204)
 		return;
 	
-	if (contentType == "multipart/form-data")
-		status = 204;
+	//if (contentType == "multipart/form-data")
+	//	status = 204;
 		
 	for (files::iterator it = filesVector.begin(); it != filesVector.end(); ++it) {
 		if (!checkStat(resource, it->getName(), status)) {
@@ -281,12 +283,10 @@ void	Post::response(int fd, Server &server) {
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
 
-		
 	int			status = getStatus(location);
 	updateResource(status);
 	File		responseBody;
-		
-	std::cout << "Status: " << status << std::endl;
+
 	getBody(status, location, responseBody);
 
 	long long responseLenght = responseBody.getSize();

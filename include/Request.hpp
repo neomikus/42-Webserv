@@ -21,7 +21,6 @@ class Request
 		std::string					userAgent; // I don't know if this is useful to us or not, maybe for cookies?
 		std::vector<std::string>	accept; // May be renamed acceptFormat?
 		// Accept-Language is horrible
-		std::vector<std::string>	acceptEncoding;
 		std::string					transferEncoding;
 		bool						keepAlive; // Connection: keep-alive = true, Connection: close = false
 		std::string					referer;
