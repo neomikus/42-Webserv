@@ -45,15 +45,13 @@ bool	Get::checkAutoindex(Location &location, File &responseBody) {
 bool	Get::checkAcceptedFormats(File &responseBody) {
 	std::string mime = responseBody.getType();
 
-	return (true); // Fix later
-
 	if (mime == "none" || accept.empty() || std::find(accept.begin(), accept.end(), "*/*") != accept.end())
-		return (true);
+		return (false);
 	if (std::find(accept.begin(), accept.end(), mime) != accept.end())
-		return (true);
+		return (false);
 	if (std::find(accept.begin(), accept.end(), mime.substr(0, mime.find_last_of("/")) + "/*") != accept.end())
-		return (true);
-	return (false);
+		return (false);
+	return (true);
 }
 
 void	Get::acceptedFormats(int &status, Location &currentLocation, File &responseBody) {
