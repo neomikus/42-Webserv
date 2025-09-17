@@ -16,19 +16,12 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 	buffer >> resource;
 	buffer >> protocol;
 
-	std::vector<std::string>	queries = strSplit(resource.substr(resource.find("?") + 1, resource.size()), "&");
-	for (std::vector<std::string>::iterator it = queries.begin(); it != queries.end(); ++it) {
-		std::vector<std::string>	currentQuery = strSplit(*it, "=");
-		if (currentQuery.size() != 2)
-			continue;
-		std::pair<std::string, std::string>	temp(currentQuery.front(), currentQuery.back());
-	}
-	
+	size_t tokenPos = resource.find("?");
+	if (tokenPos != resource.npos)
+		query = resource.substr(tokenPos + 1);
 	resource = resource.substr(0, resource.find("?"));
-
 	resource = ltrim(resource, '/');
 }
-
 
 Request::Request(std::vector<std::string> splitedRaw) {
 	*this = Request();
@@ -235,6 +228,7 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
+	
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + resource;
 	
