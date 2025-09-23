@@ -49,12 +49,6 @@ Webserv is a web server project developed as part of the <a href="https://www.42
 
 <h2>📁 Project Structure 📁</h2>
 
-- `src/` — Source code files
-- `conf/` — Example configuration files
-- `www/` — Static website content and CGI scripts
-- `Makefile` — Build instructions
-
-
 ```
 Webserv/
 ├── config/
