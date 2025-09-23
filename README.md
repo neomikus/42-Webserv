@@ -47,13 +47,29 @@ Webserv is a web server project developed as part of the <a href="https://www.42
    - Open your browser and navigate to the configured host/port.
    - Use tools like `curl` or Postman to test HTTP methods.
 
-<h2>Project Structure</h2>
+<h2>📁 Project Structure 📁</h2>
 
 - `src/` — Source code files
 - `conf/` — Example configuration files
 - `www/` — Static website content and CGI scripts
 - `Makefile` — Build instructions
 
+
+```
+Webserv/
+├── config/
+|     Multiple configuration file examples
+├── include/
+|     Code headers (.hpp)
+├── srcs/
+|     Source code files (.cpp)
+├── www/ (Example static and dynamic content)
+|   ├── forms (Form upload directory)
+|   ├── html (HTML pages)
+|   ├── uploads (Multimedia files upload directory)
+|   └── wordle (Example project)
+└── Makefile
+```
 
 <h2>Made by:</h2>
  <table>
