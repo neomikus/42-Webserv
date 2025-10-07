@@ -68,10 +68,10 @@ Webserv/
 <h2>Made by:</h2>
  <table>
   <tr>
-    <th><a href="https://www.github.com/princess-mikus"><img src="https://avatars.githubusercontent.com/u/46509432?v=4"></a></th>
+    <th><a href="https://www.github.com/neomikus"><img src="https://avatars.githubusercontent.com/u/46509432?v=4"></a></th>
     <th><a href="https://www.github.com/GoroXabi"><img src="https://avatars.githubusercontent.com/u/98422655?v=4"></a></th>
   </tr>
   <tr align="center">
-    <td><a href="https://www.github.com/princess-mikus"> princess-mikus</a></td>
+    <td><a href="https://www.github.com/pneomikus"> neomikus</a></td>
     <td><a href="https://www.github.com/GoroXabi"> GoroXabi</a> </td>
   </tr>
