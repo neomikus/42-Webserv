@@ -72,6 +72,11 @@ Webserv/
     <th><a href="https://www.github.com/GoroXabi"><img src="https://avatars.githubusercontent.com/u/98422655?v=4"></a></th>
   </tr>
   <tr align="center">
-    <td><a href="https://www.github.com/pneomikus"> neomikus</a></td>
+    <td><a href="https://www.github.com/neomikus"> neomikus</a></td>
     <td><a href="https://www.github.com/GoroXabi"> GoroXabi</a> </td>
   </tr>
+  <tr align="center">
+    <td> Micaela Casaubon </td>
+    <td> Xabier Ortega </td>
+  </tr>
+</table> 
