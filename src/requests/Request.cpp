@@ -5,8 +5,10 @@
 
 void	Request::parseMethodResourceProtocol(const std::string line)
 {
-	if (countWords(line) != 3)
+	if (countWords(line) != 3) {
 		error = true;
+		return;
+	}
 
 	std::stringstream	buffer;
 	buffer << line;
@@ -14,17 +16,12 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 	buffer >> resource;
 	buffer >> protocol;
 
-	std::vector<std::string>	queries = strSplit(resource.substr(resource.find("?") + 1, resource.size()), "&");
-	for (std::vector<std::string>::iterator it = queries.begin(); it != queries.end(); ++it) {
-		std::vector<std::string>	currentQuery = strSplit(*it, "=");
-		if (currentQuery.size() != 2)
-			continue;
-		std::pair<std::string, std::string>	temp(currentQuery.front(), currentQuery.back());
-	}
-	
+	size_t tokenPos = resource.find("?");
+	if (tokenPos != resource.npos)
+		query = resource.substr(tokenPos + 1);
 	resource = resource.substr(0, resource.find("?"));
+	resource = ltrim(resource, '/');
 }
-
 
 Request::Request(std::vector<std::string> splitedRaw) {
 	*this = Request();
@@ -60,22 +57,6 @@ Request::Request(std::vector<std::string> splitedRaw) {
 		if (_temp == "Referer:")
 			referer = it->substr(9);		
 	}
-/* 	std::cout << "this->host " << hostPort.host << std::endl;
-	std::cout << "this->port " << hostPort.port << std::endl;
-	std::cout << "this->userAgent " << userAgent << std::endl;
-	std::cout << "this->accept" << std::endl;
-	for (std::vector<std::string>::iterator it = accept.begin(); it != accept.end(); ++it)
-		std::cout << '\t' << *it << std::endl;
-	std::cout << "this->acceptEncoding" << std::endl;
-	for (std::vector<std::string>::iterator it = acceptEncoding.begin(); it != acceptEncoding.end(); ++it)
-		std::cout << '\t' << *it << std::endl;
-	std::cout << "this->keepAlive " << keepAlive << std::endl;
-	std::cout << "this->referer " << referer << std::endl;
-	std::cout << "this->method " << method << std::endl;
-	std::cout << "this->resource " << resource << std::endl;
-	std::cout << "this->protocol " << protocol << std::endl; */
-
-	
 }
 
 Request::Request() {
@@ -154,6 +135,16 @@ Server	&Request::selectServer(std::vector<Server> &servers) {
 	return (*candidates.begin());
 }
 
+bool	checkPermissions(std::string resource) {
+	struct stat resBuffer;
+
+	stat(resource.c_str(), &resBuffer);
+
+	if (!(resBuffer.st_mode & S_IRUSR))
+		return (false);
+	return (true);
+}
+
 int	Request::getStatus(Location &currentLocation) {
 	if (error)
 		return (400);
@@ -161,13 +152,17 @@ int	Request::getStatus(Location &currentLocation) {
 		method != "CONNECT" && method != "TRACE" && method != "POST" &&
 		method != "PATCH" && method != "GET" && method != "DELETE")
 		return (501);
+	if (protocol != "HTTP/1.0" && protocol != "HTTP/1.1")
+		return (505);
 	if (!checkAllowedMethods(method, currentLocation.getMethods()))
 		return (405);
-	if (method != "POST" && access(resource.substr(1).c_str(), F_OK)) {
-		if (resource.substr(1) == "teapot")
+	if (method != "POST" && !resource.empty() && access(resource.c_str(), F_OK)) {
+		if (resource == "teapot")
 			return (418);
 		return (404);
 	}
+	if (!resource.empty() && !checkPermissions(resource))
+		return (403);
 	// Save request body size in parsing!!!
 	//if (currentLocation.getMax_body_size() > request_body_size)
 	//	return (413);
@@ -176,7 +171,7 @@ int	Request::getStatus(Location &currentLocation) {
 	return (200);
 }
 
-std::string checkErrorPages(std::vector<error_page> error_pages, int &status) {
+std::string Request::checkErrorPages(std::vector<error_page> error_pages, int &status) {
 	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
 		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); ++it2) {
 			if (*it2 == status) {
@@ -196,146 +191,52 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 		responseBody.open(page);
 }
 
-std::string read_from_pipe(int fd) {
-    char buffer[1024];
-    std::string retval;
-    ssize_t rd = read(fd, buffer, sizeof(buffer));
+Location Request::selectContext(Location &location, std::string fatherUri) {
+   std::string uri = "/" + resource;
 
-	if (rd == -1) {
-		std::cerr << "Read failed!" << std::endl;
-		return ("");
-	}
+   if (uri[uri.size() - 1] == '/')
+	   uri.erase(uri.end() - 1);
+   if (fatherUri != "/")
+	   uri = uri.substr(fatherUri.size());
+   else
+	   fatherUri = "";
 
-	buffer[rd] = '\0';
-    while (rd > 0) {
-		std::cout << buffer;
-		retval += buffer;
-		if (rd < 1024)
-			break;
-		rd = read(fd, buffer, 1024);
-		buffer[rd] = '\0';
-    }
-	
-	std::cout << "I READ" << std::endl;
-    return retval;
-}
+   while(!uri.empty())
+   {	
+	   for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
+	   {
+		   if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
+			   return (*it);
+		   if (it->getUri() == uri)
+			   return (selectContext(*it, fatherUri + it->getUri()));
+	   }
+	   if (uri == "/")
+		   break;
+	   uri = trimLastWord(uri, '/');
+   }
 
-void cgi(int &status,File &responseBody, std::string resource, std::string command) {
-    std::cout << "IM IN CGI" << std::endl;
-    
-    int _pipe[2];
-    if (pipe(_pipe) == -1) {
-        std::cerr << "pipe failed" << std::endl;
-        return;
-    }
-
-    pid_t child = fork();
-    if (child == -1) {
-        std::cerr << "fork failed" << std::endl;
-        close(_pipe[0]);
-        close(_pipe[1]);
-        return;
-    }
-
-    if (child == 0) { 
-        close(_pipe[0]); 
-        dup2(_pipe[1], STDOUT_FILENO); 
-        close(_pipe[1]);
-
-		std::string file = resource;
-		if (file[0] == '/')
-			file = file.substr(1);
-        char *argv[] = {const_cast<char*>(command.c_str()), const_cast<char*>(file.c_str()), NULL};
-
-        execve(argv[0], argv, global_envp);
-        
-        std::cerr << "execve failed" << std::endl;
-        exit(0);
-    }
-
-    else {
-		int	childStatus;
-        close(_pipe[1]); 
-        waitpid(child, &childStatus, 0);
-		if (childStatus != 0)
-		{
-			status = 500;
-			return;
-		}
-
-        std::string response = read_from_pipe(_pipe[0]);
-        std::cout << HCYA << response << std::endl;
-        responseBody << response;
-        
-        close(_pipe[0]); 
-    }
+   return (location);
 }
 
 void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
-	
-	if (status == 200) {
-		if (currentLocation.getCgi() != "")
-			cgi(status, responseBody, resource, currentLocation.getCgi());
-		else
-			responseBody.open(resource.substr(1, resource.find("?") - 1));
-		return;
-	} else if (status == 201) {
-		;
-	} else if (status == 204) {
-		; // Nothing to return!!!
-	} else if (status == 418) {
-		teapotGenerator(responseBody);
-	} else if (status / 100 == 4 || status / 100 == 5) {
-		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
-		if (!page.empty()) {
-			getErrorPages(page, responseBody);
-			return;
-		}
-  } else
-    responseBody.open(DEFAULT_ERROR_PAGE);
-
-Location Request::selectContext(Location &location, std::string fatherUri) {
-	std::string uri = resource;
-	if (uri[uri.size() - 1] == '/')
-		uri.erase(uri.end() - 1);
-	if (fatherUri != "/")
-		uri = uri.substr(fatherUri.size());
+	std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+	if (!page.empty())
+		getErrorPages(page, responseBody);
 	else
-		fatherUri = "";
-
-	while(!uri.empty())
-	{	
-		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
-		{
-      /* TO CHECK
-xabicode
-			std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
-			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
-				return (*it);
-=======
-			//std::cout  << "resource: [" << uri << "]" << " location uri: [" << it->getUri() << "]" << std::endl;
-mikucode
-			if (it->getUri() == uri)
-				return (selectContext(*it, fatherUri + it->getUri()));
-		}
-    */
-		if (uri == "/")
-			break;
-		uri = trimLastWord(uri, '/');
-		//std::cout << "trimed [" << uri << "]" << std::endl;
-	}
-
-	return (location);
+		responseBody.open(DEFAULT_ERROR_PAGE);
 }
 
 void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
-	int			status = getStatus(location);
+	
+	if (!location.getRoot().empty())
+		resource = location.getRoot() + resource;
+	
+	int	status = getStatus(location);
+
 	File		responseBody;
 
 	getBody(status, location, responseBody);
-
-	long long contentLenght = responseBody.getSize();
 
 	std::string response;
 
@@ -344,16 +245,15 @@ void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
 	response += "Content Lenght: ";
-	response += toString(contentLenght);
+    response += responseBody.getSize();
 	response += "\r\n";
 	
 	response += "\r\n";
 
-	for (std::string line; std::getline(responseBody.getStream(), line);) {
-		response += line;
-	}
+	response += makeString(responseBody.getBody());
 
 	send(fd, response.c_str(), response.length(), 0);
 	close(fd);
-	clients.erase(std::find(clients.begin(), clients.end(), fd));
+	(void)clients;
+	//clients.erase(std::find(clients.begin(), clients.end(), fd));
 }

@@ -44,4 +44,5 @@ post-test.txt
 
 tmp_reporte_cppcheck.txt
 
-post
+# Uploads folder contents
+www/uploads/*

@@ -142,9 +142,23 @@ size_t	cstrlen(const char *str) {
 	return (size);
 }
 
-std::string makeString(std::vector<char> &vec) {
+size_t	cstrcat(char *dst, const char *src) {
+	if (!dst || !src)
+		return (0);
+		
+	int j = cstrlen(dst);
+	for (size_t i = 0; src[i]; i++) {
+		dst[j + i] = src[i];
+	}
+
+	size_t size = cstrlen(src) + j;
+	dst[size] = '\0';
+	return (size);
+}
+
+std::string makeString(const std::vector<char> vec) {
 	std::string	retval;
-	for (std::vector<char>::iterator it = vec.begin(); it != vec.end() ; ++it) {
+	for (std::vector<char>::const_iterator it = vec.begin(); it != vec.end() ; ++it) {
 		retval += *it;
 	}
 	return (retval);
@@ -156,5 +170,28 @@ std::string makeString(std::vector<char>::iterator start, std::vector<char>::ite
 	for (std::vector<char>::iterator it = start; it != end ; ++it) {
 		retval += *it;
 	}
+	return (retval);
+}
+
+char *makeCString(const std::vector<char> vec) {
+	char	*retval = new char[vec.size()];
+
+	size_t i = 0;
+	for (std::vector<char>::const_iterator it = vec.begin(); it != vec.end() ; ++it) {
+		retval[i++] = *it;
+	}
+
+	retval[i] = '\0';
+	return (retval);
+}
+
+char *makeCString(std::vector<char>::iterator start, std::vector<char>::iterator end) {
+	char	*retval = new char[std::distance(start, end)];
+	size_t i = 0;
+	for (std::vector<char>::iterator it = start; it != end ; ++it) {
+		retval[i++] = *it;
+	}
+
+	retval[i] = '\0';
 	return (retval);
 }

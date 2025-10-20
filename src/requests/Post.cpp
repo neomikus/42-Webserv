@@ -30,7 +30,7 @@ std::vector<char>::iterator myHaystack(std::vector<char> &haystack, std::vector<
 	}
 	return haystack.end();
 }
-std::string get_filename(std::string filehead)
+std::string getFilename(std::string filehead)
 {
 	std::vector<std::string> splited = strSplit(filehead, "\n");
 	for (std::vector<std::string>::iterator it = splited.begin(); it != splited.end(); ++it)
@@ -41,59 +41,90 @@ std::string get_filename(std::string filehead)
 	return "";
 }
 
-void	Post::parseBody(std::vector<char> &rawBody) {
-	// Program later
-	//if (rawBody.size() > server.getMax_body_size())
-	//	return ;
-	std::string			filename;
-	std::string			resourceName;
-	if (contentType == "application/x-www-form-urlencoded") {
-		;
-	}
-	else if (contentType == "multipart/form-data;") {
+void	Post::parseMultipartData(std::vector<char> &rawBody) {
+	std::vector<char>::iterator lastEnd = rawBody.begin();
+	std::vector<char>::iterator start = rawBody.begin();
 
-		std::vector<char>::iterator lastEnd = rawBody.begin();
-		std::vector<char>::iterator start = rawBody.begin();
+	for (; start != rawBody.end(); ++start)
+	{
+		std::vector<char>	body;
 
 		for (; start != rawBody.end(); ++start)
-		{
-			std::vector<char>	body;
-
-			for (; start != rawBody.end(); ++start)
-				if (std::distance(start, rawBody.end()) > 4 && *start == '\r' && *(start + 1) == '\n' && *(start + 2) == '\r' && *(start + 3) == '\n')
-					break;
-			
-			std::string fileHead = makeString(lastEnd, start);
-
-			filename = get_filename(fileHead);
-
-			std::cout << filename << std::endl;
-			std::vector<char>::iterator end = myHaystack(rawBody, start, boundary);
-			if (end == rawBody.end())
+			if (std::distance(start, rawBody.end()) > 4 && *start == '\r' && *(start + 1) == '\n' && *(start + 2) == '\r' && *(start + 3) == '\n')
 				break;
-			if (start == rawBody.end())
-				break ;
-			start += 4;
+		
+		std::string fileHead = makeString(lastEnd, start);
 
-			for (; start != end - 4; ++start)
-			{
-				body.push_back(*start);
-			}
-			std::cout << "pushing done" << std::endl;
-			filesVector.push_back(std::make_pair(filename, body));
-			lastEnd = end;
-			start = end;
-		}
+		std::string	filename = getFilename(fileHead);
+
+		std::vector<char>::iterator end = myHaystack(rawBody, start, boundary);
+		if (end == rawBody.end())
+			break;
+		if (start == rawBody.end())
+			break ;
+		start += 4;
+
+		File	newFile(filename, start, end - 4);
+
+		filesVector.push_back(newFile);
+		lastEnd = end;
+		start = end;
 	}
-	else if (contentType == "text/html") {
-		;
+}
+
+void	Post::parseFormData(std::string rawBody) {
+	std::string	body;
+	std::string	filename = "temp.json";
+
+	/* DEFINE FILE NAME HERE */
+
+	body = "{";
+	body += "\n";
+	std::vector<std::string> formData = strSplit(rawBody, "&");
+	for (std::vector<std::string>::iterator it = formData.begin(); it != formData.end(); ++it) {
+		body += '\t';
+		std::vector<std::string> values = strSplit(*it, "=");
+		body += '\"';
+		body += values.front();
+		body += '\"';
+		body += ':';
+		body += ' ';
+		body += '\"';
+		body += values.back();
+		body += "\"";
+		if (it + 1 != formData.end())
+			body += ',';
+		body += '\n';
 	}
+	
+	body += "}";
+	body += "\n";
 
-	resource = resource.substr(1);
-	std::cout << resource << std::endl;
+	File	newFile(filename);
 
-	std::cout << "Copying the body..." << std::endl;
-	//body = rawBody;
+	newFile.write(body.c_str());
+
+	filesVector.push_back(newFile);
+}
+
+void	Post::parsePlainData(std::vector<char> rawBody) {
+	std::string	filename = "temp" + getMIME(contentType, true);
+	File	newFile(filename);
+
+	newFile.getBody() = rawBody;
+	filesVector.push_back(newFile);
+}
+
+void	Post::parseBody(std::vector<char> &rawBody) {
+
+	if (contentType == "application/x-www-form-urlencoded") {
+		parseFormData(makeString(rawBody));
+	}
+	else if (contentType == "multipart/form-data") {
+		parseMultipartData(rawBody);
+	} else {
+		parsePlainData(rawBody);
+	}
 }
 
 Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: Request(splitedRaw)*/ {
@@ -130,6 +161,7 @@ Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: R
 			referer = it->substr(9);		
 		if (_temp == "Content-Type:") {
 			tokens >> contentType;
+			contentType = rtrim(contentType, ';');
 			tokens >> _temp;
 			if (_temp.substr(0, cstrlen("boundary=")) == "boundary=") {
 				boundary = _temp.substr(cstrlen("boundary="));
@@ -143,14 +175,19 @@ Post::Post(const Post &model): Request(model) {
 	
 }
 
-bool checkStat(std::string resource, std::string &filename) {
+void	Post::writeContent(File &fileBody) {
+	if (!newResourceName.empty())
+		fileBody.open(newResourceName);
+}
+
+bool checkStat(std::string resource, std::string &filename, int &status) {
 	struct stat dirBuffer;
 
-	std::cout << filename << " at " << resource << std::endl;
 	stat(resource.c_str(), &dirBuffer);
 
 	if (S_ISDIR(dirBuffer.st_mode)) {
 		if (access(resource.c_str(), F_OK)) {
+			status = 404;
 			return (false);
 		}
 		if (filename.empty()) { // Generic file name
@@ -179,41 +216,59 @@ bool checkStat(std::string resource, std::string &filename) {
 
 	stat(filename.c_str(), &resBuffer);
 
-	if (S_ISDIR(resBuffer.st_mode) || !(dirBuffer.st_mode & S_IWUSR)) {
-		std::cout << S_ISDIR(resBuffer.st_mode) << " and " << (dirBuffer.st_mode & S_IWUSR) << std::endl;
+	if (S_ISDIR(resBuffer.st_mode)) {
+		status = 404;
+		return (false);
+	}
+	if (!(dirBuffer.st_mode & S_IWUSR) || (!access(filename.c_str(), F_OK) && !(resBuffer.st_mode & S_IWUSR))) {
+		status = 403;
 		return (false);
 	}
 	return (true);
 }
 
-std::string	Post::updateResource(int &status) {
+void	Post::updateResource(int &status) {
 	if (status != 201 && status != 204)
-		return ("");
+		return;
 
-	std::string resourceName;
+	if (contentType == "multipart/form-data")
+		status = 204;
+
 	for (files::iterator it = filesVector.begin(); it != filesVector.end(); ++it) {
-		if (!checkStat(resource, it->first)) {
-			std::cerr << "File: " << it->first << " can't be written" << std::endl;
-			continue;
+		if (!checkStat(resource, it->getName(), status)) {
+			std::cerr << "File: " << it->getName() << " can't be written" << std::endl;
+			break;
 		}
 
 		std::filebuf	fb;
-		fb.open(it->first.c_str(), std::ios::binary | std::ios::out);
+		fb.open(it->getName().c_str(), std::ios::binary | std::ios::out);
 		std::ostream	newResource(&fb);
 
-		for (std::vector<char>::iterator fileIt = it->second.begin(); fileIt != it->second.end(); ++fileIt) {
+		for (std::vector<char>::iterator fileIt = it->getBody().begin(); fileIt != it->getBody().end(); ++fileIt) {
 			newResource.put(*fileIt);
 		}
-		resourceName = it->first;
 	}
+}
 
-	return (resourceName);
+void	Post::getBody(int &status, Location &currentLocation, File &responseBody) {
+	(void)currentLocation;
+	if (status == 201) {
+		writeContent(responseBody);
+	} else if (status == 204) {
+		; // Nothing to return!!!
+	} else {
+		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+		if (!page.empty())
+			getErrorPages(page, responseBody);
+		else
+			responseBody.open(DEFAULT_ERROR_PAGE);
+	}
 }
 
 void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
 	int			status = getStatus(location);
-	std::string newResource = updateResource(status);
+	updateResource(status);
 	File		responseBody;
 
 	getBody(status, location, responseBody);
@@ -230,21 +285,20 @@ void	Post::response(int fd, std::list<int> &clients, Server &server) {
 	response += toString(contentLenght);
 	response += "\r\n";
 	
-	if (status == 201) {	
+	if (status == 201) {
 		response += "Location: ";
-		response += newResource;
+		response += newResourceName;
 		response += "\r\n";
 	}
 
 	response += "\r\n";
-
+	
 	// If the created resource is small, send it after creation (code 201)
-	// If the created resource is big, send metadata (or nothing, fuck it at this point) (Code 201)
+	// If the created resource is big, send succesful upload (or nothing, fuck it at this point) (Code 201)
 	// If !body, then code 204
-	for (std::string line; std::getline(responseBody.getStream(), line);) {
-		response += line;
-	}
-
+	
+	response += makeString(responseBody.getBody());
+	
 	send(fd, response.c_str(), response.length(), 0);
 	close(fd);
 	clients.erase(std::find(clients.begin(), clients.end(), fd));

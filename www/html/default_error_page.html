@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 
-<h1>404 - Not Found</h1>
+<h1 id="error"></h1>
 
-The requested URL <span id="URI"></span> was not found in this server
+<p1>The requested URL <span id="URI"></span> was not found in this server
 
 <hr>
 
@@ -13,4 +13,20 @@ The requested URL <span id="URI"></span> was not found in this server
 <script>
 	document.getElementById("URI").innerHTML = window.location.pathname;
 	document.getElementById("serverinfo").innerHTML = "42-Webserv/0.0.1 at " + window.location.hostname + " on port " + window.location.port;
+	fetch(window.location.href)
+	.then(response => {
+		console.log(`HTTP Status Code: ${response.status}`);
+		if (response.status == 400)
+			document.getElementById("error").innerHTML = "400 - Bad Request";
+		else if (response.status == 404)
+			document.getElementById("error").innerHTML = "404 - Not Found";
+		else if (response.status == 405)
+			document.getElementById("error").innerHTML = "405 - Method Not Allowed";
+		else
+			document.getElementById("error").innerHTML = "500 - Internal Server Error";
+	})
+	.catch(error => {
+		console.error('Error fetching the page:', error);
+	});
+
 </script>

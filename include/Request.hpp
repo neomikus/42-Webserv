@@ -8,17 +8,16 @@
 class Request
 {
 	private:
-		std::vector<Server> candidates;
+		std::vector<Server> 				candidates;
 	protected:
 		bool								error; // necesary : (firstline)method resource protocol
 		std::string							method;
-		std::map<std::string, std::string>	query;
+		std::string							query;
 		std::string							resource;
-		std::string							protocol; // This is maybe not needed
-							  // Can be checked in constructor if it's HTTP/1.1 or not
+		std::string							protocol;
 
 		hostport					hostPort;
-		std::string userAgent; // I don't know if this is useful to us or not, maybe for cookies?
+		std::string					userAgent; // I don't know if this is useful to us or not, maybe for cookies?
 		std::vector<std::string>	accept; // May be renamed acceptFormat?
 		// Accept-Language is horrible
 		std::vector<std::string>	acceptEncoding;
@@ -28,10 +27,12 @@ class Request
 
 		void						parseMethodResourceProtocol(std::string line);
 		int							getStatus(Location &currentLocation);
-		void						getBody(int &status, Location &currentLocation, File &responseBody);
+		virtual void				getBody(int &status, Location &currentLocation, File &responseBody);
+		virtual	void				writeContent(File &fileBody) {(void)fileBody;};
+		std::string					checkErrorPages(std::vector<error_page> error_pages, int &status);
 		void						getErrorPages(std::string &error_page, File &responseBody);
 		Location 					selectContext(Location &location, std::string fatherUri);
-
+	
 	public:
 		
 		Request();
@@ -45,5 +46,6 @@ class Request
 };
 
 std::string	getStatusText(int status);
+std::string cgi(int &status, std::string resource, std::string command);
 
 #endif
