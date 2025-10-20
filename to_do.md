@@ -9,7 +9,8 @@
 3. Implementar:
 	- [x] Terminar POST (Mica)
 	- [ ] Códigos de Error restantes
-	- [ ] CGI está bien hecho?
+	- [x] CGI Get
+	- [ ] CGI Post
 	- [ ] Max allowed size for client requests
 	- [x] Terminar de implementar root
 	- [x] Implementar index (Mica)

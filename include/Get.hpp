@@ -13,6 +13,7 @@ class Get: public Request {
 		void	getBody(int &status, Location &currentLocation, File &responseBody);
 		bool	checkAcceptedFormats(File &responseBody);	
 		void	acceptedFormats(int &status, Location &currentLocation, File &responseBody);
+    std::string cgi(int &status, Location &location);
 	public:
 		Get(std::vector<std::string> splitedResponse);
 		Get(const Get &model);

@@ -1,72 +1,87 @@
 #include "webserv.hpp"
 
-std::string read_from_pipe(int fd) {
-    char buffer[BUFFER_SIZE + 1];
-    std::string retval;
-
-    ssize_t rd = read(fd, buffer, sizeof(buffer));
-    
-	if (rd == -1) {
-		std::cerr << "Read failed!" << std::endl;
-		return ("");
-	}
-
-	buffer[rd] = '\0';
-    while (rd > 0) {
-		retval += buffer;
-		if (rd < 1024)
-			break;
-		rd = read(fd, buffer, 1024);
-		buffer[rd] = '\0';
-    }
-	
-    return retval;
-}
-
-void cgi(int &status,File &responseBody, std::string resource, std::string command) {    
-    int _pipe[2];
-    if (pipe(_pipe) == -1) {
-        std::cerr << "pipe failed" << std::endl;
-        return;
+std::string cgi(int &status, const std::string resource, const std::string command) {
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        std::cerr << "pipe failed: " << std::endl;
+        status = 500;
+        return "";
     }
 
     pid_t child = fork();
     if (child == -1) {
-        std::cerr << "fork failed" << std::endl;
-        close(_pipe[0]);
-        close(_pipe[1]);
-        return;
+        std::cerr << "fork failed: " << std::endl;
+        close(pipefd[0]);
+        close(pipefd[1]);
+        status = 500;
+        return "";
     }
 
-    if (child == 0) { 
-        close(_pipe[0]);
-        dup2(_pipe[1], STDOUT_FILENO); 
-        close(_pipe[1]);
+    if (child == 0) {
+        
+        close(pipefd[0]);
 
-		std::string file = resource;
-		if (file[0] == '/')
-			file = file.substr(1);
-        char *argv[] = {const_cast<char*>(command.c_str()), const_cast<char*>(file.c_str()), NULL};
+        if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
+            std::cerr << "dup2 stdout failed: " << std::endl;
+            exit(1);
+        }
+        close(pipefd[1]);
 
+        std::string file = resource;
+        if (!file.empty() && file[0] == '/')
+            file = file.substr(1);
+
+        // Construimos argv local para el hijo. Asegurate de que command sea ruta valida
+        // O usar execvp si querés búsqueda en PATH:
+        char *argv[3];
+        argv[0] = const_cast<char*>(command.c_str());
+        argv[1] = const_cast<char*>(file.c_str());
+        argv[2] = NULL;
+
+        // Opcional: si querés usar PATH: execvp(argv[0], argv);
         execve(argv[0], argv, global_envp);
-        
-        std::cerr << "execve failed" << std::endl;
-        exit(0);
+        // Si llegamos acá, exec falló
+        std::cerr << "exec failed: " << std::endl;
+        exit(1);
     }
-
     else {
-		int	childStatus;
-        close(_pipe[1]); 
-        waitpid(child, &childStatus, 0);
-		if (childStatus != 0)
-		{
-			status = 500;
-			return;
-		}
+        close(pipefd[1]);
 
-        std::string response = read_from_pipe(_pipe[0]);
-        responseBody.write(response.c_str());
-        
-        close(_pipe[0]); 
+        std::string output;
+        char buffer[BUFFER_SIZE];
+        ssize_t n;
+
+        while ((n = read(pipefd[0], buffer, sizeof(buffer))) > 0)
+            output.append(buffer, n);
+    
+        if (n == -1)
+            std::cerr << "read error: " << std::endl;
+
+        close(pipefd[0]);
+
+        int child_status = 0;
+        if (waitpid(child, &child_status, 0) == -1) {
+            std::cerr << "waitpid failed: " << std::endl;
+            status = 500;
+            return "";
+        }
+    
+        if (WIFEXITED(child_status)) {
+            int exit_code = WEXITSTATUS(child_status);
+            if (exit_code != 0) {
+                std::cerr << "child exited with code " << exit_code << std::endl;
+                status = 500;
+            }
+            else status = 200;
+    
+        }
+        else if (WIFSIGNALED(child_status)) {
+            int sig = WTERMSIG(child_status);
+            std::cerr << "child killed by signal " << sig << std::endl;
+            status = 500;
+        }
+        else status = 500;
+
+        return output;
     }
 }

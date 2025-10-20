@@ -17,61 +17,12 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 	buffer >> resource;
 	buffer >> protocol;
 
-	std::vector<std::string>	queries = strSplit(resource.substr(resource.find("?") + 1, resource.size()), "&");
-	for (std::vector<std::string>::iterator it = queries.begin(); it != queries.end(); ++it) {
-		std::vector<std::string>	currentQuery = strSplit(*it, "=");
-		if (currentQuery.size() != 2)
-			continue;
-		std::pair<std::string, std::string>	temp(currentQuery.front(), currentQuery.back());
-	}
-	
+	size_t tokenPos = resource.find("?");
+	if (tokenPos != resource.npos)
+		query = resource.substr(tokenPos + 1);
 	resource = resource.substr(0, resource.find("?"));
-
 	resource = ltrim(resource, '/');
 }
-
-/*
-Request::Request(std::vector<std::string> splitedRaw) {
-	*this = Request();
-	parseMethodResourceProtocol(splitedRaw[0]);
-	if (error)
-		return ;
-	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
-	{
-		std::stringstream	tokens;
-		tokens << *it;
-
-		std::string _temp;
-		tokens >> _temp;
-
-		std::cout << *it << std::endl;
-
-		if (_temp == "Host:")
-		{
-			hostPort.host = it->substr(6, it->find(':', 6) - 6);
-			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
-
-		}
-		if (_temp == "User-Agent:")
-			userAgent = it->substr(12);
-		if (_temp == "Accept:")
-			accept = strSplit(it->substr(8), ",");
-		if (_temp == "Accept-Encoding:")
-			acceptEncoding = strSplit(it->substr(17), ", ");
-		if (_temp == "Connection:")
-		{
-			tokens >> _temp;
-			if (_temp == "keep-alive")
-				keepAlive = true;
-		}
-		if (_temp == "Referer:")
-			referer = it->substr(9);
-		if (_temp == "Content-Length:") {
-			contentLength = atol(it->substr(cstrlen("Content-Length: ")).c_str());
-		}
-	}
-}
-*/
 
 Request::Request(std::vector<std::string> splitedRaw) {
 	*this = Request();
@@ -272,6 +223,7 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 
 void	Request::response(int fd, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
+	
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + resource;
 	
