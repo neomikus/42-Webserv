@@ -18,11 +18,10 @@
 	- [x] DELETE
 	- [x] autoindex
 	- [ ] Collection endpoint (upload file to directory)
-	- [ ] Redefinir como funciona interface:port
 	- [ ] HTTP redirects
-	- [ ] Comprobar recv/poll relation
-	- [ ] Comprobar send/poll relation
-	- [ ] Get connection info when connecting to client socket
+	- [x] Comprobar recv/poll relation
+	- [x] Comprobar send/poll relation
+	- [ ] Get connection info when connecting to client socket?
 	- [ ] inet_addr to something allowed by the subject
 	- [ ] See HTTP 1.0 vs 1.1
 4. Probar:

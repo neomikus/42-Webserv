@@ -15,20 +15,21 @@ class Post: public Request {
 		std::string			boundary;
 		std::string			newResourceName;
 		Post();
-		void		parseBody(std::vector<char> &rawBody);
+		void		parseChunkedData(std::vector<char> &rawBody);
 		void		parseMultipartData(std::vector<char> &rawBody);
 		void		parseFormData(std::string rawBody);
 		void		parsePlainData(std::vector<char> rawBody);
+		void		parseBody(std::vector<char> &rawBody);
 		void		updateResource(int &status);
 		void		writeContent(File &fileBody);
 		void		getBody(int &status, Location &currentLocation, File &responseBody);
 	public:
 		Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
-		Post	&operator=(const Post &model);
+		Post		&operator=(const Post &model);
 		Post(const Post &model);
 		~Post();
 
-		void	response(int fd, std::list<int> &clients, Server &server);
+		void	response(int fd, Server &server);
 };
 
 #endif

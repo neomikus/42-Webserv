@@ -22,7 +22,7 @@ class File
 
 		void	open(const std::string filename);
 		void	open(const char *filename);
-		void	write(fileIterator &start, fileIterator &end);
+		void	write(fileIterator start, fileIterator end);
 		void	write(const char *str);
 		
 		void	toDisk(std::string filename);

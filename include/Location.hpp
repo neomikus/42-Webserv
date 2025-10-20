@@ -5,7 +5,6 @@
 
 class Location {
 	private:
-
 		std::string					uri;
 		long long					level;
 		std::string					cgi_option;

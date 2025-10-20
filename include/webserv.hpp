@@ -29,7 +29,6 @@
 #include <dirent.h>
 #include <utility>
 
-
 #define HMAG		"\033[95m"
 #define HCYA		"\033[96m"
 #define HDCY		"\033[36m"
@@ -53,7 +52,7 @@ extern int	errorCode;
 extern std::string errorLine;
 extern char **global_envp;
 
-
+#define EPOLL_EVENT_COUNT 100
 #define BUFFER_SIZE 1024
 
 #include "Socket.hpp"
@@ -98,6 +97,7 @@ char		*makeCString(const std::vector<char> vec);
 char		*makeCString(std::vector<char>::iterator start, std::vector<char>::iterator end);
 
 std::string					toString(int n);
+std::string					getTime();
 
 bool	checkDirectory(std::string resource);
 
@@ -109,5 +109,6 @@ void	teapotGenerator(File &responseBody);
 File	generateAutoIndex(std::string resource, std::string directory);
 
 std::string	getMIME(std::string needle, bool reverse);
+
 
 #endif

@@ -42,9 +42,35 @@ bool	Get::checkAutoindex(Location &location, File &responseBody) {
 	return (false);
 }
 
+bool	Get::checkAcceptedFormats(File &responseBody) {
+	std::string mime = responseBody.getType();
+
+	if (mime == "none" || accept.empty() || std::find(accept.begin(), accept.end(), "*/*") != accept.end())
+		return (false);
+	if (std::find(accept.begin(), accept.end(), mime) != accept.end())
+		return (false);
+	if (std::find(accept.begin(), accept.end(), mime.substr(0, mime.find_last_of("/")) + "/*") != accept.end())
+		return (false);
+	return (true);
+}
+
+void	Get::acceptedFormats(int &status, Location &currentLocation, File &responseBody) {
+	if (!checkAcceptedFormats(responseBody)) {
+		if (status == 200)
+			status = 406;
+		if (std::find(accept.begin(), accept.end(), "text/html") != accept.end() ||
+			std::find(accept.begin(), accept.end(), "text/*") != accept.end())
+			getBody(status, currentLocation, responseBody);
+		else
+			responseBody = File();
+	}
+}
+
 void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
 	if (status == 200) {
-		if (!resource.empty() && !checkDirectory(resource))
+		if (currentLocation.getCgi() != "" && !checkDirectory(resource))
+			cgi(status, responseBody, resource, currentLocation.getCgi());
+		else if (!resource.empty() && !checkDirectory(resource))
 			responseBody.open(resource);
 		else {
 			if (checkRedirect(currentLocation, status))
@@ -170,23 +196,32 @@ std::string Get::cgi(int &status, Location &location)
         return output;
     }
 }
+
 void	Get::response(int fd, std::list<int> &clients, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
 	int	status = getStatus(location);
+	File		responseBody;
+
+	getBody(status, location, responseBody);
+	acceptedFormats(status, location, responseBody);
+
+	long long responseLenght = responseBody.getSize();
+
 	std::string response;
 
-	if (location.getCgi() != "" && !checkDirectory(resource))
-	{
-		std::string cgi_response;
-		cgi_response = cgi(status, location);
-		response += "HTTP/1.1 "; // This is always true
-		response += toString(status);
-		response += " " + getStatusText(status);
-		// I don't know how much we need to add to the response?
-		response += "Content Lenght: ";
-		response += toString(cgi_response.size());
+	response += "HTTP/1.1 "; // This is always true
+	response += toString(status);
+	response += " " + getStatusText(status);
+	// I don't know how much we need to add to the response?
+	response += "Content Lenght: ";
+	response += toString(responseLenght);
+	response += "\r\n";
+	
+	if (status == 301) {
+		response += "Location: ";
+		response += resource.substr(resource.find_last_of('/') + 1) + "/" ;
 		response += "\r\n";
 		response += cgi_response;
 	}
@@ -196,7 +231,15 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 
 		getBody(status, location, responseBody);
 
-		long long contentLenght = responseBody.getSize();
+	if (location.getCgi() == "" || !checkDirectory(resource)) {
+		response += "Content-Type: ";
+		response += responseBody.getType();
+		response += "\r\n";
+	} else {
+		response += "Content-Type: ";
+		response += "text/html";
+		response += "\r\n";
+	}
 
 
 		response += "HTTP/1.1 "; // This is always true
@@ -221,6 +264,4 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 		response += makeString(responseBody.getBody());
 	}
 	send(fd, response.c_str(), response.size(), 0);
-	close(fd);
-	clients.erase(std::find(clients.begin(), clients.end(), fd));
 }

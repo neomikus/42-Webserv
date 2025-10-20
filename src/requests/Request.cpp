@@ -2,6 +2,7 @@
 #include "Request.hpp"
 #include "Server.hpp"
 #include "File.hpp"
+#include "Post.hpp"
 
 void	Request::parseMethodResourceProtocol(const std::string line)
 {
@@ -30,34 +31,29 @@ Request::Request(std::vector<std::string> splitedRaw) {
 		return ;
 	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
 	{
-		std::stringstream	tokens;
-		tokens << *it;
-
-		std::string _temp;
-		tokens >> _temp;
-
-		if (_temp == "Host:")
-		{
-			hostPort.host = it->substr(6, it->find(':', 6) - 6);
+		if (it->find("Host") != it->npos) {
+			hostPort.host = strTrim(it->substr(0, it->find(':')));
 			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
-
 		}
-		if (_temp == "User-Agent:")
-			userAgent = it->substr(12);
-		if (_temp == "Accept:")
-			accept = strSplit(it->substr(8), ",");
-		if (_temp == "Accept-Encoding:")
-			acceptEncoding = strSplit(it->substr(17), ", ");
-		if (_temp == "Connection:")
-		{
-			tokens >> _temp;
-			if (_temp == "keep-alive")
+		if (it->find("User-Agent") != it->npos)
+			userAgent = strTrim(it->substr(cstrlen("User-Agent:")));
+		if (it->find("Accept") != it->npos)
+			accept = strSplit(strTrim(it->substr(cstrlen("Accept:"))), ",");
+		if (it->find("Connection") != it->npos) {
+			if (strTrim(it->substr(cstrlen("Connection:"))) == "keep-alive")
 				keepAlive = true;
 		}
-		if (_temp == "Referer:")
-			referer = it->substr(9);		
+		if (it->find("Referer") != it->npos)
+			referer = strTrim(it->substr(cstrlen("Referer")));
+		if (it->find("Content-Lenght") != it->npos) {
+			contentLength = atol(strTrim(it->substr(cstrlen("Content-Length:"))).c_str());
+		}
+		if (it->find("Transfer-Encoding") != it->npos) {
+			transferEncoding = strTrim(it->substr(cstrlen("Transfer-Encoding:")));
+		}
 	}
 }
+
 
 Request::Request() {
 	error = false;
@@ -67,6 +63,8 @@ Request::Request() {
 	userAgent = "";
 	keepAlive = false;
 	referer = "";
+	transferEncoding = "";
+	contentLength = -1;
 }
 
 Request::Request(const Request &model) {
@@ -77,11 +75,9 @@ Request::Request(const Request &model) {
 	this->hostPort = model.hostPort;
 	this->userAgent = model.userAgent;
 	this->accept = model.accept;
-	this->acceptEncoding = model.acceptEncoding;
 	this->keepAlive = model.keepAlive;
 	this->referer = model.referer;
 }
-
 
 Request	&Request::operator=(const Request &model) {
 	this->error = model.error;
@@ -91,12 +87,10 @@ Request	&Request::operator=(const Request &model) {
 	this->hostPort = model.hostPort;
 	this->userAgent = model.userAgent;
 	this->accept = model.accept;
-	this->acceptEncoding = model.acceptEncoding;
 	this->keepAlive = model.keepAlive;
 	this->referer = model.referer;
 	return (*this);
 }
-
 
 Request::~Request() {
 	
@@ -135,7 +129,7 @@ Server	&Request::selectServer(std::vector<Server> &servers) {
 	return (*candidates.begin());
 }
 
-bool	checkPermissions(std::string resource) {
+bool	Request::checkPermissions() {
 	struct stat resBuffer;
 
 	stat(resource.c_str(), &resBuffer);
@@ -156,12 +150,15 @@ int	Request::getStatus(Location &currentLocation) {
 		return (505);
 	if (!checkAllowedMethods(method, currentLocation.getMethods()))
 		return (405);
+	if (method == "POST" && transferEncoding != "chunked" && contentLength == -1) {
+		return (411);
+	}
 	if (method != "POST" && !resource.empty() && access(resource.c_str(), F_OK)) {
 		if (resource == "teapot")
 			return (418);
 		return (404);
 	}
-	if (!resource.empty() && !checkPermissions(resource))
+	if (method != "POST" && !resource.empty() && !checkPermissions())
 		return (403);
 	// Save request body size in parsing!!!
 	//if (currentLocation.getMax_body_size() > request_body_size)
@@ -194,28 +191,26 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 Location Request::selectContext(Location &location, std::string fatherUri) {
    std::string uri = "/" + resource;
 
-   if (uri[uri.size() - 1] == '/')
-	   uri.erase(uri.end() - 1);
-   if (fatherUri != "/")
-	   uri = uri.substr(fatherUri.size());
-   else
-	   fatherUri = "";
+	if (uri[uri.size() - 1] == '/')
+		uri.erase(uri.end() - 1);
+	if (fatherUri != "/")
+		uri = uri.substr(fatherUri.size());
+	else
+		fatherUri = "";
 
-   while(!uri.empty())
-   {	
-	   for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
-	   {
-		   if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
-			   return (*it);
-		   if (it->getUri() == uri)
-			   return (selectContext(*it, fatherUri + it->getUri()));
-	   }
-	   if (uri == "/")
-		   break;
-	   uri = trimLastWord(uri, '/');
-   }
+	while (!uri.empty() && uri != "/")
+	{
+		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
+		{
+			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
+				return (*it);
+			if (it->getUri() == uri)
+				return (selectContext(*it, fatherUri + it->getUri()));
+		}
+		uri = trimLastWord(uri, '/');
+	}
 
-   return (location);
+	return (location);
 }
 
 void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
@@ -226,7 +221,7 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 		responseBody.open(DEFAULT_ERROR_PAGE);
 }
 
-void	Request::response(int fd, std::list<int> &clients, Server &server) {
+void	Request::response(int fd, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
 	
 	if (!location.getRoot().empty())
@@ -245,7 +240,7 @@ void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	response += " " + getStatusText(status);
 	// I don't know how much we need to add to the response?
 	response += "Content Lenght: ";
-    response += responseBody.getSize();
+	response += responseBody.getSize();
 	response += "\r\n";
 	
 	response += "\r\n";
@@ -253,7 +248,4 @@ void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	response += makeString(responseBody.getBody());
 
 	send(fd, response.c_str(), response.length(), 0);
-	close(fd);
-	(void)clients;
-	//clients.erase(std::find(clients.begin(), clients.end(), fd));
 }
