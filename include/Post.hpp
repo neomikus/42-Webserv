@@ -23,6 +23,8 @@ class Post: public Request {
 		void		updateResource(int &status);
 		void		writeContent(File &fileBody);
 		void		getBody(int &status, Location &currentLocation, File &responseBody);
+		std::string	cgi(int &status, Location &location);
+
 	public:
 		Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
 		Post		&operator=(const Post &model);

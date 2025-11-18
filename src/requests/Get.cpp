@@ -69,7 +69,7 @@ void	Get::acceptedFormats(int &status, Location &currentLocation, File &response
 void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
 	if (status == 200) {
 		if (currentLocation.getCgi() != "" && !checkDirectory(resource))
-			cgi(status, responseBody, resource, currentLocation.getCgi());
+			cgi(status, currentLocation);
 		else if (!resource.empty() && !checkDirectory(resource))
 			responseBody.open(resource);
 		else {
@@ -197,57 +197,42 @@ std::string Get::cgi(int &status, Location &location)
     }
 }
 
-void	Get::response(int fd, std::list<int> &clients, Server &server) {
+void	Get::response(int fd, Server &server) {
 	Location 	location = selectContext(server.getVLocation(), "");
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
 	int	status = getStatus(location);
 	File		responseBody;
-
-	getBody(status, location, responseBody);
-	acceptedFormats(status, location, responseBody);
-
-	long long responseLenght = responseBody.getSize();
-
 	std::string response;
 
-	response += "HTTP/1.1 "; // This is always true
-	response += toString(status);
-	response += " " + getStatusText(status);
-	// I don't know how much we need to add to the response?
-	response += "Content Lenght: ";
-	response += toString(responseLenght);
-	response += "\r\n";
-	
-	if (status == 301) {
-		response += "Location: ";
-		response += resource.substr(resource.find_last_of('/') + 1) + "/" ;
+
+	if (location.getCgi() != "" && !checkDirectory(resource))
+	{
+		std::string cgi_response;
+		cgi_response = cgi(status, location);
+		response += "HTTP/1.1 "; // This is always true
+		response += toString(status);
+		response += " " + getStatusText(status);
+		// I don't know how much we need to add to the response?
+		response += "Content Lenght: ";
+		response += toString(cgi_response.size());
 		response += "\r\n";
 		response += cgi_response;
 	}
 	else
 	{
-		File		responseBody;
 
 		getBody(status, location, responseBody);
+		acceptedFormats(status, location, responseBody);
 
-	if (location.getCgi() == "" || !checkDirectory(resource)) {
-		response += "Content-Type: ";
-		response += responseBody.getType();
-		response += "\r\n";
-	} else {
-		response += "Content-Type: ";
-		response += "text/html";
-		response += "\r\n";
-	}
-
+		long long responseLenght = responseBody.getSize();
 
 		response += "HTTP/1.1 "; // This is always true
 		response += toString(status);
 		response += " " + getStatusText(status);
 		// I don't know how much we need to add to the response?
 		response += "Content Lenght: ";
-		response += toString(contentLenght);
+		response += toString(responseLenght);
 		response += "\r\n";
 		
 		if (status == 301) {
@@ -256,9 +241,15 @@ void	Get::response(int fd, std::list<int> &clients, Server &server) {
 			response += "\r\n";
 		}
 
-		response += "Content-Type: ";
-		response += responseBody.getType();
-		response += "\r\n";
+		if (location.getCgi() == "" || !checkDirectory(resource)) {
+			response += "Content-Type: ";
+			response += responseBody.getType();
+			response += "\r\n";
+		} else {
+			response += "Content-Type: ";
+			response += "text/html";
+			response += "\r\n";
+		}
 
 		response += "\r\n";
 		response += makeString(responseBody.getBody());
