@@ -26,7 +26,7 @@ Webserv is a web server project developed as part of the <a href="https://www.42
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/princess-mikus/42-Webserv.git
+   git clone https://github.com/neomikus/42-Webserv.git
    cd 42-Webserv
    ```
 
