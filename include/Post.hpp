@@ -14,7 +14,6 @@ class Post: public Request {
 		std::string			contentType;
 		std::string			boundary;
 		std::string			newResourceName;
-		Post();
 		void		parseChunkedData(std::vector<char> &rawBody);
 		void		parseMultipartData(std::vector<char> &rawBody);
 		void		parseFormData(std::string rawBody);
@@ -24,8 +23,9 @@ class Post: public Request {
 		void		writeContent(File &fileBody);
 		void		getBody(int &status, Location &currentLocation, File &responseBody);
 		std::string	cgi(int &status, Location &location);
-
+		
 	public:
+		Post();
 		Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
 		Post		&operator=(const Post &model);
 		Post(const Post &model);

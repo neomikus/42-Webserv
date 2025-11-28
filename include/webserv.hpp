@@ -46,6 +46,7 @@ const long long MB = KB * 1024;
 const long long GB = MB * 1024;
 
 #define DEFAULT_ERROR_PAGE "www/html/default_error_page.html"
+#define MAX_HEADER_SIZE 8000
 
 extern bool	sigstop;
 extern int	errorCode;

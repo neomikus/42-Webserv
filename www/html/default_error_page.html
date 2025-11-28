@@ -18,10 +18,14 @@
 		console.log(`HTTP Status Code: ${response.status}`);
 		if (response.status == 400)
 			document.getElementById("error").innerHTML = "400 - Bad Request";
+		else if (response.stauts == 403)
+			document.getElementById("error").innerHTML = "403 - Forbidden";
 		else if (response.status == 404)
 			document.getElementById("error").innerHTML = "404 - Not Found";
 		else if (response.status == 405)
 			document.getElementById("error").innerHTML = "405 - Method Not Allowed";
+		else if (response.status == 406)
+			document.getElementById("error").innerHTML = "406 - Not Acceptable";
 		else
 			document.getElementById("error").innerHTML = "500 - Internal Server Error";
 	})

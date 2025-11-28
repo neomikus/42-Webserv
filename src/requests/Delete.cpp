@@ -55,7 +55,6 @@ void    Delete::getBody(int &status, Location &currentLocation, File &responseBo
 }
 
 void	Delete::response(int fd, Server &server) {
-	Location 	location = selectContext(server.getVLocation(), "");
 	int	status = getStatus(location);
     deleteResource(status);
 	File		responseBody;

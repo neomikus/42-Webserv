@@ -479,7 +479,6 @@ std::string Post::cgi(int &status, Location &location)
 }
 
 void	Post::response(int fd, Server &server) {
-	Location 	location = selectContext(server.getVLocation(), "");
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
 	int			status = getStatus(location);

@@ -188,31 +188,6 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 		responseBody.open(page);
 }
 
-Location Request::selectContext(Location &location, std::string fatherUri) {
-   std::string uri = "/" + resource;
-
-	if (uri[uri.size() - 1] == '/')
-		uri.erase(uri.end() - 1);
-	if (fatherUri != "/")
-		uri = uri.substr(fatherUri.size());
-	else
-		fatherUri = "";
-
-	while (!uri.empty() && uri != "/")
-	{
-		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
-		{
-			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
-				return (*it);
-			if (it->getUri() == uri)
-				return (selectContext(*it, fatherUri + it->getUri()));
-		}
-		uri = trimLastWord(uri, '/');
-	}
-
-	return (location);
-}
-
 void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
 	std::string page = checkErrorPages(currentLocation.getError_pages(), status);
 	if (!page.empty())
@@ -222,8 +197,6 @@ void	Request::getBody(int &status, Location &currentLocation, File &responseBody
 }
 
 void	Request::response(int fd, Server &server) {
-	Location 	location = selectContext(server.getVLocation(), "");
-	
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + resource;
 	
@@ -249,3 +222,10 @@ void	Request::response(int fd, Server &server) {
 
 	send(fd, response.c_str(), response.length(), 0);
 }
+
+std::string			&Request::getMethod() {return(this->method);}
+std::string			&Request::getResource() {return(this->resource);}
+std::string			&Request::getProtocol() {return(this->protocol);}
+std::string			&Request::getQuery() {return(this->query);}
+std::vector<char>	&Request::getRawRequest() {return(this->rawRequest);}
+Location			&Request::getLocation() {return(this->location)};

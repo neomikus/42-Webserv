@@ -72,7 +72,7 @@ void	Location::parseErrorPage(std::string value) {
 		errorCode = 8;
 		return ;
 	}
-	
+
 	error_page	error_page;
 	error_page.page = "";
 	error_page.to_replace = 0;

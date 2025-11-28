@@ -16,7 +16,22 @@ bool	checkfds(int fd, std::list<int> fdList) {
 	return (false);
 }
 
-int	read_request(int fd, std::vector<char> &rawResponse) {
+bool	Request::readHeader(int fd) {
+	// Case = you're reading the body
+	if (headerRead) {
+		return (true);
+	}
+
+	std::string	alreadyRead = makeString(rawHeader);
+	// You find the body in the first reading (The first line reading)
+	if (alreadyRead.find("\r\n\r\n")) {
+		parseHeader();
+		for (int i = alreadyRead.find("\r\n\r\n"); i < rawHeader.size(); i++) {
+			rawBody.push_back(rawHeader[i]);
+		}
+		return (true); // Body found, stop reading
+	}
+
 	char buffer[BUFFER_SIZE + 1];
 	int rd = recv(fd, buffer, 1024, 0);
 	if (rd == -1) {
@@ -24,11 +39,26 @@ int	read_request(int fd, std::vector<char> &rawResponse) {
 		return (true);
 	}
 
-	for (int i = 0; i < rd; i++) {
-		rawResponse.push_back(buffer[i]);
+	std::string read(buffer);
+
+	if (read.find("\r\n\r\n")) {
+		int i = 0;
+		for (; i < read.find("\r\n\r\n"); i++) {
+			rawHeader.push_back(buffer[i]);
+		}
+		for (; i < rd; i++) {
+			rawBody.push_back(buffer[i]);
+		}
+		parseHeader();
+		return (true); // Body found, stop reading
 	}
 
-	if (rd == BUFFER_SIZE)
+
+	for (int i = 0; i < rd; i++) {
+		rawHeader.push_back(buffer[i]);
+	}
+
+	if (rawHeader.size() != MAX_HEADER_SIZE)
 		return (false);
 	return (true);
 }
@@ -68,29 +98,95 @@ std::vector<char> getBody(std::vector<char> &rawResponse, std::vector<char>::ite
 	return (retval);
 }
 
-Request *makeRequest(std::vector<char> &rawResponse)
-{
-	Request 			*req;
-	std::stringstream	buffer;
-	std::string			_temp;
-	std::vector<char>::iterator	bodyStart;
-	std::vector<char>	rawBody = getBody(rawResponse, bodyStart);
-	std::string			rawHeader = makeString(rawResponse.begin(), bodyStart);
-	std::vector<std::string>	splitedResponse = strSplit(rawHeader, "\n");
+Location	selectContext(Location &location, std::string fatherUri, std::string resource) {
+   std::string uri = "/" + resource;
 
-
-	buffer << splitedResponse[0];
-	buffer >> _temp;
-	if (_temp == "GET")
-		req = new Get(splitedResponse);
-	else if (_temp == "POST")
-		req = new Post(splitedResponse, rawBody);
-	else if (_temp == "DELETE")
-		req = new Delete(splitedResponse);
+	if (uri[uri.size() - 1] == '/')
+		uri.erase(uri.end() - 1);
+	if (fatherUri != "/")
+		uri = uri.substr(fatherUri.size());
 	else
-		req = new Request(splitedResponse);
+		fatherUri = "";
 
-	return (req);
+	while (!uri.empty() && uri != "/")
+	{
+		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
+		{
+			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
+				return (*it);
+			if (it->getUri() == uri)
+				return (selectContext(*it, fatherUri + it->getUri()));
+		}
+		uri = trimLastWord(uri, '/');
+	}
+
+	return (location);
+}
+
+
+Request *makeRequest(int fd, Server &server)
+{
+	std::vector<char> rawRequest;
+	char buffer[BUFFER_SIZE * 2];
+	int rd = recv(fd, buffer, 1, 0);
+	Request *retval;
+	
+	if (rd < 0) {
+		/* Devolver un error 500 si read falla */
+
+		retval = new Request;
+		return (retval);
+	}
+
+	for (int i = 0; i < rd; i++) {
+		rawRequest.push_back(buffer[i]);
+	}
+
+	std::string request = makeString(rawRequest);
+
+	if (request.find("\n") == request.npos) {
+		/*  */
+		return (NULL);
+	}
+
+	request = request.substr(0, request.find("\n"));
+
+	if (countWords(request) != 3) {
+		/* ERROR 400 */
+		return (NULL);
+	}
+
+	std::stringstream	strBuffer;
+
+	std::string method;
+	std::string resource;
+	std::string protocol;
+
+	strBuffer << request;
+	strBuffer >> method;
+	strBuffer >> resource;
+	strBuffer >> protocol;
+
+	if (method == "GET")
+		retval = new Get();
+	else if (method == "POST")
+		retval = new Post();
+	else if (method == "DELETE")
+		retval = new Delete();
+	else
+		retval = new Request();
+
+	retval->getMethod() = method;
+	retval->getProtocol() = protocol;
+
+	size_t tokenPos = resource.find("?");
+	if (tokenPos != resource.npos)
+		retval->getQuery() = resource.substr(tokenPos + 1);
+	retval->getResource() = resource.substr(0, resource.find("?"));
+	retval->getResource() = ltrim(resource, '/');
+
+	retval->getRawRequest() = rawRequest;
+	retval->getLocation() = selectContext(server.getVLocation(), "", retval->getResource())
 }
 
 void	handleEvent(int epfd, int evtfd) {
@@ -107,34 +203,41 @@ void	closeConnection(int epfd, int evtfd, std::list<int> &clients) {
 	clients.erase(std::find(clients.begin(), clients.end(), evtfd));
 }
 
+
 void	acceptConnections(int epfd, std::vector<Server> &servers) {
 	std::list<int>	clients;
 
 	struct epoll_event events[EPOLL_EVENT_COUNT];
 
-	std::vector<char> rawResponse;
-	Request *request = NULL;
+
+	std::vector<char> rawRequest;
+	// FD, Request map
+	std::map<int, Request *> requests;
 	while (!sigstop)
 	{
 		int evt_count = epoll_wait(epfd, events, EPOLL_EVENT_COUNT, -1);
 		for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 			for (int i = 0; i < evt_count; i++) {
-				if (checkfds(events[i].data.fd, it->getSockets()))
+				if (checkfds(events[i].data.fd, it->getSockets())) {
 					connect(epfd, events[i].data.fd, clients);
+					requests[events[i].data.fd] = NULL;
+				}
 
 				if (checkfds(events[i].data.fd, clients)) {
-					if ((events[i].events & EPOLLIN) && read_request(events[i].data.fd, rawResponse)) {
-						request = makeRequest(rawResponse);
+					Request	*currentRequest = requests[events[i].data.fd];
+					if ((events[i].events & EPOLLIN) && !currentRequest) {
+						currentRequest = makeRequest(events[i].data.fd, currentRequest->selectServer(servers));
+					} else if ((events[i].events & EPOLLIN) && currentRequest->readHeader(events[i].data.fd, currentRequest)) {
 						handleEvent(epfd, events[i].data.fd);
 					} else if (events[i].events & EPOLLOUT) {
-						request->response(events[i].data.fd, request->selectServer(servers));
-						rawResponse.clear();
-						delete request;
+						currentRequest->response(events[i].data.fd, currentRequest->selectServer(servers));
+						rawRequest.clear();
+						delete currentRequest;
 						closeConnection(epfd, events[i].data.fd, clients);
 					} else if (events[i].events & EPOLLHUP || events[i].events & EPOLLERR) {
 						closeConnection(epfd, events[i].data.fd, clients);
-						if (request)
-							delete request;
+						if (currentRequest)
+							delete currentRequest;
 					}
 				}
 			}
