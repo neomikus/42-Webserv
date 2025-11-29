@@ -1,7 +1,9 @@
 #include "webserv.hpp"
 #include "Delete.hpp"
 
-Delete::Delete(){}
+Delete::Delete(): Request() {
+	contentLength = 0;
+}
 
 Delete::Delete(std::vector<std::string> splitedResponse): Request(splitedResponse){
 }
@@ -12,6 +14,10 @@ Delete::Delete(const Delete &model): Request(model) {
 
 Delete::~Delete() {
 
+}
+
+void	Delete::parseHeader() {
+	Request::parseHeader();
 }
 
 bool checkStat(std::string resource, int &status) {
@@ -26,7 +32,7 @@ bool checkStat(std::string resource, int &status) {
 	return (true);
 }
 
-void	Delete::deleteResource(int &status) {
+void	Delete::deleteResource() {
     if (status != 200)
         return;
 
@@ -39,14 +45,9 @@ void	Delete::deleteResource(int &status) {
     }
 }
 
-void    Delete::getBody(int &status, Location &currentLocation, File &responseBody) {
-	(void)currentLocation;
-	if (status == 200) {
-		;
-	} else if (status == 204) {
-		; // Nothing to return!!!
-	} else {
-		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+void    Delete::getBody(File &responseBody) {
+	if (status != 200 && status != 201) {
+		std::string page = checkErrorPages(location.getError_pages());
 		if (!page.empty())
 			getErrorPages(page, responseBody);
 		else
@@ -54,12 +55,12 @@ void    Delete::getBody(int &status, Location &currentLocation, File &responseBo
 	}
 }
 
-void	Delete::response(int fd, Server &server) {
-	int	status = getStatus(location);
-    deleteResource(status);
+void	Delete::response(int fd) {
+	status = getStatus();
+    deleteResource();
 	File		responseBody;
 
-	getBody(status, location, responseBody);
+	getBody(responseBody);
 	
     std::string response;
 

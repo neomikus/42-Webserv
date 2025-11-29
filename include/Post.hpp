@@ -14,24 +14,26 @@ class Post: public Request {
 		std::string			contentType;
 		std::string			boundary;
 		std::string			newResourceName;
-		void		parseChunkedData(std::vector<char> &rawBody);
-		void		parseMultipartData(std::vector<char> &rawBody);
-		void		parseFormData(std::string rawBody);
-		void		parsePlainData(std::vector<char> rawBody);
-		void		parseBody(std::vector<char> &rawBody);
-		void		updateResource(int &status);
+		void		parseChunkedData();
+		void		parseMultipartData();
+		void		parseFormData();
+		void		parsePlainData();
+		void		parseBody();
+		void		updateResource();
 		void		writeContent(File &fileBody);
-		void		getBody(int &status, Location &currentLocation, File &responseBody);
-		std::string	cgi(int &status, Location &location);
+		void		getBody(File &responseBody);
+		void		parseHeader();
+
+		std::string	cgi();
 		
 	public:
 		Post();
-		Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
+		//Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
 		Post		&operator=(const Post &model);
 		Post(const Post &model);
 		~Post();
 
-		void	response(int fd, Server &server);
+		void	response(int fd);
 };
 
 #endif

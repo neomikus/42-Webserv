@@ -1,7 +1,9 @@
 #include "webserv.hpp"
 #include "Get.hpp"
 
-Get::Get(){}
+Get::Get(): Request() {
+	contentLength = 0;
+}
 
 Get::Get(std::vector<std::string> splitedResponse): Request(splitedResponse){
 
@@ -13,7 +15,11 @@ Get::Get(const Get &model): Request(model) {
 
 Get::~Get(){}
 
-bool	Get::checkRedirect(Location &location, int &status) {
+void	Get::parseHeader() {
+	Request::parseHeader();
+}
+
+bool	Get::checkRedirect() {
 	if (!resource.substr(location.getRoot().size()).empty() && *resource.rbegin() != '/') {
 		status = 301;
 		return (true);
@@ -21,7 +27,7 @@ bool	Get::checkRedirect(Location &location, int &status) {
 	return (false);
 }
 
-bool	Get::checkIndex(Location &location, File &responseBody) {
+bool	Get::checkIndex(File &responseBody) {
 	std::vector<std::string> indexes = location.getIndex();
 	if (indexes.empty() || !checkDirectory(resource))
 		return (false);
@@ -34,7 +40,7 @@ bool	Get::checkIndex(Location &location, File &responseBody) {
 	return (false);
 }
 
-bool	Get::checkAutoindex(Location &location, File &responseBody) {
+bool	Get::checkAutoindex(File &responseBody) {
 	if (location.getAutoindex()) {
 		responseBody = generateAutoIndex(resource.substr(location.getRoot().size()), resource);
 		return (true);
@@ -54,45 +60,45 @@ bool	Get::checkAcceptedFormats(File &responseBody) {
 	return (true);
 }
 
-void	Get::acceptedFormats(int &status, Location &currentLocation, File &responseBody) {
+void	Get::acceptedFormats(File &responseBody) {
 	if (!checkAcceptedFormats(responseBody)) {
 		if (status == 200)
 			status = 406;
 		if (std::find(accept.begin(), accept.end(), "text/html") != accept.end() ||
 			std::find(accept.begin(), accept.end(), "text/*") != accept.end())
-			getBody(status, currentLocation, responseBody);
+			getBody(responseBody);
 		else
 			responseBody = File();
 	}
 }
 
-void	Get::getBody(int &status, Location &currentLocation, File &responseBody) {
+void	Get::getBody(File &responseBody) {
 	if (status == 200) {
-		if (currentLocation.getCgi() != "" && !checkDirectory(resource))
-			cgi(status, currentLocation);
+		if (location.getCgi() != "" && !checkDirectory(resource))
+			cgi();
 		else if (!resource.empty() && !checkDirectory(resource))
 			responseBody.open(resource);
 		else {
-			if (checkRedirect(currentLocation, status))
+			if (checkRedirect())
 				return;
-			if (checkIndex(currentLocation, responseBody))
+			if (checkIndex(responseBody))
 				return;
-			if (checkAutoindex(currentLocation, responseBody))
+			if (checkAutoindex(responseBody))
 				return;
 			status = 404;
-			getBody(status, currentLocation, responseBody);
+			getBody(responseBody);
 		}
 	} else if (status == 418) {
 		teapotGenerator(responseBody);
 	} else {
-		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+		std::string page = checkErrorPages(location.getError_pages());
 		if (!page.empty())
 			getErrorPages(page, responseBody);
 		else
 			responseBody.open(DEFAULT_ERROR_PAGE);
 	}
 }
-std::string Get::cgi(int &status, Location &location)
+std::string Get::cgi()
 {
 	std::string command = location.getCgi();
 	int pipefd[2];
@@ -197,19 +203,17 @@ std::string Get::cgi(int &status, Location &location)
     }
 }
 
-void	Get::response(int fd, Server &server) {
-	Location 	location = selectContext(server.getVLocation(), "");
+void	Get::response(int fd) {
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
-	int	status = getStatus(location);
+	status = getStatus();
 	File		responseBody;
 	std::string response;
 
 
-	if (location.getCgi() != "" && !checkDirectory(resource))
-	{
+	if (location.getCgi() != "" && !checkDirectory(resource)) {
 		std::string cgi_response;
-		cgi_response = cgi(status, location);
+		cgi_response = cgi();
 		response += "HTTP/1.1 "; // This is always true
 		response += toString(status);
 		response += " " + getStatusText(status);
@@ -218,12 +222,9 @@ void	Get::response(int fd, Server &server) {
 		response += toString(cgi_response.size());
 		response += "\r\n";
 		response += cgi_response;
-	}
-	else
-	{
-
-		getBody(status, location, responseBody);
-		acceptedFormats(status, location, responseBody);
+	} else {
+		getBody(responseBody);
+		acceptedFormats(responseBody);
 
 		long long responseLenght = responseBody.getSize();
 
@@ -235,7 +236,7 @@ void	Get::response(int fd, Server &server) {
 		response += toString(responseLenght);
 		response += "\r\n";
 		
-		if (status == 301) {
+		if (this->status == 301) {
 			response += "Location: ";
 			response += resource.substr(resource.find_last_of('/') + 1) + "/" ;
 			response += "\r\n";

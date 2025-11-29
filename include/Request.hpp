@@ -31,32 +31,36 @@ class Request
 		std::string							referer;
 
 		Location							location;
+		int									status;
 
 		void						parseMethodResourceProtocol(std::string line);
 		bool						checkPermissions();
-		int							getStatus(Location &currentLocation);
-		virtual void				getBody(int &status, Location &currentLocation, File &responseBody);
+		int							getStatus();
+		virtual void				getBody(File &responseBody);
 		virtual	void				writeContent(File &fileBody) {(void)fileBody;};
-		std::string					checkErrorPages(std::vector<error_page> error_pages, int &status);
+		std::string					checkErrorPages(std::vector<error_page> error_pages);
 		void						getErrorPages(std::string &error_page, File &responseBody);
-		bool						readHeader(int fd);
-		void						parseHeader();
+		virtual void				parseHeader();
 	
 	public:
-		
 		Request();
 		Request(std::vector<std::string> splitedRaw);
 		Request(const Request &model);
 		Request	&operator=(const Request &model);
 		virtual ~Request();
 		Server	&selectServer(std::vector<Server> &servers);
-		virtual void	response(int fd, Server &server); // May return int for response code or for error check?
+		virtual void	response(int fd); // May return int for response code or for error check?
+
+		bool				readHeader(int fd);
+		bool				readBody(int fd);
+		
+		void				setStatus(int newStatus);
 
 		std::string			&getMethod();
 		std::string			&getProtocol();
 		std::string			&getResource();
 		std::string			&getQuery();
-		std::vector<char>	&getRawRequest();
+		std::vector<char>	&getRawHeader();
 		Location			&getLocation();
 
 };

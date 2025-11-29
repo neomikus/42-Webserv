@@ -49,7 +49,7 @@ bool	finalChunk(std::vector<char> &chunk) {
 	return (true);
 }
 
-void	Post::parseChunkedData(std::vector<char> &rawBody) {
+void	Post::parseChunkedData() {
 	std::string	totalSize;
 
 	std::vector<char>::iterator it = rawBody.begin();
@@ -95,7 +95,7 @@ std::string getFilename(std::string filehead)
 	return "";
 }
 
-void	Post::parseMultipartData(std::vector<char> &rawBody) {
+void	Post::parseMultipartData() {
 	std::vector<char>::iterator lastEnd = rawBody.begin();
 	std::vector<char>::iterator start = rawBody.begin();
 
@@ -132,13 +132,14 @@ void	Post::parseMultipartData(std::vector<char> &rawBody) {
 	https://digitalbunker.dev/understanding-how-uuids-are-generated/
 	https://en.wikipedia.org/wiki/Universally_unique_identifier
 */
-void	Post::parseFormData(std::string rawBody) {
+void	Post::parseFormData() {
 	std::string	body;
 	std::string	filename = getTime() + ".json";
+	std::string toParse = makeString(rawBody);
 
 	body = "{";
 	body += "\n";
-	std::vector<std::string> formData = strSplit(rawBody, "&");
+	std::vector<std::string> formData = strSplit(toParse, "&");
 	for (std::vector<std::string>::iterator it = formData.begin(); it != formData.end(); ++it) {
 		body += '\t';
 		std::vector<std::string> values = strSplit(*it, "=");
@@ -167,7 +168,7 @@ void	Post::parseFormData(std::string rawBody) {
 	filesVector.push_back(newFile);
 }
 
-void	Post::parsePlainData(std::vector<char> rawBody) {
+void	Post::parsePlainData() {
 	std::string	filename = "temp" + getMIME(contentType, true);
 	File	newFile;
 
@@ -178,20 +179,21 @@ void	Post::parsePlainData(std::vector<char> rawBody) {
 	filesVector.push_back(newFile);
 }
 
-void	Post::parseBody(std::vector<char> &rawBody) {
+void	Post::parseBody() {
 
 	if (transferEncoding == "chunked") {
-		parseChunkedData(rawBody);
+		parseChunkedData();
 	} else if (contentType == "application/x-www-form-urlencoded") {
-		parseFormData(makeString(rawBody));
+		parseFormData();
 	} else if (contentType == "multipart/form-data") {
-		parseMultipartData(rawBody);
+		parseMultipartData();
 	} else {
-		parsePlainData(rawBody);
+		parsePlainData();
 	}
 }
 
-Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: Request(splitedRaw)*/ {
+/*
+Post::Post(std::vector<std::string> splitedRaw) {
 	*this = Post();
 
 	parseMethodResourceProtocol(splitedRaw[0]);
@@ -229,7 +231,7 @@ Post::Post(std::vector<std::string> splitedRaw, std::vector<char> &rawBody)/*: R
 		}
 	}
 	parseBody(rawBody);
-}
+} */
 
 Post::Post(const Post &model): Request(model) {
 	this->contentType = model.contentType;
@@ -248,6 +250,43 @@ Post	&Post::operator=(const Post &model) {
 	this->contentType = model.contentType;
 	return (*this);
 }
+
+void	Post::parseHeader() {
+	std::vector<std::string>	header = strSplit(makeString(rawHeader), "\r\n");
+
+	for (std::vector<std::string>::iterator it = header.begin(); it != header.end(); ++it)
+	{
+		*it = strTrim(*it, '\r');
+
+		if (it->find("Host") != it->npos) {
+			hostPort.host = strTrim(it->substr(0, it->find(':')));
+			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
+		}
+		if (it->find("User-Agent") != it->npos)
+			userAgent = strTrim(it->substr(cstrlen("User-Agent:")));
+		if (it->find("Accept") != it->npos)
+			accept = strSplit(strTrim(it->substr(cstrlen("Accept:"))), ",");
+		if (it->find("Connection") != it->npos) {
+			if (strTrim(it->substr(cstrlen("Connection:"))) == "keep-alive")
+				keepAlive = true;
+		}
+		if (it->find("Referer") != it->npos)
+			referer = strTrim(it->substr(cstrlen("Referer")));
+		if (it->find("Content-Length") != it->npos) {
+			contentLength = atol(strTrim(it->substr(cstrlen("Content-Length:"))).c_str());
+		}
+		if (it->find("Content-Type") != it->npos) {
+			contentType = strTrim(it->substr(cstrlen("Content-Type:"), it->find(";") - cstrlen("Content-Type:")));
+			if (it->find("boundary=") != it->npos) {
+				boundary = it->substr(it->find(";") + cstrlen("boundary="));
+			}
+		}
+		if (it->find("Transfer-Encoding") != it->npos) {
+			transferEncoding = strTrim(it->substr(cstrlen("Transfer-Encoding:")));
+		}
+	}
+}
+
 
 void	Post::writeContent(File &fileBody) {
 	if (!newResourceName.empty())
@@ -302,7 +341,7 @@ bool checkStat(std::string resource, std::string &filename, int &status) {
 	return (true);
 }
 
-void	Post::updateResource(int &status) {
+void	Post::updateResource() {
 	if (status != 201 && status != 204)
 		return;
 	
@@ -328,13 +367,13 @@ void	Post::updateResource(int &status) {
 	}
 }
 
-void	Post::getBody(int &status, Location &currentLocation, File &responseBody) {
+void	Post::getBody(File &responseBody) {
 	if (status == 201) {
 		writeContent(responseBody);
 	} else if (status == 204) {
 		; // Nothing to return!!!
 	} else {
-		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+		std::string page = checkErrorPages(location.getError_pages());
 		if (!page.empty())
 			getErrorPages(page, responseBody);
 		else
@@ -342,7 +381,7 @@ void	Post::getBody(int &status, Location &currentLocation, File &responseBody) {
 	}
 }
 
-std::string Post::cgi(int &status, Location &location)
+std::string Post::cgi()
 {
 	std::cout << HRED << "Got into CGI post" << std::endl;
 	std::string command = location.getCgi();
@@ -478,16 +517,17 @@ std::string Post::cgi(int &status, Location &location)
     }
 }
 
-void	Post::response(int fd, Server &server) {
+void	Post::response(int fd) {
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
-	int			status = getStatus(location);
+	status = getStatus();
+	parseBody();
 	std::string response;
 
 	if (location.getCgi() != "" && !checkDirectory(resource))
 	{
 		std::string cgi_response;
-		cgi_response = cgi(status, location);
+		cgi_response = cgi();
 		response += "HTTP/1.1 "; // This is always true
 		response += toString(status);
 		response += " " + getStatusText(status);
@@ -499,10 +539,10 @@ void	Post::response(int fd, Server &server) {
 	}
 	else
 	{
-		updateResource(status);
+		updateResource();
 		File		responseBody;
 
-		getBody(status, location, responseBody);
+		getBody(responseBody);
 
 		long long responseLenght = responseBody.getSize();
 

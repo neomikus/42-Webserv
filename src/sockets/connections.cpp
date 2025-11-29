@@ -16,6 +16,49 @@ bool	checkfds(int fd, std::list<int> fdList) {
 	return (false);
 }
 
+bool	Request::readBody(int fd) {
+	if (contentLength < 0) {
+		return (411);
+		return (true);
+	} else if (contentLength ==  0) {
+		return (true);
+	} else if ((long)rawBody.size() == contentLength) {
+		return (true);
+	}
+
+	char buffer[BUFFER_SIZE];
+
+	int rd = recv(fd, buffer, 1024, 0);
+	
+	/* CASE: CHUNKED */
+	if (transferEncoding == "chunked") {
+		/* Do chunked request later */
+		return (false);
+	} else {
+		if (contentLength < 0) {
+			/* Error: 411 */
+			return (true);
+		}
+		if (contentLength ==  0) {
+			return (true);
+		}
+
+		for (int i = 0; i < rd; i++) {
+			rawBody.push_back(buffer[i]);
+		}
+
+		if ((long)(long)rawBody.size() > location.getMax_body_size()) {
+			status = 413;
+			return (true);
+		}
+		if ((long)rawBody.size() < contentLength) {
+			return (false);
+		}
+		
+		return (false);
+	}
+}
+
 bool	Request::readHeader(int fd) {
 	// Case = you're reading the body
 	if (headerRead) {
@@ -24,9 +67,9 @@ bool	Request::readHeader(int fd) {
 
 	std::string	alreadyRead = makeString(rawHeader);
 	// You find the body in the first reading (The first line reading)
-	if (alreadyRead.find("\r\n\r\n")) {
+	if (alreadyRead.find("\r\n\r\n") != alreadyRead.npos) {
 		parseHeader();
-		for (int i = alreadyRead.find("\r\n\r\n"); i < rawHeader.size(); i++) {
+		for (size_t i = alreadyRead.find("\r\n\r\n") + 4; i < rawHeader.size(); i++) {
 			rawBody.push_back(rawHeader[i]);
 		}
 		return (true); // Body found, stop reading
@@ -41,12 +84,12 @@ bool	Request::readHeader(int fd) {
 
 	std::string read(buffer);
 
-	if (read.find("\r\n\r\n")) {
-		int i = 0;
+	if (read.find("\r\n\r\n") != read.npos) {
+		size_t i = 0;
 		for (; i < read.find("\r\n\r\n"); i++) {
 			rawHeader.push_back(buffer[i]);
 		}
-		for (; i < rd; i++) {
+		for (; (int)i < rd; i++) {
 			rawBody.push_back(buffer[i]);
 		}
 		parseHeader();
@@ -58,9 +101,11 @@ bool	Request::readHeader(int fd) {
 		rawHeader.push_back(buffer[i]);
 	}
 
-	if (rawHeader.size() != MAX_HEADER_SIZE)
-		return (false);
-	return (true);
+	if (rawHeader.size() > MAX_HEADER_SIZE) {
+		status = 400;
+		return (true);
+	}
+	return (false);
 }
 
 void	connect(int epfd, int fd, std::list<int> &clients) {
@@ -98,7 +143,7 @@ std::vector<char> getBody(std::vector<char> &rawResponse, std::vector<char>::ite
 	return (retval);
 }
 
-Location	selectContext(Location &location, std::string fatherUri, std::string resource) {
+Location	selectContext(Location &location, std::string fatherUri, std::string &resource) {
    std::string uri = "/" + resource;
 
 	if (uri[uri.size() - 1] == '/')
@@ -115,7 +160,7 @@ Location	selectContext(Location &location, std::string fatherUri, std::string re
 			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
 				return (*it);
 			if (it->getUri() == uri)
-				return (selectContext(*it, fatherUri + it->getUri()));
+				return (selectContext(*it, fatherUri + it->getUri(), resource));
 		}
 		uri = trimLastWord(uri, '/');
 	}
@@ -124,17 +169,16 @@ Location	selectContext(Location &location, std::string fatherUri, std::string re
 }
 
 
-Request *makeRequest(int fd, Server &server)
+Request *makeRequest(int fd, std::vector<Server> &servers)
 {
 	std::vector<char> rawRequest;
 	char buffer[BUFFER_SIZE * 2];
-	int rd = recv(fd, buffer, 1, 0);
+	int rd = recv(fd, buffer, BUFFER_SIZE, 0);
 	Request *retval;
 	
 	if (rd < 0) {
-		/* Devolver un error 500 si read falla */
-
 		retval = new Request;
+		retval->setStatus(500);
 		return (retval);
 	}
 
@@ -144,16 +188,20 @@ Request *makeRequest(int fd, Server &server)
 
 	std::string request = makeString(rawRequest);
 
-	if (request.find("\n") == request.npos) {
-		/*  */
-		return (NULL);
+	if (request.find("\r\n") == request.npos) {
+		retval = new Request();
+		retval->setStatus(400);
+		// Set headerRead to true
+		return (retval);
 	}
-
-	request = request.substr(0, request.find("\n"));
+	
+	request = request.substr(0, request.find("\r\n"));
 
 	if (countWords(request) != 3) {
-		/* ERROR 400 */
-		return (NULL);
+		retval = new Request();
+		retval->setStatus(400);
+		// Set headerRead to true
+		return (retval);
 	}
 
 	std::stringstream	strBuffer;
@@ -185,8 +233,9 @@ Request *makeRequest(int fd, Server &server)
 	retval->getResource() = resource.substr(0, resource.find("?"));
 	retval->getResource() = ltrim(resource, '/');
 
-	retval->getRawRequest() = rawRequest;
-	retval->getLocation() = selectContext(server.getVLocation(), "", retval->getResource())
+	retval->getRawHeader() = rawRequest;
+	retval->getLocation() = selectContext(retval->selectServer(servers).getVLocation(), "", retval->getResource());
+	return (retval);
 }
 
 void	handleEvent(int epfd, int evtfd) {
@@ -221,23 +270,25 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 				if (checkfds(events[i].data.fd, it->getSockets())) {
 					connect(epfd, events[i].data.fd, clients);
 					requests[events[i].data.fd] = NULL;
-				}
-
-				if (checkfds(events[i].data.fd, clients)) {
-					Request	*currentRequest = requests[events[i].data.fd];
-					if ((events[i].events & EPOLLIN) && !currentRequest) {
-						currentRequest = makeRequest(events[i].data.fd, currentRequest->selectServer(servers));
-					} else if ((events[i].events & EPOLLIN) && currentRequest->readHeader(events[i].data.fd, currentRequest)) {
+				} else if (checkfds(events[i].data.fd, clients)) {
+					if ((events[i].events & EPOLLIN) && !requests[events[i].data.fd]) {
+						requests[events[i].data.fd] = makeRequest(events[i].data.fd, servers);
+					}
+					if ((events[i].events & EPOLLIN) 
+								&& requests[events[i].data.fd]->readHeader(events[i].data.fd) 
+								&& requests[events[i].data.fd]->readBody(events[i].data.fd)) {
 						handleEvent(epfd, events[i].data.fd);
 					} else if (events[i].events & EPOLLOUT) {
-						currentRequest->response(events[i].data.fd, currentRequest->selectServer(servers));
+						requests[events[i].data.fd]->response(events[i].data.fd);
 						rawRequest.clear();
-						delete currentRequest;
+						delete requests[events[i].data.fd];
+						requests.erase(events[i].data.fd);
 						closeConnection(epfd, events[i].data.fd, clients);
 					} else if (events[i].events & EPOLLHUP || events[i].events & EPOLLERR) {
 						closeConnection(epfd, events[i].data.fd, clients);
-						if (currentRequest)
-							delete currentRequest;
+						if (requests[events[i].data.fd])
+							delete requests[events[i].data.fd];
+						requests.erase(events[i].data.fd);
 					}
 				}
 			}

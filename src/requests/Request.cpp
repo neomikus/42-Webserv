@@ -54,6 +54,31 @@ Request::Request(std::vector<std::string> splitedRaw) {
 	}
 }
 
+void	Request::parseHeader() {
+	std::vector<std::string>	header = strSplit(makeString(rawHeader), "\r\n");
+
+	for (std::vector<std::string>::iterator it = header.begin(); it != header.end(); ++it)
+	{
+		if (it->find("Host") != it->npos) {
+			hostPort.host = strTrim(it->substr(0, it->find(':')));
+			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
+		} else if (it->find("User-Agent") != it->npos) {
+			userAgent = strTrim(it->substr(cstrlen("User-Agent:")));
+		} else if (it->find("Accept") != it->npos) {
+			accept = strSplit(strTrim(it->substr(cstrlen("Accept:"))), ",");
+		} else if (it->find("Connection") != it->npos) {
+			if (strTrim(it->substr(cstrlen("Connection:"))) == "keep-alive")
+				keepAlive = true;
+		} else if (it->find("Referer") != it->npos) {
+			referer = strTrim(it->substr(cstrlen("Referer")));
+		} else if (it->find("Content-Length") != it->npos) {
+			contentLength = atol(strTrim(it->substr(cstrlen("Content-Length: "))).c_str());
+		} else if (it->find("Transfer-Encoding") != it->npos) {
+			transferEncoding = strTrim(it->substr(cstrlen("Transfer-Encoding:")));
+		}
+	}
+	headerRead = true;
+}
 
 Request::Request() {
 	error = false;
@@ -65,6 +90,8 @@ Request::Request() {
 	referer = "";
 	transferEncoding = "";
 	contentLength = -1;
+	headerRead = false;
+	status = 0;
 }
 
 Request::Request(const Request &model) {
@@ -139,7 +166,7 @@ bool	Request::checkPermissions() {
 	return (true);
 }
 
-int	Request::getStatus(Location &currentLocation) {
+int	Request::getStatus() {
 	if (error)
 		return (400);
 	if (method != "PUT" && method != "HEAD" &&
@@ -148,7 +175,7 @@ int	Request::getStatus(Location &currentLocation) {
 		return (501);
 	if (protocol != "HTTP/1.0" && protocol != "HTTP/1.1")
 		return (505);
-	if (!checkAllowedMethods(method, currentLocation.getMethods()))
+	if (!checkAllowedMethods(method, location.getMethods()))
 		return (405);
 	if (method == "POST" && transferEncoding != "chunked" && contentLength == -1) {
 		return (411);
@@ -160,15 +187,12 @@ int	Request::getStatus(Location &currentLocation) {
 	}
 	if (method != "POST" && !resource.empty() && !checkPermissions())
 		return (403);
-	// Save request body size in parsing!!!
-	//if (currentLocation.getMax_body_size() > request_body_size)
-	//	return (413);
 	if (method == "POST")
 		return (201);
 	return (200);
 }
 
-std::string Request::checkErrorPages(std::vector<error_page> error_pages, int &status) {
+std::string Request::checkErrorPages(std::vector<error_page> error_pages) {
 	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
 		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); ++it2) {
 			if (*it2 == status) {
@@ -188,23 +212,24 @@ void	Request::getErrorPages(std::string &page, File &responseBody) {
 		responseBody.open(page);
 }
 
-void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
-	std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+void	Request::getBody(File &responseBody) {
+	std::string page = checkErrorPages(location.getError_pages());
 	if (!page.empty())
 		getErrorPages(page, responseBody);
 	else
 		responseBody.open(DEFAULT_ERROR_PAGE);
 }
 
-void	Request::response(int fd, Server &server) {
+void	Request::response(int fd) {
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + resource;
 	
-	int	status = getStatus(location);
+	if (!status)
+		status = getStatus();
 
 	File		responseBody;
 
-	getBody(status, location, responseBody);
+	getBody(responseBody);
 
 	std::string response;
 
@@ -227,5 +252,6 @@ std::string			&Request::getMethod() {return(this->method);}
 std::string			&Request::getResource() {return(this->resource);}
 std::string			&Request::getProtocol() {return(this->protocol);}
 std::string			&Request::getQuery() {return(this->query);}
-std::vector<char>	&Request::getRawRequest() {return(this->rawRequest);}
-Location			&Request::getLocation() {return(this->location)};
+std::vector<char>	&Request::getRawHeader() {return(this->rawHeader);}
+Location			&Request::getLocation() {return(this->location);};
+void				Request::setStatus(int newStatus) {status = newStatus;};

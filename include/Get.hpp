@@ -5,20 +5,21 @@
 
 class Get: public Request {
 	private:
-		bool	checkRedirect(Location &location, int &status);
-		bool	checkIndex(Location &location, File &responseBody);
-		bool	checkAutoindex(Location &location, File &responseBody);
-		void	getBody(int &status, Location &currentLocation, File &responseBody);
+		bool	checkRedirect();
+		bool	checkIndex(File &responseBody);
+		bool	checkAutoindex(File &responseBody);
+		void	getBody(File &responseBody);
 		bool	checkAcceptedFormats(File &responseBody);	
-		void	acceptedFormats(int &status, Location &currentLocation, File &responseBody);
-		std::string cgi(int &status, Location &location);
+		void	acceptedFormats(File &responseBody);
+		void	parseHeader();
+		std::string cgi();
 	public:
 		Get();
 		Get(std::vector<std::string> splitedResponse);
 		Get(const Get &model);
 		~Get();
 	
-		void	response(int fd, Server &server);
+		void	response(int fd);
 };
 
 #endif
