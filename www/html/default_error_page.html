@@ -2,7 +2,7 @@
 
 <h1 id="error"></h1>
 
-<p1>The requested URL <span id="URI"></span> was not found in this server
+<p1 id="error-expl">The requested URL <span id="URI"></span> was not found in this server
 
 <hr>
 
@@ -11,23 +11,39 @@
 </div>
 
 <script>
-	document.getElementById("URI").innerHTML = window.location.pathname;
-	document.getElementById("serverinfo").innerHTML = "42-Webserv/0.0.1 at " + window.location.hostname + " on port " + window.location.port;
 	fetch(window.location.href)
 	.then(response => {
 		console.log(`HTTP Status Code: ${response.status}`);
+		document.getElementById("error").innerHTML = `${response.status} - ${response.statusText}`
 		if (response.status == 400)
-			document.getElementById("error").innerHTML = "400 - Bad Request";
+			document.getElementById("error-expl").innerHTML = "The request header was either corrupted or had errors";
 		else if (response.stauts == 403)
-			document.getElementById("error").innerHTML = "403 - Forbidden";
+			document.getElementById("error-expl").innerHTML = "The requested URL <span id='URI'></span> was not accessible";
 		else if (response.status == 404)
-			document.getElementById("error").innerHTML = "404 - Not Found";
+			document.getElementById("error-expl").innerHTML = "The requested URL <span id='URI'></span> was not found in this server";
 		else if (response.status == 405)
-			document.getElementById("error").innerHTML = "405 - Method Not Allowed";
+			document.getElementById("error-expl").innerHTML = "The requested URL <span id='URI'></span> does not accept the requested method";
 		else if (response.status == 406)
-			document.getElementById("error").innerHTML = "406 - Not Acceptable";
+			document.getElementById("error-expl").innerHTML = "The resource sent to server was not acceptable";
+		else if (response.status == 408)
+			document.getElementById("error-expl").innerHTML = "The request has timed out";
+		else if (response.status == 411)
+			document.getElementById("error-expl").innerHTML = "The request has sent a body but not a Content-Lenght header";
+		else if (response.status == 413)
+			document.getElementById("error-expl").innerHTML = "The resource sent was too big for the requested URL";
+		else if (response.status == 418)
+			document.getElementById("error-expl").innerHTML = "I'M A TEAPOT!!!!";
+		else if (response.status == 500)
+			document.getElementById("error-expl").innerHTML = "Something went bad on our side";
+		else if (response.status == 502)
+			document.getElementById("error-expl").innerHTML = "The requested URL was served through CGI, and it seems to have failed";
+		else if (response.status == 505)
+			document.getElementById("error-expl").innerHTML = "The request protocol was not HTTP/1.1 or HTTP/1.0";
 		else
-			document.getElementById("error").innerHTML = "500 - Internal Server Error";
+			document.getElementById("error-expl").innerHTML = "Unknown error";
+	document.getElementById("URI").innerHTML = window.location.pathname;
+	document.getElementById("serverinfo").innerHTML = "42-Webserv/0.0.1 at " + window.location.hostname + " on port " + window.location.port;
+
 	})
 	.catch(error => {
 		console.error('Error fetching the page:', error);

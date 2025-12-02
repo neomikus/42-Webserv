@@ -92,6 +92,7 @@ Request::Request() {
 	contentLength = -1;
 	headerRead = false;
 	status = 0;
+	bodyRead = 0;
 }
 
 Request::Request(const Request &model) {

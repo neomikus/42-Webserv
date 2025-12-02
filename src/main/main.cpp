@@ -116,7 +116,6 @@ int	main(int argc, char *argv[], char *envp[]) {
  	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 		std::vector<hostport> _hostport = it->getHostports();
 		for (std::vector<hostport>::iterator it2 = _hostport.begin(); it2 != _hostport.end(); ++it2) {
-			// Change inet_addr to something allowed by the subject later
 			it->getSockets().push_back(Socket::initServer(it2->port, inet_addr(it2->host.c_str()), epfd));
 		}
 	}

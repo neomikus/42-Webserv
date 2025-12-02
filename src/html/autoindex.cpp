@@ -55,7 +55,6 @@ std::string	getFileElement(std::string current, std::string path) {
 
 	// Last modified cell
 	retval << "<td>" << ctime(&fileBuffer.st_mtime) << "</td>" << std::endl;
-	// Find something allowed by the subject!!!
 
 	// Size cell
 	if (type == "directory")

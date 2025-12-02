@@ -21,6 +21,8 @@ std::string	getStatusText(int status) {
 			return ("Not Found\r\n");
 		case 405:
 			return ("Method Not Allowed\r\n");
+		case 406:
+			return ("Not Acceptable\r\n");
 		case 408:
 			return ("Request Tiemout\r\n");
 		case 411:
@@ -33,6 +35,8 @@ std::string	getStatusText(int status) {
 			return ("Internal Server Error\r\n");
 		case 501:
 			return ("Not Implemented\r\n");
+		case 502:
+			return ("Bad Gateway\r\n");
 		case 505:
 			return ("HTTP Version Not Supported\r\n");
 		default:

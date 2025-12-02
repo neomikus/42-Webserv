@@ -9,6 +9,7 @@ class Request
 {
 	private:
 		std::vector<Server> 				candidates;
+		long long							bodyRead;
 
 	protected:
 		std::vector<char>					rawHeader;

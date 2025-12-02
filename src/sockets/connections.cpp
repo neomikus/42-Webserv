@@ -22,40 +22,42 @@ bool	Request::readBody(int fd) {
 		return (true);
 	} else if (contentLength ==  0) {
 		return (true);
-	} else if ((long)rawBody.size() == contentLength) {
+	} else if (bodyRead == contentLength) {
 		return (true);
 	}
 
 	char buffer[BUFFER_SIZE];
 
 	int rd = recv(fd, buffer, 1024, 0);
+
+	bodyRead += rd;
+
+	if (error) {
+		if (bodyRead == contentLength) {
+			return (true);
+		}
+		return (false);
+	}
 	
 	/* CASE: CHUNKED */
 	if (transferEncoding == "chunked") {
 		/* Do chunked request later */
 		return (false);
 	} else {
-		if (contentLength < 0) {
-			/* Error: 411 */
-			return (true);
-		}
-		if (contentLength ==  0) {
-			return (true);
-		}
-
 		for (int i = 0; i < rd; i++) {
 			rawBody.push_back(buffer[i]);
 		}
 
-		if ((long)(long)rawBody.size() > location.getMax_body_size()) {
+		if (bodyRead > location.getMax_body_size()) {
 			status = 413;
-			return (true);
+			error = true;
+			return (false);
 		}
-		if ((long)rawBody.size() < contentLength) {
+		if (bodyRead < contentLength) {
 			return (false);
 		}
 		
-		return (false);
+		return (true);
 	}
 }
 
@@ -72,7 +74,8 @@ bool	Request::readHeader(int fd) {
 		for (size_t i = alreadyRead.find("\r\n\r\n") + 4; i < rawHeader.size(); i++) {
 			rawBody.push_back(rawHeader[i]);
 		}
-		return (true); // Body found, stop reading
+		bodyRead = rawBody.size();
+		return (true); // Body found, stop reading header
 	}
 
 	char buffer[BUFFER_SIZE + 1];
@@ -81,6 +84,9 @@ bool	Request::readHeader(int fd) {
 		std::cerr << "Read failed!" << std::endl;
 		return (true);
 	}
+
+	if (error)
+		return (false);
 
 	std::string read(buffer);
 
@@ -103,7 +109,7 @@ bool	Request::readHeader(int fd) {
 
 	if (rawHeader.size() > MAX_HEADER_SIZE) {
 		status = 400;
-		return (true);
+		error = true;
 	}
 	return (false);
 }

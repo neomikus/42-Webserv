@@ -285,6 +285,7 @@ void	Post::parseHeader() {
 			transferEncoding = strTrim(it->substr(cstrlen("Transfer-Encoding:")));
 		}
 	}
+	headerRead = true;
 }
 
 
@@ -520,7 +521,8 @@ std::string Post::cgi()
 void	Post::response(int fd) {
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
-	status = getStatus();
+	if (!status)
+		status = getStatus();
 	parseBody();
 	std::string response;
 
