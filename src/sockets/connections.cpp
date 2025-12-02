@@ -38,25 +38,27 @@ bool	Request::readBody(int fd) {
 		}
 		return (false);
 	}
+
+	if (bodyRead > location.getMax_body_size()) {
+		status = 413;
+		error = true;
+		return (false);
+	}
+
+	for (int i = 0; i < rd; i++) {
+		rawBody.push_back(buffer[i]);
+	}
 	
-	/* CASE: CHUNKED */
 	if (transferEncoding == "chunked") {
-		/* Do chunked request later */
+		/* CASE: CHUNKED */
+		std::string contentStr = makeString(rawBody);
+		if (contentStr.find("0\r\n\r\n") != contentStr.npos)
+			return (true);
 		return (false);
 	} else {
-		for (int i = 0; i < rd; i++) {
-			rawBody.push_back(buffer[i]);
-		}
-
-		if (bodyRead > location.getMax_body_size()) {
-			status = 413;
-			error = true;
-			return (false);
-		}
 		if (bodyRead < contentLength) {
 			return (false);
 		}
-		
 		return (true);
 	}
 }

@@ -63,7 +63,6 @@ void	Post::parseChunkedData() {
 
 	for (std::vector<char> currentChunk; ;) {
 		std::string	size;
-		
 
 		for (; *start != '\r' && *start != '\n'; ++start) {
 			size += *start;
