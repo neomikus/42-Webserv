@@ -519,6 +519,8 @@ std::string Post::cgi()
 }
 
 void	Post::response(int fd) {
+	if (location.getCollectionRoute() != "")
+		resource = location.getCollectionRoute();
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
 	if (!status)

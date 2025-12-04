@@ -80,7 +80,7 @@ void	Location::parseCollectionRoute(std::string value) {
 		errorCode = 4;
 		return ;
 	}
-	collection_route = value;
+	collection_route = strTrim(value, '/');
 }
 
 void	Location::parseCgi(std::string value) {
