@@ -15,6 +15,8 @@ class Location {
 		allowed_methods				methods;
 		std::vector<error_page>		error_pages;
 		long long					max_body_size;
+		std::pair<int, std::string>	redirect;
+		std::string					colection_route;
 
 		void						parseCgi(std::string value);
 		void						parseRoot(std::string value);
@@ -23,7 +25,8 @@ class Location {
 		void						parseAlowedMethods(std::string value);
 		void						parseErrorPage(std::string value);
 		void						parseBodySize(std::string value);
-
+		void						parseRedirect(std::string value);
+		void						parseColectionRoute(std::string value);
 
 		public:
 
@@ -44,6 +47,8 @@ class Location {
 		allowed_methods				getMethods() const;
 		std::vector<error_page>		getError_pages() const;
 		long long					getMax_body_size() const;
+		std::pair<int, std::string>	getRedirect() const;
+		std::string					getColectionRoute() const;
 
 };
 

@@ -3,6 +3,7 @@
 
 Get::Get(): Request() {
 	contentLength = 0;
+	redirectUrl = "";
 }
 
 Get::Get(std::vector<std::string> splitedResponse): Request(splitedResponse){
@@ -20,10 +21,17 @@ void	Get::parseHeader() {
 }
 
 bool	Get::checkRedirect() {
+	if (location.getRedirect().first) {
+		status = location.getRedirect().first;
+		redirectUrl = location.getRedirect().second;
+	}
 	if (!resource.substr(location.getRoot().size()).empty() && *resource.rbegin() != '/') {
-		status = 301;
+		if (status != 302)
+			status = 301;
 		return (true);
 	}
+	if (location.getRedirect().first)
+		return (true);
 	return (false);
 }
 
@@ -73,10 +81,10 @@ void	Get::acceptedFormats(File &responseBody) {
 }
 
 void	Get::getBody(File &responseBody) {
-	if (status == 200) {
+	if (status == 200 || status == 301 || status == 302) {
 		if (location.getCgi() != "" && !checkDirectory(resource))
 			cgi();
-		else if (!resource.empty() && !checkDirectory(resource))
+		else if (status != 301 && status != 302 && !resource.empty() && !checkDirectory(resource))
 			responseBody.open(resource);
 		else {
 			if (checkRedirect())
@@ -235,11 +243,17 @@ void	Get::response(int fd) {
 		response += "Content Lenght: ";
 		response += toString(responseLenght);
 		response += "\r\n";
-		
-		if (this->status == 301) {
-			response += "Location: ";
-			response += resource.substr(resource.find_last_of('/') + 1) + "/" ;
-			response += "\r\n";
+	
+		if (this->status == 301 || this->status == 302) {
+			if (redirectUrl != "") {
+				response += "Location: ";
+				response += redirectUrl;
+				response += "\r\n";
+			} else {
+				response += "Location: ";
+				response += resource.substr(resource.find_last_of('/') + 1) + "/";
+				response += "\r\n";
+			}
 		}
 
 		if (location.getCgi() == "" || !checkDirectory(resource)) {

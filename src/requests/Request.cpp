@@ -181,6 +181,9 @@ int	Request::getStatus() {
 	if (method == "POST" && transferEncoding != "chunked" && contentLength == -1) {
 		return (411);
 	}
+	if (location.getRedirect().first) {
+		return (location.getRedirect().first);
+	}
 	if (method != "POST" && !resource.empty() && access(resource.c_str(), F_OK)) {
 		if (resource == "teapot")
 			return (418);

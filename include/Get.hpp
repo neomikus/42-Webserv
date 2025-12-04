@@ -5,6 +5,8 @@
 
 class Get: public Request {
 	private:
+		std::string redirectUrl;
+
 		bool	checkRedirect();
 		bool	checkIndex(File &responseBody);
 		bool	checkAutoindex(File &responseBody);
