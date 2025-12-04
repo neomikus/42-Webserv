@@ -81,6 +81,7 @@ void	Request::parseHeader() {
 }
 
 Request::Request() {
+	readError = false;
 	error = false;
 	method = "";
 	resource = "";
@@ -96,6 +97,7 @@ Request::Request() {
 }
 
 Request::Request(const Request &model) {
+	this->readError = model.readError;
 	this->error = model.error;
 	this->method = model.method;
 	this->resource = model.resource;
@@ -108,6 +110,7 @@ Request::Request(const Request &model) {
 }
 
 Request	&Request::operator=(const Request &model) {
+	this->readError = model.readError;
 	this->error = model.error;
 	this->method = model.method;
 	this->resource = model.resource;
@@ -252,6 +255,8 @@ void	Request::response(int fd) {
 	send(fd, response.c_str(), response.length(), 0);
 }
 
+bool				Request::getReadError(){return(this->readError);}
+void				Request::setReadError(bool value){this->readError = value;}
 std::string			&Request::getMethod() {return(this->method);}
 std::string			&Request::getResource() {return(this->resource);}
 std::string			&Request::getProtocol() {return(this->protocol);}

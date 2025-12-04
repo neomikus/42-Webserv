@@ -12,9 +12,11 @@ class Request
 		long long							bodyRead;
 
 	protected:
+		bool								readError;
+		bool								error; // necesary : (firstline)method resource protocol
+
 		std::vector<char>					rawHeader;
 		std::vector<char>					rawBody;
-		bool								error; // necesary : (firstline)method resource protocol
 		std::string							method;
 		std::string							query;
 		std::string							resource;
@@ -55,6 +57,9 @@ class Request
 		bool				readHeader(int fd);
 		bool				readBody(int fd);
 		
+		bool				getReadError();
+		void				setReadError(bool value);
+
 		void				setStatus(int newStatus);
 
 		std::string			&getMethod();

@@ -3,6 +3,7 @@
 
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <string>
 #include <sstream>
 #include <iostream>

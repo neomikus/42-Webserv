@@ -29,6 +29,11 @@ bool	Request::readBody(int fd) {
 	char buffer[BUFFER_SIZE];
 
 	int rd = recv(fd, buffer, 1024, 0);
+	if (rd == -1 || rd == 0) {
+		std::cerr << "Read error!" << std::endl;
+		readError = true;
+		return (false);
+	}
 
 	bodyRead += rd;
 
@@ -83,8 +88,8 @@ bool	Request::readHeader(int fd) {
 
 	char buffer[BUFFER_SIZE + 1];
 	int rd = recv(fd, buffer, 1024, 0);
-	if (rd == -1) {
-		std::cerr << "Read failed!" << std::endl;
+	if (rd == -1 || rd == 0) {
+		readError = true;
 		return (true);
 	}
 
@@ -184,11 +189,10 @@ Request *makeRequest(int fd, std::vector<Server> &servers)
 	char buffer[BUFFER_SIZE * 2];
 	int rd = recv(fd, buffer, BUFFER_SIZE, 0);
 	Request *retval;
-	
-	if (rd < 0) {
-		retval = new Request;
-		retval->setStatus(500);
-		return (retval);
+	if (rd == -1 || rd == 0) {
+		retval = new Request();
+		std::cerr << "Read error!" << std::endl;
+		retval->setReadError(true);
 	}
 
 	for (int i = 0; i < rd; i++) {
@@ -283,8 +287,9 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 					if ((events[i].events & EPOLLIN) && !requests[events[i].data.fd]) {
 						requests[events[i].data.fd] = makeRequest(events[i].data.fd, servers);
 					}
-					if ((events[i].events & EPOLLIN) 
+					if ((events[i].events & EPOLLIN)
 								&& requests[events[i].data.fd]->readHeader(events[i].data.fd) 
+								&& !requests[events[i].data.fd]->getReadError() 
 								&& requests[events[i].data.fd]->readBody(events[i].data.fd)) {
 						handleEvent(epfd, events[i].data.fd);
 					} else if (events[i].events & EPOLLOUT) {
@@ -293,7 +298,7 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 						delete requests[events[i].data.fd];
 						requests.erase(events[i].data.fd);
 						closeConnection(epfd, events[i].data.fd, clients);
-					} else if (events[i].events & EPOLLHUP || events[i].events & EPOLLERR) {
+					} if (events[i].events & EPOLLHUP || events[i].events & EPOLLERR || (requests[events[i].data.fd] && requests[events[i].data.fd]->getReadError())) {
 						closeConnection(epfd, events[i].data.fd, clients);
 						if (requests[events[i].data.fd])
 							delete requests[events[i].data.fd];

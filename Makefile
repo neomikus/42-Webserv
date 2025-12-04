@@ -2,7 +2,7 @@ NAME		:=	webserv
 OBJ_DIR		:=	obj/
 SRC_PATH	:=	src/
 CC			:=	c++
-CPPFLAGS = -Wall -Wextra -Werror -Wshadow -std=c++98 -Iinclude -glldb
+CPPFLAGS = -Wall -Wextra -Werror -Wshadow -std=c++98 -Iinclude -g
 
 # SRCS #
 MAIN		:= main

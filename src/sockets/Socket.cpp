@@ -1,11 +1,5 @@
 #include "Socket.hpp"
 
-void	createSockAddress(sockaddr_in &sockaddress, int port, uint32_t address) {
-	sockaddress.sin_family = AF_INET;
-	sockaddress.sin_port = htons(port);
-	sockaddress.sin_addr.s_addr = htonl(address);
-}
-
 void	setSocketOptions(int socketfd) {
 	int	option = 1;
 	struct timeval tv;
@@ -18,24 +12,46 @@ void	setSocketOptions(int socketfd) {
 }
 
 
-int	Socket::initServer(int port, uint32_t address, int epfd) {
-	int socketfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
-	if (!socketfd) {
-		std::cerr << strerror(errno) << std::endl;
-		return (-1);
+int	Socket::initServer(int port, const char *hostname, int epfd) {
+	struct addrinfo *addresses;
+	struct addrinfo hints;
+	hints.ai_family = AF_INET;    /* Allow IPv4 only */
+	hints.ai_socktype = SOCK_STREAM; /* Use only TCP sockets (HTTP/1.1 is TCP based) h*/
+	hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+	hints.ai_protocol = 0;          /* Any protocol */
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
+	memset(&hints, 0, sizeof(hints));
+	if (getaddrinfo(hostname, toString(port).c_str(), &hints, &addresses)) {
+		std::cerr << "Can't resolve host into addresses" << std::endl;
 	}
 
-	setSocketOptions(socketfd);
+	int socketfd = -1;
+	for (struct addrinfo *rp = addresses; rp != NULL; rp = rp->ai_next) {
+		int sfd = socket(rp->ai_family, SOCK_STREAM | SOCK_NONBLOCK, rp->ai_protocol);
+		if (sfd == -1) {
+			std::cerr << strerror(errno) << std::endl;
+			return (-1);
+		}
 
-	sockaddr_in	sockaddress;
+		setSocketOptions(sfd);
 
-	createSockAddress(sockaddress, port, address);
+		if (bind(sfd, rp->ai_addr, rp->ai_addrlen) < 0) {
+			close(sfd);
+			continue;
+		}
 
-	if (bind(socketfd, (sockaddr *)&sockaddress, sizeof(sockaddr)) < 0) {
-		std::cerr << strerror(errno) << std::endl;
-		close(socketfd);
-		return (-1);
+		socketfd = sfd;
+		break;
 	}
+
+	freeaddrinfo(addresses);
+
+	if (socketfd == -1) {
+		std::cerr << "Could not bind " << hostname << ":" << port << "to any interface" << std::endl;
+		return (-1);
+	} 
 
 	epoll_event	config;
 
@@ -50,4 +66,8 @@ int	Socket::initServer(int port, uint32_t address, int epfd) {
 	}
 
 	return (socketfd);
+}
+
+Socket::~Socket() {
+	
 }
