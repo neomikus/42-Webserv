@@ -277,7 +277,8 @@ void	Post::parseHeader() {
 		if (it->find("Content-Type") != it->npos) {
 			contentType = strTrim(it->substr(cstrlen("Content-Type:"), it->find(";") - cstrlen("Content-Type:")));
 			if (it->find("boundary=") != it->npos) {
-				boundary = it->substr(it->find(";") + cstrlen("boundary="));
+				std::string temp = strTrim(it->substr(it->find(";") + 1), ' ');
+				boundary = temp.substr(cstrlen("boundary="));
 			}
 		}
 		if (it->find("Transfer-Encoding") != it->npos) {

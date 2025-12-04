@@ -10,7 +10,7 @@ Location::Location() {
 	methods = a_methods;
 	max_body_size = MB;
 	redirect = std::make_pair(0, "");
-	colection_route = "";
+	collection_route = "";
 }
 
 Location::~Location(){
@@ -28,7 +28,7 @@ Location::Location(const Location& model) {
     methods = model.methods;
 	max_body_size = model.max_body_size;
 	redirect = model.redirect;
-	colection_route = model.colection_route;
+	collection_route = model.collection_route;
     for (size_t i = 0; i < model.locations.size(); i++) {
         locations.push_back(Location(model.locations[i]));
     }
@@ -46,7 +46,7 @@ Location &Location::operator=(const Location &model) {
 	methods = model.methods;
 	max_body_size = model.max_body_size;
 	redirect = model.redirect;
-	colection_route = model.colection_route;
+	collection_route = model.collection_route;
 	for (size_t i = 0; i < model.locations.size(); i++) {
 		locations.push_back(Location(model.locations[i]));
 	}
@@ -73,14 +73,14 @@ void	Location::parseRedirect(std::string value) {
 		return ;
 	}
 }
-void	Location::parseColectionRoute(std::string value) {
+void	Location::parseCollectionRoute(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
 	if (value.empty())
 	{
 		errorCode = 4;
 		return ;
 	}
-	colection_route = value;
+	collection_route = value;
 }
 
 void	Location::parseCgi(std::string value) {
@@ -306,7 +306,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 	this->error_pages = father.getError_pages();
 	this->root = father.getRoot();
 	this->autoindex = father.getAutoindex();
-	this->colection_route = father.getColectionRoute();
+	this->collection_route = father.getCollectionRoute();
 	this->redirect = father.getRedirect();
 
 	if (nest != 0 && value.empty())
@@ -336,7 +336,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 	
 	std::string key_words[13] = {
 	"error_page", "location", "autoindex", "root", "index", "cgi", "allowed_methods",
-	"client_max_body_size", "return", "colectionendpoint", "listen", "server_name", "error"};
+	"client_max_body_size", "return", "collectionendpoint", "listen", "server_name", "error"};
 	for (std::string buffer; std::getline(confFile, buffer);)
 	{
 		buffer = strTrim(buffer);
@@ -404,7 +404,7 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 				parseRedirect(value);
 				break;
 			case 9:
-				parseColectionRoute(value);
+				parseCollectionRoute(value);
 				break;
 			default:
 				break;
@@ -476,7 +476,7 @@ std::ostream &operator<<(std::ostream &stream, Location location) {
 
 	stream << tabs <<  "| MAX BODY SIZE\t: " << location.getMax_body_size() <<  + "\n";
 	stream << tabs <<  "| RETURN\t: " << location.getRedirect().first << " " << location.getRedirect().second <<  + "\n";
-	stream << tabs <<  "| COLECTION PATH: " << location.getColectionRoute() <<  + "\n";
+	stream << tabs <<  "| COLECTION PATH: " << location.getCollectionRoute() <<  + "\n";
 
 	std::vector<Location> _locations = location.getLocations();
 	if (!_locations.empty())
@@ -505,6 +505,6 @@ allowed_methods				Location::getMethods() const {return methods;}
 std::vector<error_page>		Location::getError_pages() const {return error_pages;}
 long long					Location::getMax_body_size() const {return max_body_size;}
 std::pair<int, std::string>	Location::getRedirect() const {return redirect;}
-std::string					Location::getColectionRoute() const {return colection_route;}
+std::string					Location::getCollectionRoute() const {return collection_route;}
 
 void						Location::setLevel(long long newLevel) {level = newLevel;}

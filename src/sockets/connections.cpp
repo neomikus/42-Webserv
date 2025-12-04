@@ -72,10 +72,11 @@ bool	Request::readHeader(int fd) {
 	std::string	alreadyRead = makeString(rawHeader);
 	// You find the body in the first reading (The first line reading)
 	if (alreadyRead.find("\r\n\r\n") != alreadyRead.npos) {
-		parseHeader();
 		for (size_t i = alreadyRead.find("\r\n\r\n") + 4; i < rawHeader.size(); i++) {
 			rawBody.push_back(rawHeader[i]);
 		}
+		rawHeader.erase(rawHeader.begin() + alreadyRead.find("\r\n\r\n"), rawHeader.end());
+		parseHeader();
 		bodyRead = rawBody.size();
 		return (true); // Body found, stop reading header
 	}
