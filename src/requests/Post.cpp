@@ -474,6 +474,9 @@ std::string Post::cgi()
     }
     else {
 
+		int flags = fcntl(pipefd[0], F_GETFL, 0);
+		fcntl(pipefd[0], F_SETFL, flags | O_NONBLOCK);
+
         std::string output;
         char buffer[BUFFER_SIZE];
         ssize_t n;
@@ -481,10 +484,27 @@ std::string Post::cgi()
 		close(pipefd2[0]);
 
 		write(pipefd2[1], makeString(filesVector[0].getBody()).c_str(), filesVector[0].getSize());
+        
+		time_t time_start;
+		time(&time_start);
 
-
-        while ((n = read(pipefd[0], buffer, sizeof(buffer))) > 0)
-            output.append(buffer, n);
+		while (true)
+		{
+			static time_t time_running; 
+			time(&time_running);
+			if (time_running - time_start > CGI_WAIT_TIME)
+			{
+        		close(pipefd[0]);
+				kill(child, SIGTERM);
+				status = 504;
+            	return "";
+			}
+			n = read(pipefd[0], buffer, sizeof(buffer));
+			if (n > 0)
+				output.append(buffer, n);
+			if (n == 0)
+				break;
+		}
     
         if (n == -1)
             std::cerr << "read error: " << std::endl;

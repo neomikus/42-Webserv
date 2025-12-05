@@ -170,14 +170,35 @@ std::string Get::cgi()
         exit(1);
     }
     else {
+
+		int flags = fcntl(pipefd[0], F_GETFL, 0);
+		fcntl(pipefd[0], F_SETFL, flags | O_NONBLOCK);
         close(pipefd[1]);
 
         std::string output;
         char buffer[BUFFER_SIZE];
         ssize_t n;
 
-        while ((n = read(pipefd[0], buffer, sizeof(buffer))) > 0)
-            output.append(buffer, n);
+		time_t time_start;
+		time(&time_start);
+
+        while (true)
+		{
+			static time_t time_running; 
+			time(&time_running);
+			if (time_running - time_start > CGI_WAIT_TIME)
+			{
+        		close(pipefd[0]);
+				kill(child, SIGTERM);
+				status = 504;
+            	return "";
+			}
+			n = read(pipefd[0], buffer, sizeof(buffer));
+			if (n > 0)
+				output.append(buffer, n);
+			if (n == 0)
+				break;
+		}
     
         if (n == -1)
             std::cerr << "read error: " << std::endl;
@@ -185,7 +206,7 @@ std::string Get::cgi()
         close(pipefd[0]);
 
         int child_status = 0;
-        if (waitpid(child, &child_status, 0) == -1) {
+        if (waitpid(child, &child_status, WNOHANG) == -1) {
             std::cerr << "waitpid failed: " << std::endl;
             status = 500;
             return "";

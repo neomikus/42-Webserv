@@ -18,7 +18,7 @@ int	Socket::initServer(int port, const char *hostname, int epfd) {
 	hints.ai_family = AF_INET;    /* Allow IPv4 only */
 	hints.ai_socktype = SOCK_STREAM; /* Use only TCP sockets (HTTP/1.1 is TCP based) h*/
 	hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-	hints.ai_protocol = 0;          /* Any protocol */
+	hints.ai_protocol = IPPROTO_TCP;  /* Only TCP */
 	hints.ai_canonname = NULL;
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;

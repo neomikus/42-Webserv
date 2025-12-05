@@ -57,6 +57,8 @@ extern char **global_envp;
 #define EPOLL_EVENT_COUNT 100
 #define BUFFER_SIZE 1024
 
+#define CGI_WAIT_TIME 5
+
 #include "Socket.hpp"
 
 struct error_page {
