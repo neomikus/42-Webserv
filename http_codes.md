@@ -28,4 +28,6 @@
 
 - [x] 500 Internal Server Error?  (Should probably not happen in our webserver)
 - [x] 501 Not Implemented
+- [x] 502 Bad Gateway
+- [x] 504 Gateway Timeout
 - [x] 505 HTTP Version Not Supported

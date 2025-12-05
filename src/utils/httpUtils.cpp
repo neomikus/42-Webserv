@@ -37,6 +37,8 @@ std::string	getStatusText(int status) {
 			return ("Not Implemented\r\n");
 		case 502:
 			return ("Bad Gateway\r\n");
+		case 504:
+			return ("Gateway Timeout\r\n");
 		case 505:
 			return ("HTTP Version Not Supported\r\n");
 		default:

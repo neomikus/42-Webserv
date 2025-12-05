@@ -243,6 +243,9 @@ void	Get::response(int fd) {
 	if (location.getCgi() != "" && !checkDirectory(resource)) {
 		std::string cgi_response;
 		cgi_response = cgi();
+		if (status == 200) {
+			
+		}
 		response += "HTTP/1.1 "; // This is always true
 		response += toString(status);
 		response += " " + getStatusText(status);
@@ -250,8 +253,9 @@ void	Get::response(int fd) {
 		response += "Content Lenght: ";
 		response += toString(cgi_response.size());
 		response += "\r\n";
-		response += cgi_response;
-	} else {
+		response += cgi_response;	
+	} 
+	if (!(location.getCgi() != "" && !checkDirectory(resource)) || status != 200) {
 		getBody(responseBody);
 		acceptedFormats(responseBody);
 
