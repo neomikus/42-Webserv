@@ -111,6 +111,8 @@ int	main(int argc, char *argv[], char *envp[]) {
 	if (errorCode != 0)
 		return (errorMesage(argv[1]));
 	
+	confFile.close();
+
 	int	epfd = epoll_create(1);
 
  	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
@@ -128,6 +130,5 @@ int	main(int argc, char *argv[], char *envp[]) {
 	}
 
 	close(epfd);
-
 	return (0);
 }

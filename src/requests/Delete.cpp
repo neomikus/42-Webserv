@@ -20,15 +20,24 @@ void	Delete::parseHeader() {
 	Request::parseHeader();
 }
 
-bool checkStat(std::string resource, int &status) {
+bool checkStat(std::string &resource, int &status) {
 	struct stat resBuffer;
 
-	stat(resource.c_str(), &resBuffer);
+	if (!stat(resource.c_str(), &resBuffer)) {
+		status = 500;
+		return (false);
+	}
 
-	if (S_ISDIR(resBuffer.st_mode) || !(resBuffer.st_mode & S_IWUSR)) {
+	if (resBuffer.st_mode && S_ISDIR(resBuffer.st_mode)) {
 		status = 403;
         return (false);
 	}
+
+	if (resBuffer.st_mode && !(resBuffer.st_mode & S_IWUSR)) {
+		status = 403;
+		return (false);
+	}
+
 	return (true);
 }
 

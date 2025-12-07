@@ -62,8 +62,9 @@ std::map<std::string, std::string> mime_init() {
 					}			
 				}
 			}
-			
+			currentFile.close();
 		}		
+		
 		closedir(mimeDir);
 	}
 	return (mimeLib);
@@ -110,7 +111,7 @@ std::map<std::string, std::string> mime_reverse_init() {
 					}			
 				}
 			}
-			
+			currentFile.close();
 		}		
 		closedir(mimeDir);
 	}

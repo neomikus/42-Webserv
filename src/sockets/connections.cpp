@@ -307,6 +307,11 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 			}
 		}
 	}
+
+	for (std::map<int, Request *>::iterator it = requests.begin(); it != requests.end(); ++it) {
+		if (it->second)
+			delete it->second;
+	}	
 	
 	for (std::list<int>::iterator it = clients.begin(); it != clients.end(); ++it) {
 		send(*it, "Connection closed by server\r\n", cstrlen("Connection closed by server\r\n"), 0);

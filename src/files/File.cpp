@@ -33,6 +33,8 @@ File::File(const std::string filename) {
 		type = getMIME(filename.substr(filename.find_last_of(".")), false);
 	else
 		type = "text/plain";
+
+	file.close();
 }
 
 File::File(const char *filename) {
@@ -51,6 +53,8 @@ File::File(const char *filename) {
 		type = getMIME(std::string(filename).substr(std::string(filename).find_last_of(".")), false);
 	else
 		type = "text/plain";
+
+	file.close();
 }
 
 File::~File() {
@@ -79,6 +83,8 @@ void	File::open(const std::string filename) {
 		type = getMIME(filename.substr(filename.find_last_of(".")), false);
 	else
 		type = "text/plain";
+	
+	file.close();
 }
 
 void	File::open(const char *filename) {
@@ -103,6 +109,8 @@ void	File::open(const char *filename) {
 		type = getMIME(std::string(filename).substr(std::string(filename).find_last_of(".")), false);
 	else
 		type = "text/plain";
+	
+	file.close();
 }
 
 void	File::write(fileIterator start, fileIterator end) {
