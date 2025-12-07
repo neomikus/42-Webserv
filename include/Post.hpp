@@ -14,15 +14,15 @@ class Post: public Request {
 		std::string			contentType;
 		std::string			boundary;
 		std::string			newResourceName;
-		void		parseChunkedData();
-		void		parseMultipartData();
-		void		parseFormData();
-		void		parsePlainData();
-		void		parseBody();
-		void		updateResource();
-		void		writeContent(File &fileBody);
-		void		getBody(File &responseBody);
-		void		parseHeader();
+		void				parseChunkedData();
+		void				parseMultipartData();
+		void				parseFormData();
+		void				parsePlainData();
+		void				parseBody();
+		void				updateResource();
+		void				writeContent(File &fileBody);
+		void				getBody(File &responseBody);
+		void				parseHeader();
 
 		std::string	cgi();
 		

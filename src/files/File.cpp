@@ -127,3 +127,32 @@ void	File::toDisk(std::string filename) {
 	}
 	close(fd);
 }
+
+std::vector<char>	&File::getBody() {
+	return (body);
+}
+
+long long	&File::getSize() {
+	return (_size);
+}
+
+std::string	File::getType() const {
+	return (type);
+}
+
+std::string	&File::getName() {
+	return (name);
+}
+
+std::string	File::getName() const {
+	return (name);
+}
+
+
+void	File::setType(std::string newType) {
+	type = newType;
+}
+
+void	File::setName(std::string newName) {
+	name = newName;
+}

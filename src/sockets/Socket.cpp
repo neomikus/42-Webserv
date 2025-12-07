@@ -11,7 +11,6 @@ void	setSocketOptions(int socketfd) {
 	setsockopt(socketfd, SOL_SOCKET, SO_KEEPALIVE, &option, sizeof(option));
 }
 
-
 int	Socket::initServer(int port, const char *hostname, int epfd) {
 	struct addrinfo *addresses;
 	struct addrinfo hints;
@@ -70,4 +69,9 @@ int	Socket::initServer(int port, const char *hostname, int epfd) {
 
 Socket::~Socket() {
 	
+}
+
+Socket	&Socket::operator=(const Socket &model) {
+	(void)model;
+	return *this;
 }

@@ -131,7 +131,6 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 	if (clientfd == -1) {
 		std::cerr << "Connection refused" << std::endl;
 	} else {
-		std::cerr << "Connection accepted" << std::endl;
 		clients.push_back(clientfd);
 		epoll_ctl(epfd, EPOLL_CTL_ADD, clientfd, &clientConfig);
 	}
@@ -271,10 +270,10 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 
 	struct epoll_event events[EPOLL_EVENT_COUNT];
 
-
 	std::vector<char> rawRequest;
 	// FD, Request map
 	std::map<int, Request *> requests;
+	std::cout << "Accepting connections..." << std::endl;
 	while (!sigstop)
 	{
 		int evt_count = epoll_wait(epfd, events, EPOLL_EVENT_COUNT, -1);

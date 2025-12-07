@@ -5,7 +5,7 @@
 class Socket
 {
 	private:
-		Socket(/* args */);
+		Socket();
 		~Socket();
 		Socket(const Socket &model);
 		Socket	&operator=(const Socket &model);
