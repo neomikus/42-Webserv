@@ -254,7 +254,7 @@ void	Get::response(int fd) {
 		response += toString(cgi_response.size());
 		response += "\r\n";
 		response += cgi_response;	
-	} 
+	}
 	if (!(location.getCgi() != "" && !checkDirectory(resource)) || status != 200) {
 		getBody(responseBody);
 		acceptedFormats(responseBody);

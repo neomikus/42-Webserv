@@ -561,7 +561,7 @@ void	Post::response(int fd) {
 		response += "\r\n";
 		response += cgi_response;
 	}
-	else
+	if (!(location.getCgi() != "" && !checkDirectory(resource)) || (status != 201 && status != 204))
 	{
 		updateResource();
 		File		responseBody;
