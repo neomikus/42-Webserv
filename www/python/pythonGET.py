@@ -21,7 +21,7 @@ if query_string:
             params_html += f"<li>{param}</li>"
     params_html += "</ul>"
 else:
-    params_html = "<p>No se proporcionó un Query String.</p>"
+    params_html = "<p>Query String missing.</p>"
 
 # --- Imprimir la respuesta HTML ---
 print("Content-Type: text/html\n")
@@ -43,12 +43,12 @@ print(f"""
 </head>
 <body>
     <div class="container">
-        <h1>GET Request Procesada por Python 🐍</h1>
+        <h1>GET Request Procesed by Python 🐍</h1>
         <div class="timestamp">
-            <strong>Hora de Ejecución:</strong> {current_time}
+            <strong>Timestamp of execution:</strong> {current_time}
         </div>
         <div class="data-box">
-            <h2>Datos Recibidos:</h2>
+            <h2>Data Recived:</h2>
             {params_html}
         </div>
     </div>

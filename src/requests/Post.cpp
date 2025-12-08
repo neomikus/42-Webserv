@@ -507,7 +507,8 @@ std::string Post::cgi()
         int child_status = 0;
         if (waitpid(child, &child_status, 0) == -1) {
             std::cerr << "waitpid failed: " << std::endl;
-            status = 500;
+            status = 502;
+			output.clear();
             return "";
         }
     
@@ -515,18 +516,23 @@ std::string Post::cgi()
             int exit_code = WEXITSTATUS(child_status);
             if (exit_code != 0) {
                 std::cerr << "child exited with code " << exit_code << std::endl;
-                status = 500;
+                status = 502;
+				output.clear();
             }
-            else status = 200;
+            else status = 201;
     
         }
         else if (WIFSIGNALED(child_status)) {
             int sig = WTERMSIG(child_status);
             std::cerr << "child killed by signal " << sig << std::endl;
-            status = 500;
+            status = 502;
+			output.clear();
         }
-        else status = 500;
-
+        else
+		{
+			status = 502;
+			output.clear();
+		}
         return output;
     }
 }

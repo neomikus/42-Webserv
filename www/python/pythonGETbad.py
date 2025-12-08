@@ -21,7 +21,7 @@ if query_string:
             params_html += f"<li>{param}</li>"
     params_html += "</ul>"
 else:
-    params_html = "<p>No se proporcionó un Query String.</p>"
+    params_html = "<p>Query String missing.</p>"
 
 while True:
 	pass
