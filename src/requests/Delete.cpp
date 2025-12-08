@@ -76,7 +76,7 @@ void	Delete::response(int fd) {
 	response += "HTTP/1.1 "; // This is always true
 	response += toString(status);
 	response += " " + getStatusText(status);
-	// I don't know how much we need to add to the response?
+	 
 	response += "Content Lenght: ";
     response += responseBody.getSize();
 	response += "\r\n";

@@ -21,7 +21,7 @@ int	errorMesage(std::string fileName)
 			std::cerr << "something found outside context" << std::endl;
 			break;
 		case 2:
-			std::cerr << "semicolom not found" << std::endl;
+			std::cerr << "semicolon not found" << std::endl;
 			break;
 		case 3:
 			std::cerr << "\"server {\" dosnt recive arguments" << std::endl;
@@ -125,7 +125,6 @@ int	main(int argc, char *argv[], char *envp[]) {
 	acceptConnections(epfd, servers);
 
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
-		// Change to loop later
 		epoll_ctl(epfd, EPOLL_CTL_DEL, it->getSockets().front(), NULL);
 	}
 

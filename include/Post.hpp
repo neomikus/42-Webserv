@@ -28,7 +28,6 @@ class Post: public Request {
 		
 	public:
 		Post();
-		//Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
 		Post		&operator=(const Post &model);
 		Post(const Post &model);
 		~Post();

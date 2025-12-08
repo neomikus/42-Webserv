@@ -55,7 +55,6 @@ bool	Request::readBody(int fd) {
 	}
 	
 	if (transferEncoding == "chunked") {
-		/* CASE: CHUNKED */
 		std::string contentStr = makeString(rawBody);
 		if (contentStr.find("0\r\n\r\n") != contentStr.npos)
 			return (true);
@@ -87,7 +86,7 @@ bool	Request::readHeader(int fd) {
 	}
 
 	char buffer[BUFFER_SIZE + 1];
-	int rd = recv(fd, buffer, 1024, 0);
+	int rd = recv(fd, buffer, BUFFER_SIZE, 0);
 	if (rd == -1 || rd == 0) {
 		readError = true;
 		return (true);
@@ -138,7 +137,6 @@ void	connect(int epfd, int fd, std::list<int> &clients) {
 
 std::vector<char> getBody(std::vector<char> &rawResponse, std::vector<char>::iterator &bodyStart) {
 	std::vector<char> retval;
-	//for (std::vector<char>::iterator it = std::find(rawResponse.begin(), rawResponse.end(), '\r'); it != rawResponse.end(); it = std::find(it + 1, rawResponse.end(), '\r'))
 	for (std::vector<char>::iterator it = rawResponse.begin(); it != rawResponse.end(); ++it)
 	{
 		(void)bodyStart;
@@ -203,7 +201,6 @@ Request *makeRequest(int fd, std::vector<Server> &servers)
 	if (request.find("\r\n") == request.npos) {
 		retval = new Request();
 		retval->setStatus(400);
-		// Set headerRead to true
 		return (retval);
 	}
 	
@@ -212,7 +209,6 @@ Request *makeRequest(int fd, std::vector<Server> &servers)
 	if (countWords(request) != 3) {
 		retval = new Request();
 		retval->setStatus(400);
-		// Set headerRead to true
 		return (retval);
 	}
 

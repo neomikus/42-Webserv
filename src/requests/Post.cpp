@@ -191,47 +191,6 @@ void	Post::parseBody() {
 	}
 }
 
-/*
-Post::Post(std::vector<std::string> splitedRaw) {
-	*this = Post();
-
-	parseMethodResourceProtocol(splitedRaw[0]);
-	if (error)
-		return ;
-	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
-	{
-		*it = strTrim(*it, '\r');
-
-		if (it->find("Host") != it->npos) {
-			hostPort.host = strTrim(it->substr(0, it->find(':')));
-			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
-		}
-		if (it->find("User-Agent") != it->npos)
-			userAgent = strTrim(it->substr(cstrlen("User-Agent:")));
-		if (it->find("Accept") != it->npos)
-			accept = strSplit(strTrim(it->substr(cstrlen("Accept:"))), ",");
-		if (it->find("Connection") != it->npos) {
-			if (strTrim(it->substr(cstrlen("Connection:"))) == "keep-alive")
-				keepAlive = true;
-		}
-		if (it->find("Referer") != it->npos)
-			referer = strTrim(it->substr(cstrlen("Referer")));
-		if (it->find("Content-Length") != it->npos) {
-			contentLength = atol(strTrim(it->substr(cstrlen("Content-Length:"))).c_str());
-		}
-		if (it->find("Content-Type") != it->npos) {
-			contentType = strTrim(it->substr(cstrlen("Content-Type:"), it->find(";") - cstrlen("Content-Type:")));
-			if (it->find("boundary=") != it->npos) {
-				boundary = it->substr(it->find(";") + cstrlen("boundary="));
-			}
-		}
-		if (it->find("Transfer-Encoding") != it->npos) {
-			transferEncoding = strTrim(it->substr(cstrlen("Transfer-Encoding:")));
-		}
-	}
-	parseBody(rawBody);
-} */
-
 Post::Post(const Post &model): Request(model) {
 	this->contentType = model.contentType;
 }
@@ -346,9 +305,6 @@ void	Post::updateResource() {
 	if (status != 201 && status != 204)
 		return;
 	
-	//if (contentType == "multipart/form-data")
-	//	status = 204;
-
 	for (files::iterator it = filesVector.begin(); it != filesVector.end(); ++it) {
 		if (!checkStat(resource, it->getName(), status)) {
 			std::cerr << "File: " << it->getName() << " can't be written" << std::endl;
@@ -554,7 +510,7 @@ void	Post::response(int fd) {
 		response += "HTTP/1.1 "; // This is always true
 		response += toString(status);
 		response += " " + getStatusText(status);
-		// I don't know how much we need to add to the response?
+		
 		response += "Content Lenght: ";
 		response += toString(cgi_response.size());
 		response += "\r\n";
@@ -573,7 +529,7 @@ void	Post::response(int fd) {
 		response += "HTTP/1.1 "; // This is always true
 		response += toString(status);
 		response += " " + getStatusText(status);
-		// I don't know how much we need to add to the response?
+		 
 		response += "Content Lenght: ";
 		response += toString(responseLenght);
 		response += "\r\n";
@@ -599,11 +555,6 @@ void	Post::response(int fd) {
 		}
 
 		response += "\r\n";
-
-		// If the created resource is small, send it after creation (code 201)
-		// If the created resource is big, send succesful upload (or nothing, fuck it at this point) (Code 201)
-		// If !body, then code 204
-
 		response += makeString(responseBody.getBody());
 	}
 	send(fd, response.c_str(), response.length(), 0);

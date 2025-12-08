@@ -100,7 +100,6 @@ void	Get::getBody(File &responseBody) {
 		teapotGenerator(responseBody);
 	} else {
 		std::string page = checkErrorPages(location.getError_pages());
-		std::cout << "[" << page << "]" << std::endl;
 		if (page != "")
 			getErrorPages(page, responseBody);
 		else {
@@ -257,11 +256,11 @@ void	Get::response(int fd) {
 		response += "HTTP/1.1 "; // This is always true
 		response += toString(status);
 		response += " " + getStatusText(status);
-		// I don't know how much we need to add to the response?
+		 
 		response += "Content Lenght: ";
 		response += toString(cgi_response.size());
 		response += "\r\n";
-		response += cgi_response;	
+		response += cgi_response;
 	}
 	if (!(location.getCgi() != "" && !checkDirectory(resource)) || status != 200) {
 		getBody(responseBody);
@@ -272,7 +271,7 @@ void	Get::response(int fd) {
 		response += "HTTP/1.1 "; // This is always true
 		response += toString(status);
 		response += " " + getStatusText(status);
-		// I don't know how much we need to add to the response?
+		 
 		response += "Content Lenght: ";
 		response += toString(responseLenght);
 		response += "\r\n";
