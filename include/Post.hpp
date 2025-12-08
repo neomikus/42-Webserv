@@ -22,7 +22,7 @@ class Post: public Request {
 		void				updateResource();
 		void				writeContent(File &fileBody);
 		void				getBody(File &responseBody);
-		void				parseHeader();
+		void				parseHeader(std::vector<Server> &servers);
 
 		std::string	cgi();
 		

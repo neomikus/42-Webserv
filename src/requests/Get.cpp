@@ -6,18 +6,14 @@ Get::Get(): Request() {
 	redirectUrl = "";
 }
 
-Get::Get(std::vector<std::string> splitedResponse): Request(splitedResponse){
-
-}
-
 Get::Get(const Get &model): Request(model) {
 
 }
 
 Get::~Get(){}
 
-void	Get::parseHeader() {
-	Request::parseHeader();
+void	Get::parseHeader(std::vector<Server> &servers) {
+	Request::parseHeader(servers);
 }
 
 bool	Get::checkRedirect() {

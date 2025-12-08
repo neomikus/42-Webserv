@@ -5,9 +5,6 @@ Delete::Delete(): Request() {
 	contentLength = 0;
 }
 
-Delete::Delete(std::vector<std::string> splitedResponse): Request(splitedResponse){
-}
-
 Delete::Delete(const Delete &model): Request(model) {
     
 }
@@ -16,8 +13,8 @@ Delete::~Delete() {
 
 }
 
-void	Delete::parseHeader() {
-	Request::parseHeader();
+void	Delete::parseHeader(std::vector<Server> &servers) {
+	Request::parseHeader(servers);
 }
 
 bool checkStat(std::string &resource, int &status) {

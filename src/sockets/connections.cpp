@@ -67,7 +67,7 @@ bool	Request::readBody(int fd) {
 	}
 }
 
-bool	Request::readHeader(int fd) {
+bool	Request::readHeader(int fd, std::vector<Server> &servers) {
 	// Case = you're reading the body
 	if (headerRead) {
 		return (true);
@@ -80,7 +80,7 @@ bool	Request::readHeader(int fd) {
 			rawBody.push_back(rawHeader[i]);
 		}
 		rawHeader.erase(rawHeader.begin() + alreadyRead.find("\r\n\r\n"), rawHeader.end());
-		parseHeader();
+		parseHeader(servers);
 		bodyRead = rawBody.size();
 		return (true); // Body found, stop reading header
 	}
@@ -105,7 +105,7 @@ bool	Request::readHeader(int fd) {
 		for (; (int)i < rd; i++) {
 			rawBody.push_back(buffer[i]);
 		}
-		parseHeader();
+		parseHeader(servers);
 		return (true); // Body found, stop reading
 	}
 
@@ -154,33 +154,8 @@ std::vector<char> getBody(std::vector<char> &rawResponse, std::vector<char>::ite
 	return (retval);
 }
 
-Location	selectContext(Location &location, std::string fatherUri, std::string &resource) {
-   std::string uri = "/" + resource;
 
-	if (uri[uri.size() - 1] == '/')
-		uri.erase(uri.end() - 1);
-	if (fatherUri != "/")
-		uri = uri.substr(fatherUri.size());
-	else
-		fatherUri = "";
-
-	while (!uri.empty() && uri != "/")
-	{
-		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
-		{
-			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
-				return (*it);
-			if (it->getUri() == uri)
-				return (selectContext(*it, fatherUri + it->getUri(), resource));
-		}
-		uri = trimLastWord(uri, '/');
-	}
-
-	return (location);
-}
-
-
-Request *makeRequest(int fd, std::vector<Server> &servers)
+Request *makeRequest(int fd)
 {
 	std::vector<char> rawRequest;
 	char buffer[BUFFER_SIZE * 2];
@@ -242,7 +217,6 @@ Request *makeRequest(int fd, std::vector<Server> &servers)
 	retval->getResource() = ltrim(resource, '/');
 
 	retval->getRawHeader() = rawRequest;
-	retval->getLocation() = selectContext(retval->selectServer(servers).getVLocation(), "", retval->getResource());
 	return (retval);
 }
 
@@ -280,10 +254,10 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 					requests[events[i].data.fd] = NULL;
 				} else if (checkfds(events[i].data.fd, clients)) {
 					if ((events[i].events & EPOLLIN) && !requests[events[i].data.fd]) {
-						requests[events[i].data.fd] = makeRequest(events[i].data.fd, servers);
+						requests[events[i].data.fd] = makeRequest(events[i].data.fd);
 					}
 					if ((events[i].events & EPOLLIN)
-								&& requests[events[i].data.fd]->readHeader(events[i].data.fd) 
+								&& requests[events[i].data.fd]->readHeader(events[i].data.fd, servers) 
 								&& !requests[events[i].data.fd]->getReadError() 
 								&& requests[events[i].data.fd]->readBody(events[i].data.fd)) {
 						handleEvent(epfd, events[i].data.fd);

@@ -13,11 +13,11 @@ class Get: public Request {
 		void	getBody(File &responseBody);
 		bool	checkAcceptedFormats(File &responseBody);	
 		void	acceptedFormats(File &responseBody);
-		void	parseHeader();
+		void	parseHeader(std::vector<Server> &servers);
 		std::string cgi();
 	public:
 		Get();
-		Get(std::vector<std::string> splitedResponse);
+		//Get(std::vector<std::string> splitedResponse);
 		Get(const Get &model);
 		~Get();
 	

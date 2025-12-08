@@ -4,6 +4,31 @@
 #include "File.hpp"
 #include "Post.hpp"
 
+Location	selectContext(Location &location, std::string fatherUri, std::string &resource) {
+   std::string uri = "/" + resource;
+
+	if (uri[uri.size() - 1] == '/')
+		uri.erase(uri.end() - 1);
+	if (fatherUri != "/")
+		uri = uri.substr(fatherUri.size());
+	else
+		fatherUri = "";
+
+	while (!uri.empty() && uri != "/")
+	{
+		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
+		{
+			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
+				return (*it);
+			if (it->getUri() == uri)
+				return (selectContext(*it, fatherUri + it->getUri(), resource));
+		}
+		uri = trimLastWord(uri, '/');
+	}
+
+	return (location);
+}
+
 void	Request::parseMethodResourceProtocol(const std::string line)
 {
 	if (countWords(line) != 3) {
@@ -23,7 +48,7 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 	resource = resource.substr(0, resource.find("?"));
 	resource = ltrim(resource, '/');
 }
-
+/*
 Request::Request(std::vector<std::string> splitedRaw) {
 	*this = Request();
 	parseMethodResourceProtocol(splitedRaw[0]);
@@ -32,7 +57,7 @@ Request::Request(std::vector<std::string> splitedRaw) {
 	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
 	{
 		if (it->find("Host") != it->npos) {
-			hostPort.host = strTrim(it->substr(0, it->find(':')));
+			hostPort.host = strTrim(it->substr(it->find("Host: "), it->substr(it->find("Host: ")).find(':')));
 			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
 		}
 		if (it->find("User-Agent") != it->npos)
@@ -53,14 +78,15 @@ Request::Request(std::vector<std::string> splitedRaw) {
 		}
 	}
 }
-
-void	Request::parseHeader() {
+*/
+void	Request::parseHeader(std::vector<Server> &servers) {
 	std::vector<std::string>	header = strSplit(makeString(rawHeader), "\r\n");
 
 	for (std::vector<std::string>::iterator it = header.begin(); it != header.end(); ++it)
 	{
 		if (it->find("Host") != it->npos) {
-			hostPort.host = strTrim(it->substr(0, it->find(':')));
+			std::string temp = strTrim(it->substr(cstrlen("Host:")));
+			hostPort.host = temp.substr(0, temp.find(":"));
 			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
 		} else if (it->find("User-Agent") != it->npos) {
 			userAgent = strTrim(it->substr(cstrlen("User-Agent:")));
@@ -78,6 +104,7 @@ void	Request::parseHeader() {
 		}
 	}
 	headerRead = true;
+	location = selectContext(selectServer(servers).getVLocation(), "", resource);
 }
 
 Request::Request() {
@@ -141,10 +168,11 @@ bool	checkAllowedMethods(std::string &method, allowed_methods methods) {
 
 Server	&Request::selectServer(std::vector<Server> &servers) {
 
+	
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 		std::vector<hostport> hostports = it->getHostports();
 		for (std::vector<hostport>::iterator it2 = hostports.begin(); it2 != hostports.end(); ++it2) {
-			if ((hostPort.host == it2->host || it2->host == "0.0.0.0") && (hostPort.port == it2->port || it2->port == -1))
+			if ((hostPort.port == it2->port || it2->port == -1))
 				candidates.push_back(*it);
 		}
 	}

@@ -42,18 +42,18 @@ class Request
 		virtual	void				writeContent(File &fileBody) {(void)fileBody;};
 		std::string					checkErrorPages(std::vector<error_page> error_pages);
 		void						getErrorPages(std::string &error_page, File &responseBody);
-		virtual void				parseHeader();
+		virtual void				parseHeader(std::vector<Server> &servers);
 	
 	public:
 		Request();
-		Request(std::vector<std::string> splitedRaw);
+		//Request(std::vector<std::string> splitedRaw);
 		Request(const Request &model);
 		Request	&operator=(const Request &model);
 		virtual ~Request();
 		Server	&selectServer(std::vector<Server> &servers);
 		virtual void	response(int fd); // May return int for response code or for error check?
 
-		bool				readHeader(int fd);
+		bool				readHeader(int fd, std::vector<Server> &servers);
 		bool				readBody(int fd);
 		
 		bool				getReadError();
@@ -73,5 +73,6 @@ class Request
 std::string	getStatusText(int status);
 std::string cgi(int &status, std::string resource, std::string command);
 
+Location	selectContext(Location &location, std::string fatherUri, std::string &resource);
 
 #endif

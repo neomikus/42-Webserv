@@ -209,7 +209,7 @@ Post	&Post::operator=(const Post &model) {
 	return (*this);
 }
 
-void	Post::parseHeader() {
+void	Post::parseHeader(std::vector<Server> &servers) {
 	std::vector<std::string>	header = strSplit(makeString(rawHeader), "\r\n");
 
 	for (std::vector<std::string>::iterator it = header.begin(); it != header.end(); ++it)
@@ -217,7 +217,7 @@ void	Post::parseHeader() {
 		*it = strTrim(*it, '\r');
 
 		if (it->find("Host") != it->npos) {
-			hostPort.host = strTrim(it->substr(0, it->find(':')));
+			hostPort.host = strTrim(it->substr(it->find("Host: "), it->find(':')));
 			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
 		}
 		if (it->find("User-Agent") != it->npos)
@@ -245,6 +245,7 @@ void	Post::parseHeader() {
 		}
 	}
 	headerRead = true;
+	location = selectContext(selectServer(servers).getVLocation(), "", resource);
 }
 
 
