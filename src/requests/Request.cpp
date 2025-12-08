@@ -188,7 +188,8 @@ int	Request::getStatus() {
 		return (location.getRedirect().first);
 	}
 	if (method != "POST" && !resource.empty() && access(resource.c_str(), F_OK)) {
-		if (resource == "teapot")
+		std::vector<std::string> trimmedResource = strSplit(resource, "/");
+		if (trimmedResource.back() == "teapot")
 			return (418);
 		return (404);
 	}
@@ -209,12 +210,12 @@ std::string Request::checkErrorPages(std::vector<error_page> error_pages) {
 			}
 		}
 	}
-	return (DEFAULT_ERROR_PAGE);
+	return ("");
 }
 
 void	Request::getErrorPages(std::string &page, File &responseBody) {
 	if (access(page.c_str(), F_OK))
-		responseBody.open(DEFAULT_ERROR_PAGE);
+		errorPageGenerator(responseBody, status);
 	else
 		responseBody.open(page);
 }
@@ -224,7 +225,7 @@ void	Request::getBody(File &responseBody) {
 	if (!page.empty())
 		getErrorPages(page, responseBody);
 	else
-		responseBody.open(DEFAULT_ERROR_PAGE);
+		errorPageGenerator(responseBody, status);
 }
 
 void	Request::response(int fd) {

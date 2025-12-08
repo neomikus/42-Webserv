@@ -60,7 +60,7 @@ void    Delete::getBody(File &responseBody) {
 		if (!page.empty())
 			getErrorPages(page, responseBody);
 		else
-			responseBody.open(DEFAULT_ERROR_PAGE);
+			errorPageGenerator(responseBody, status);
 	}
 }
 

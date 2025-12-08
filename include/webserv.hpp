@@ -46,7 +46,6 @@ const long long KB = BYTE * 1024;
 const long long MB = KB * 1024;
 const long long GB = MB * 1024;
 
-#define DEFAULT_ERROR_PAGE "www/html/default_error_page.html"
 #define MAX_HEADER_SIZE 16000
 
 extern bool	sigstop;
@@ -110,6 +109,7 @@ bool	checkDirectory(std::string resource);
 class File;
 
 void	teapotGenerator(File &responseBody);
+void	errorPageGenerator(File &responseBody, int &status);
 File	generateAutoIndex(std::string resource, std::string directory);
 
 std::string	getMIME(std::string needle, bool reverse);

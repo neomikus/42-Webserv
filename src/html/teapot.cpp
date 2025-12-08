@@ -8,4 +8,5 @@ void	teapotGenerator(File &responseBody) {
 	responseBody.write("<p>🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖🫖</p>\n");
 	responseBody.write("<p>🫖 The requested teapot has been returned succesfully!!!!! 🫖</p>\n");
 	responseBody.write("<strong>🫖 ENJOY YOUR TEAPOT!!!! 🫖</strong>\n");
+	responseBody.setType("text/html");
 }

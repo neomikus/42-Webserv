@@ -100,10 +100,12 @@ void	Get::getBody(File &responseBody) {
 		teapotGenerator(responseBody);
 	} else {
 		std::string page = checkErrorPages(location.getError_pages());
-		if (!page.empty())
+		std::cout << "[" << page << "]" << std::endl;
+		if (page != "")
 			getErrorPages(page, responseBody);
-		else
-			responseBody.open(DEFAULT_ERROR_PAGE);
+		else {
+			errorPageGenerator(responseBody, status);
+		}
 	}
 }
 std::string Get::cgi()

@@ -11,7 +11,7 @@ CONTEXT		:= Location Server
 UTILS	 	:= httpUtils statUtils strUtils intUtils 
 SOCKETS		:= Socket connections
 REQUESTS	:= Request Get Post Delete
-HTML		:= teapot autoindex
+HTML		:= teapot autoindex errorpage
 
 PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \
 				$(addsuffix .cpp, $(addprefix files/,	$(FILES))) \
