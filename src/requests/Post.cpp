@@ -384,7 +384,6 @@ void	Post::getBody(File &responseBody) {
 
 std::string Post::cgi()
 {
-	std::cout << HRED << "Got into CGI post" << std::endl;
 	std::string command = location.getCgi();
 	int pipefd[2];
 	int pipefd2[2];
@@ -408,7 +407,6 @@ std::string Post::cgi()
         status = 500;
         return "";
     }
-	std::cout << toString(filesVector[0].getSize()) << std::endl;
     if (child == 0) {
         
         close(pipefd[0]);
