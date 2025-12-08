@@ -448,11 +448,6 @@ std::string Post::cgi()
 		strcpy(new_envp[env_count + 1], query_length);
 
     	new_envp[env_count + 2] = NULL;
-
-		std::cerr << env_count << std::endl;
-		std::cerr << new_envp[env_count] << std::endl;
-		std::cerr << new_envp[env_count + 1] << std::endl;
-		std::cerr << new_envp[env_count + 2] << std::endl;
 		
 		char *argv[4];
         argv[0] = const_cast<char*>(command.c_str());
