@@ -224,7 +224,7 @@ Request *makeRequest(int fd)
 	if (tokenPos != resource.npos)
 		retval->getQuery() = resource.substr(tokenPos + 1);
 	retval->getResource() = resource.substr(0, resource.find("?"));
-	retval->getResource() = ltrim(resource, '/');
+	retval->getResource() = ltrim(retval->getResource(), '/');
 
 	retval->getRawHeader() = rawRequest;
 	return (retval);
@@ -283,7 +283,7 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 					requests.erase(events[i].data.fd);
 				}
 			} else {
-				/* Pipe case */
+				
 			}
 		}
 	}

@@ -48,37 +48,7 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 	resource = resource.substr(0, resource.find("?"));
 	resource = ltrim(resource, '/');
 }
-/*
-Request::Request(std::vector<std::string> splitedRaw) {
-	*this = Request();
-	parseMethodResourceProtocol(splitedRaw[0]);
-	if (error)
-		return ;
-	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
-	{
-		if (it->find("Host") != it->npos) {
-			hostPort.host = strTrim(it->substr(it->find("Host: "), it->substr(it->find("Host: ")).find(':')));
-			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
-		}
-		if (it->find("User-Agent") != it->npos)
-			userAgent = strTrim(it->substr(cstrlen("User-Agent:")));
-		if (it->find("Accept") != it->npos)
-			accept = strSplit(strTrim(it->substr(cstrlen("Accept:"))), ",");
-		if (it->find("Connection") != it->npos) {
-			if (strTrim(it->substr(cstrlen("Connection:"))) == "keep-alive")
-				keepAlive = true;
-		}
-		if (it->find("Referer") != it->npos)
-			referer = strTrim(it->substr(cstrlen("Referer")));
-		if (it->find("Content-Lenght") != it->npos) {
-			contentLength = atol(strTrim(it->substr(cstrlen("Content-Length:"))).c_str());
-		}
-		if (it->find("Transfer-Encoding") != it->npos) {
-			transferEncoding = strTrim(it->substr(cstrlen("Transfer-Encoding:")));
-		}
-	}
-}
-*/
+
 void	Request::parseHeader(std::vector<Server> &servers) {
 	std::vector<std::string>	header = strSplit(makeString(rawHeader), "\r\n");
 
