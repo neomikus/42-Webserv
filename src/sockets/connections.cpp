@@ -5,12 +5,22 @@
 #include "Post.hpp"
 #include "Delete.hpp"
 
+
 bool	checkfds(int fd, std::list<int> fdList) {
 	if (fdList.empty())
 		return (false);
 	for (std::list<int>::iterator it = fdList.begin(); it != fdList.end(); ++it)
 	{
 		if (fd == *it)
+			return (true);
+	}
+	return (false);
+}
+
+bool	checkfds(int fd, std::vector<Server> &servers) {
+
+	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
+		if (checkfds(fd, it->getSockets()))
 			return (true);
 	}
 	return (false);
@@ -247,33 +257,33 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 	while (!sigstop)
 	{
 		int evt_count = epoll_wait(epfd, events, EPOLL_EVENT_COUNT, -1);
-		for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
-			for (int i = 0; i < evt_count; i++) {
-				if (checkfds(events[i].data.fd, it->getSockets())) {
-					connect(epfd, events[i].data.fd, clients);
-					requests[events[i].data.fd] = NULL;
-				} else if (checkfds(events[i].data.fd, clients)) {
-					if ((events[i].events & EPOLLIN) && !requests[events[i].data.fd]) {
-						requests[events[i].data.fd] = makeRequest(events[i].data.fd);
-					}
-					if ((events[i].events & EPOLLIN)
-								&& requests[events[i].data.fd]->readHeader(events[i].data.fd, servers) 
-								&& !requests[events[i].data.fd]->getReadError() 
-								&& requests[events[i].data.fd]->readBody(events[i].data.fd)) {
-						handleEvent(epfd, events[i].data.fd);
-					} else if (events[i].events & EPOLLOUT) {
-						requests[events[i].data.fd]->response(events[i].data.fd);
-						rawRequest.clear();
-						delete requests[events[i].data.fd];
-						requests.erase(events[i].data.fd);
-						closeConnection(epfd, events[i].data.fd, clients);
-					} if (events[i].events & EPOLLHUP || events[i].events & EPOLLERR || (requests[events[i].data.fd] && requests[events[i].data.fd]->getReadError())) {
-						closeConnection(epfd, events[i].data.fd, clients);
-						if (requests[events[i].data.fd])
-							delete requests[events[i].data.fd];
-						requests.erase(events[i].data.fd);
-					}
+		for (int i = 0; i < evt_count; i++) {
+			if (checkfds(events[i].data.fd, servers)) {
+				connect(epfd, events[i].data.fd, clients);
+				requests[events[i].data.fd] = NULL;
+			} else if (checkfds(events[i].data.fd, clients)) {
+				if ((events[i].events & EPOLLIN) && !requests[events[i].data.fd]) {
+					requests[events[i].data.fd] = makeRequest(events[i].data.fd);
 				}
+				if ((events[i].events & EPOLLIN)
+							&& requests[events[i].data.fd]->readHeader(events[i].data.fd, servers) 
+							&& !requests[events[i].data.fd]->getReadError() 
+							&& requests[events[i].data.fd]->readBody(events[i].data.fd)) {
+					handleEvent(epfd, events[i].data.fd);
+				} else if (events[i].events & EPOLLOUT) {
+					requests[events[i].data.fd]->response(events[i].data.fd);
+					rawRequest.clear();
+					delete requests[events[i].data.fd];
+					requests.erase(events[i].data.fd);
+					closeConnection(epfd, events[i].data.fd, clients);
+				} if (events[i].events & EPOLLHUP || events[i].events & EPOLLERR || (requests[events[i].data.fd] && requests[events[i].data.fd]->getReadError())) {
+					closeConnection(epfd, events[i].data.fd, clients);
+					if (requests[events[i].data.fd])
+						delete requests[events[i].data.fd];
+					requests.erase(events[i].data.fd);
+				}
+			} else {
+				/* Pipe case */
 			}
 		}
 	}
