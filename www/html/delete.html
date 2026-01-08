@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+
+<!-- Stolen from W3Schools -->
+<html>
+<body>
+
+<h2>HTML Uploads</h2>
+
+<form onsubmit="sendDelete(this, event)" enctype="multipart/form-data">
+  <div>
+    <label for="file">Choose file to delete (full path)</label><br>
+    <input type="text" id="file" name="file" value=""><br><br>
+  </div>
+  <div>
+    <button>Delete</button>
+  </div>
+
+  <p id="result"></p>
+</form>
+
+
+</body>
+<script>
+  function sendDelete(ths, evt) {
+    evt.preventDefault();
+    fetch(ths.file.value, {
+      method: "DELETE"
+    }).then(response => {
+      document.querySelector("#result").innerHTML = `Result for ${ths.file.value}: ${response.status}, ${response.statusText}`
+    });
+  }
+</script>
+</html>

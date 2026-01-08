@@ -20,7 +20,7 @@ void	Delete::parseHeader(std::vector<Server> &servers) {
 bool checkStat(std::string &resource, int &status) {
 	struct stat resBuffer;
 
-	if (!stat(resource.c_str(), &resBuffer)) {
+	if (stat(resource.c_str(), &resBuffer)) {
 		status = 500;
 		return (false);
 	}
@@ -62,6 +62,7 @@ void    Delete::getBody(File &responseBody) {
 }
 
 void	Delete::response(int fd) {
+	resource = location.getRoot() + "/" + resource;
 	status = getStatus();
     deleteResource();
 	File		responseBody;
