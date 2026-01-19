@@ -263,3 +263,4 @@ std::string			&Request::getQuery() {return(this->query);}
 std::vector<char>	&Request::getRawHeader() {return(this->rawHeader);}
 Location			&Request::getLocation() {return(this->location);};
 void				Request::setStatus(int newStatus) {status = newStatus;};
+void				Request::cgiResponse(int fd) {(void)fd;};

@@ -52,6 +52,7 @@ class Request
 		virtual ~Request();
 		Server	&selectServer(std::vector<Server> &servers);
 		virtual void	response(int fd); // May return int for response code or for error check?
+		virtual void	cgiResponse(int fd);
 
 		bool				readHeader(int fd, std::vector<Server> &servers);
 		bool				readBody(int fd);
@@ -71,7 +72,6 @@ class Request
 };
 
 std::string	getStatusText(int status);
-std::string cgi(int &status, std::string resource, std::string command);
 
 Location	selectContext(Location &location, std::string fatherUri, std::string &resource);
 

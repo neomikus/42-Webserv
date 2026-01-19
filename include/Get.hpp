@@ -18,6 +18,7 @@ class Get: public Request {
 	public:
 		Get();
 		//Get(std::vector<std::string> splitedResponse);
+		void	cgiResponse(int fd);
 		Get(const Get &model);
 		~Get();
 	

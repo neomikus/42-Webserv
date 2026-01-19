@@ -8,7 +8,8 @@ class File;
 
 class Post: public Request {
 	private:
-		typedef std::vector<File> files;
+		typedef std::vector<File>	files;
+		bool						body_parsed;
 
 		files				filesVector;
 		std::string			contentType;
@@ -33,6 +34,7 @@ class Post: public Request {
 		~Post();
 
 		void	response(int fd);
+		void	cgiResponse(int fd);
 };
 
 #endif

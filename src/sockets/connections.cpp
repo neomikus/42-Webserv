@@ -265,13 +265,20 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 				if ((events[i].events & EPOLLIN) && !requests[events[i].data.fd]) {
 					requests[events[i].data.fd] = makeRequest(events[i].data.fd);
 				}
+				Request *currentRequest = requests[events[i].data.fd];
 				if ((events[i].events & EPOLLIN)
-							&& requests[events[i].data.fd]->readHeader(events[i].data.fd, servers) 
-							&& !requests[events[i].data.fd]->getReadError() 
-							&& requests[events[i].data.fd]->readBody(events[i].data.fd)) {
+							&& currentRequest->readHeader(events[i].data.fd, servers) 
+							&& !currentRequest->getReadError() 
+							&& currentRequest->readBody(events[i].data.fd)) {
 					handleEvent(epfd, events[i].data.fd);
 				} else if (events[i].events & EPOLLOUT) {
-					requests[events[i].data.fd]->response(events[i].data.fd);
+					if (currentRequest->getLocation().getCgi() != "" &&
+					(currentRequest->getMethod() == "GET" || currentRequest->getMethod() == "POST"))
+					{
+						currentRequest->cgiResponse(events[i].data.fd);
+					}
+					else
+						currentRequest->response(events[i].data.fd);
 					rawRequest.clear();
 					delete requests[events[i].data.fd];
 					requests.erase(events[i].data.fd);
