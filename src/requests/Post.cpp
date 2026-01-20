@@ -137,7 +137,7 @@ void	Post::parseFormData() {
 
 	std::string	filename;
 	if (!checkDirectory(resource))
-		filename = resource;
+		filename = strSplit(resource, "/").back();
 	else
 		filename = getTime() + ".json";
 	std::string toParse = makeString(rawBody);
