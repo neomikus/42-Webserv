@@ -12,7 +12,7 @@ UTILS	 	:= httpUtils statUtils strUtils intUtils
 SOCKETS		:= Socket connections
 REQUESTS	:= Request Get Post Delete
 HTML		:= teapot autoindex errorpage
-CGI			:= cgiGet cgiPost
+CGI			:= cgiGet cgiPost cgiUtils
 
 PLAIN_SRCS 	:=	$(addsuffix .cpp, $(addprefix main/,	$(MAIN))) \
 				$(addsuffix .cpp, $(addprefix files/,	$(FILES))) \

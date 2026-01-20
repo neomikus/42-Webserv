@@ -78,9 +78,7 @@ void	Get::acceptedFormats(File &responseBody) {
 
 void	Get::getBody(File &responseBody) {
 	if (status == 200 || status == 301 || status == 302) {
-		if (location.getCgi() != "" && !checkDirectory(resource))
-			cgi();
-		else if (status != 301 && status != 302 && !resource.empty() && !checkDirectory(resource))
+		if (status != 301 && status != 302 && !resource.empty() && !checkDirectory(resource))
 			responseBody.open(resource);
 		else {
 			if (checkRedirect())

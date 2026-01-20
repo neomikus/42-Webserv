@@ -1,14 +1,24 @@
 #include "Get.hpp"
 
-std::string Get::cgi()
+void Get::cgi(int epfd)
 {
 	std::string command = location.getCgi();
 	int pipefd[2];
     if (pipe(pipefd) == -1) {
         std::cerr << "pipe failed: " << std::endl;
         status = 500;
-        return "";
+        return;
     }
+	outpipe = pipefd[0];
+	epoll_event	config;
+
+	config.events = EPOLLIN;
+	config.data.fd = outpipe;
+	if (epoll_ctl(epfd, EPOLL_CTL_ADD, outpipe, &config) == -1) {
+		std::cerr << "Epoll failed to add pipe" << std::endl;
+        status = 500;
+        return;
+	}
 
     pid_t child = fork();
     if (child == -1) {
@@ -16,11 +26,8 @@ std::string Get::cgi()
         close(pipefd[0]);
         close(pipefd[1]);
         status = 500;
-        return "";
-    }
-
-    if (child == 0) {
-        
+        return;
+    } else if (child == 0) {
         close(pipefd[0]);
 
         if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
@@ -64,15 +71,14 @@ std::string Get::cgi()
         exit(1);
     }
     else {
-		/* Quitar esto */
-		int flags = fcntl(pipefd[0], F_GETFL, 0);
-		fcntl(pipefd[0], F_SETFL, flags | O_NONBLOCK);
         close(pipefd[1]);
+		if (waitpid(child, &childStatus, WNOHANG) == -1) {
+            std::cerr << "waitpid failed: " << std::endl;
+            status = 502;
+            return;
+        }
 
-        std::string output;
-        char buffer[BUFFER_SIZE];
-        ssize_t n;
-
+		/* Timeout paused
 		time_t time_start;
 		time(&time_start);
 
@@ -85,7 +91,7 @@ std::string Get::cgi()
         		close(pipefd[0]);
 				kill(child, SIGTERM);
 				status = 504;
-            	return "";
+            	return;
 			}
 			n = read(pipefd[0], buffer, sizeof(buffer));
 			if (n > 0)
@@ -93,18 +99,14 @@ std::string Get::cgi()
 			if (n == 0)
 				break;
 		}
-    
-        if (n == -1)
-            std::cerr << "read error: " << std::endl;
+		*/
 
-        close(pipefd[0]);
-
+		/* Child status errors
         int child_status = 0;
         if (waitpid(child, &child_status, WNOHANG) == -1) {
             std::cerr << "waitpid failed: " << std::endl;
             status = 502;
-			output.clear();
-            return "";
+            return;
         }
     
         if (WIFEXITED(child_status)) {
@@ -112,7 +114,6 @@ std::string Get::cgi()
             if (exit_code != 0) {
                 std::cerr << "child exited with code " << exit_code << std::endl;
                 status = 502;
-				output.clear();
             }
             else status = 200;
 
@@ -121,19 +122,16 @@ std::string Get::cgi()
             int sig = WTERMSIG(child_status);
             std::cerr << "child killed by signal " << sig << std::endl;
             status = 502;
-			output.clear();
         }
         else
-		{
 			status = 502;
-			output.clear();
-		}
-        return output;
-    }
+	
+		*/
+		status = 200;
+	}
 }
 
 void	Get::cgiResponse(int fd, int epfd) {
-	(void)epfd;
 	std::string og_resource = resource;
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
@@ -144,26 +142,33 @@ void	Get::cgiResponse(int fd, int epfd) {
 		return;
 	}
 
-	File		responseBody;
-	std::string response;
-
-	std::string cgi_response;
-	cgi_response = cgi();
-	response += "HTTP/1.1 "; // This is always true
-	response += toString(status);
-	response += " " + getStatusText(status);
-		
-	response += "Content Lenght: ";
-	response += toString(cgi_response.size());
-	response += "\r\n";
-	response += cgi_response;
-
-	if (status != 200) {
-		response.clear();
-		resource = og_resource;
-		this->response(fd);
+	if (outpipe == -1) {
+		cgi(epfd);
+		if (status >= 500) {
+			resource = og_resource;
+			this->response(fd);
+		}
 		return;
 	}
 
-	sent = true;
+	if (pipeRead) {
+		if (status != 200) {
+			resource = og_resource;
+			this->response(fd);
+			return;
+		}
+		std::string response;
+	
+		response += "HTTP/1.1 "; // This is always true
+		response += toString(status);
+		response += " " + getStatusText(status);
+			
+		response += "Content Lenght: ";
+		response += toString(cgiOutput.size());
+		response += "\r\n";
+		response += cgiOutput;
+
+		send(fd, response.c_str(), response.size(), 0);
+		sent = true;
+	}
 }

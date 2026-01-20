@@ -90,8 +90,11 @@ Request::Request() {
 	contentLength = -1;
 	headerRead = false;
 	status = 0;
-	bodyRead = 0;
+	bodyRead = false;
 	sent = false;
+	inpipe = -1;
+	outpipe = -1;
+	pipeRead = false;
 }
 
 Request::Request(const Request &model) {
@@ -105,6 +108,9 @@ Request::Request(const Request &model) {
 	this->accept = model.accept;
 	this->keepAlive = model.keepAlive;
 	this->referer = model.referer;
+	this->inpipe = model.inpipe;
+	this->outpipe = model.outpipe;
+	this->sent = model.sent;
 }
 
 Request	&Request::operator=(const Request &model) {
@@ -118,6 +124,9 @@ Request	&Request::operator=(const Request &model) {
 	this->accept = model.accept;
 	this->keepAlive = model.keepAlive;
 	this->referer = model.referer;
+	this->inpipe = model.inpipe;
+	this->outpipe = model.outpipe;
+	this->sent = model.sent;
 	return (*this);
 }
 
@@ -265,5 +274,6 @@ std::string			&Request::getProtocol() {return(this->protocol);}
 std::string			&Request::getQuery() {return(this->query);}
 std::vector<char>	&Request::getRawHeader() {return(this->rawHeader);}
 Location			&Request::getLocation() {return(this->location);};
+int					Request::getOutpipe(){return(this->outpipe);};
 void				Request::setStatus(int newStatus) {status = newStatus;};
 void				Request::cgiResponse(int fd, int epfd) {(void)fd;(void)epfd;};

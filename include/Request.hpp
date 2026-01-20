@@ -13,8 +13,10 @@ class Request
 
 	protected:
 		bool								readError;
-		bool								error; // necesary : (firstline)method resource protocol
+		bool								error;
 		bool								sent;
+		int									outpipe;
+		int									inpipe;
 
 		std::vector<char>					rawHeader;
 		std::vector<char>					rawBody;
@@ -24,6 +26,10 @@ class Request
 		std::string							protocol;
 
 		bool								headerRead;
+		bool								pipeRead;
+		std::string							cgiOutput;
+		int									childStatus;
+
 
 		long								contentLength;
 		hostport							hostPort;
@@ -44,7 +50,9 @@ class Request
 		std::string					checkErrorPages(std::vector<error_page> error_pages);
 		void						getErrorPages(std::string &error_page, File &responseBody);
 		virtual void				parseHeader(std::vector<Server> &servers);
-	
+
+		
+
 	public:
 		Request();
 		//Request(std::vector<std::string> splitedRaw);
@@ -57,21 +65,24 @@ class Request
 
 		bool				readHeader(int fd, std::vector<Server> &servers);
 		bool				readBody(int fd);
+		void				readFromPipe();
+		void				closePipe(int epfd);
 		
 		bool				getReadError();
 		void				setReadError(bool value);
 		bool				getSent();
 
 		void				setStatus(int newStatus);
-
+		
 		std::string			&getMethod();
 		std::string			&getProtocol();
 		std::string			&getResource();
 		std::string			&getQuery();
 		std::vector<char>	&getRawHeader();
 		Location			&getLocation();
-
-};
+		int					getOutpipe();
+		
+	};
 
 std::string	getStatusText(int status);
 

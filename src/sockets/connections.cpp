@@ -5,7 +5,6 @@
 #include "Post.hpp"
 #include "Delete.hpp"
 
-
 bool	checkfds(int fd, std::list<int> fdList) {
 	if (fdList.empty())
 		return (false);
@@ -232,6 +231,17 @@ Request *makeRequest(int fd)
 	return (retval);
 }
 
+Request *searchByPipe(std::map<int, Request *> &requests, int fd) {
+	for (std::map<int, Request *>::iterator it = requests.begin(); it != requests.end(); ++it) {
+		if (!it->second)
+			continue;
+		if (it->second->getOutpipe() == fd) {
+			return (it->second);
+		}
+	}
+	return (NULL);
+}
+
 void	handleEvent(int epfd, int evtfd) {
 	epoll_event	config;
 
@@ -278,7 +288,6 @@ void	handleEpollEvent(int epfd, std::map<int, Request *> &requests, 	std::list<i
 	}
 }
 
-
 void	acceptConnections(int epfd, std::vector<Server> &servers) {
 	std::list<int>	clients;
 
@@ -297,7 +306,16 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 			} else if (checkfds(events[i].data.fd, clients)) {
 				handleEpollEvent(epfd, requests, clients, servers, events[i].events, events[i].data.fd);
 			} else {
-				/* PIPE CASE */
+				if (events[i].events & EPOLLIN) {
+					// Outpipe case
+					Request *currentRequest = searchByPipe(requests, events[i].data.fd);
+					if (currentRequest)
+						currentRequest->readFromPipe();
+				} else if (events[i].events & EPOLLOUT) {
+					// Inpipe case
+				} else if (events[i].events & EPOLLHUP) {
+					searchByPipe(requests, events[i].data.fd)->closePipe(epfd);
+				}
 			}
 		}
 	}
@@ -305,7 +323,7 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 	for (std::map<int, Request *>::iterator it = requests.begin(); it != requests.end(); ++it) {
 		if (it->second)
 			delete it->second;
-	}	
+	}
 	
 	for (std::list<int>::iterator it = clients.begin(); it != clients.end(); ++it) {
 		send(*it, "Connection closed by server\r\n", cstrlen("Connection closed by server\r\n"), 0);

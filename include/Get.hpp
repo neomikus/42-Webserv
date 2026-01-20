@@ -14,7 +14,7 @@ class Get: public Request {
 		bool	checkAcceptedFormats(File &responseBody);	
 		void	acceptedFormats(File &responseBody);
 		void	parseHeader(std::vector<Server> &servers);
-		std::string cgi();
+		void	cgi(int epfd);
 	public:
 		Get();
 		//Get(std::vector<std::string> splitedResponse);
