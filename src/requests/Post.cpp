@@ -134,7 +134,12 @@ void	Post::parseMultipartData() {
 */
 void	Post::parseFormData() {
 	std::string	body;
-	std::string	filename = getTime() + ".json";
+
+	std::string	filename;
+	if (!checkDirectory(resource))
+		filename = resource;
+	else
+		filename = getTime() + ".json";
 	std::string toParse = makeString(rawBody);
 
 	body = "{";
@@ -280,7 +285,7 @@ bool checkStat(std::string resource, std::string &filename, int &status) {
 			resource = trimLastWord(resource, '/') + "/";
 		}
 		else {
-			resource = trimLastWord(resource, '/');
+			resource = trimLastWord(resource, '/') + "/";
 			if (access(resource.c_str(), F_OK)) {
 				return (false);
 			}
@@ -392,6 +397,7 @@ void	Post::response(int fd) {
 	response += makeString(responseBody.getBody());
 
 	send(fd, response.c_str(), response.length(), 0);
+	sent = true;
 }
 
 Post::~Post(){}

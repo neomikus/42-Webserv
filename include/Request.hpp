@@ -14,6 +14,7 @@ class Request
 	protected:
 		bool								readError;
 		bool								error; // necesary : (firstline)method resource protocol
+		bool								sent;
 
 		std::vector<char>					rawHeader;
 		std::vector<char>					rawBody;
@@ -52,13 +53,14 @@ class Request
 		virtual ~Request();
 		Server	&selectServer(std::vector<Server> &servers);
 		virtual void	response(int fd); // May return int for response code or for error check?
-		virtual void	cgiResponse(int fd);
+		virtual void	cgiResponse(int fd, int epfd);
 
 		bool				readHeader(int fd, std::vector<Server> &servers);
 		bool				readBody(int fd);
 		
 		bool				getReadError();
 		void				setReadError(bool value);
+		bool				getSent();
 
 		void				setStatus(int newStatus);
 

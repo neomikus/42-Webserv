@@ -34,7 +34,7 @@ class Post: public Request {
 		~Post();
 
 		void	response(int fd);
-		void	cgiResponse(int fd);
+		void	cgiResponse(int fd, int epfd);
 };
 
 #endif

@@ -91,6 +91,7 @@ Request::Request() {
 	headerRead = false;
 	status = 0;
 	bodyRead = 0;
+	sent = false;
 }
 
 Request::Request(const Request &model) {
@@ -252,10 +253,12 @@ void	Request::response(int fd) {
 	response += makeString(responseBody.getBody());
 
 	send(fd, response.c_str(), response.length(), 0);
+	sent = true;
 }
 
-bool				Request::getReadError(){return(this->readError);}
-void				Request::setReadError(bool value){this->readError = value;}
+bool				Request::getReadError() {return(this->readError);}
+bool				Request::getSent() {return(this->sent);};
+void				Request::setReadError(bool value) {this->readError = value;}
 std::string			&Request::getMethod() {return(this->method);}
 std::string			&Request::getResource() {return(this->resource);}
 std::string			&Request::getProtocol() {return(this->protocol);}
@@ -263,4 +266,4 @@ std::string			&Request::getQuery() {return(this->query);}
 std::vector<char>	&Request::getRawHeader() {return(this->rawHeader);}
 Location			&Request::getLocation() {return(this->location);};
 void				Request::setStatus(int newStatus) {status = newStatus;};
-void				Request::cgiResponse(int fd) {(void)fd;};
+void				Request::cgiResponse(int fd, int epfd) {(void)fd;(void)epfd;};

@@ -90,5 +90,5 @@ void	Delete::response(int fd) {
 	response += makeString(responseBody.getBody());
 
 	send(fd, response.c_str(), response.length(), 0);
-	close(fd);
+	sent = true;
 }

@@ -64,7 +64,7 @@ std::string Get::cgi()
         exit(1);
     }
     else {
-
+		/* Quitar esto */
 		int flags = fcntl(pipefd[0], F_GETFL, 0);
 		fcntl(pipefd[0], F_SETFL, flags | O_NONBLOCK);
         close(pipefd[1]);
@@ -115,7 +115,7 @@ std::string Get::cgi()
 				output.clear();
             }
             else status = 200;
-    
+
         }
         else if (WIFSIGNALED(child_status)) {
             int sig = WTERMSIG(child_status);
@@ -132,7 +132,8 @@ std::string Get::cgi()
     }
 }
 
-void	Get::cgiResponse(int fd) {
+void	Get::cgiResponse(int fd, int epfd) {
+	(void)epfd;
 	std::string og_resource = resource;
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
@@ -164,5 +165,5 @@ void	Get::cgiResponse(int fd) {
 		return;
 	}
 
-	send(fd, response.c_str(), response.size(), 0);
+	sent = true;
 }

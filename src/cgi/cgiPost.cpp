@@ -151,14 +151,15 @@ std::string Post::cgi()
     }
 }
 
-void	Post::cgiResponse(int fd) {
+void	Post::cgiResponse(int fd, int epfd) {
+	(void)epfd;
 	std::string og_resource = resource;
 	if (location.getCollectionRoute() != "")
 		resource = location.getCollectionRoute();
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + "/" + resource;
 
-	if (checkDirectory(resource))  {
+	if (checkDirectory(resource)) {
 		resource = og_resource;
 		this->response(fd);
 		return;
@@ -179,7 +180,7 @@ void	Post::cgiResponse(int fd) {
 	response += "\r\n";
 	response += cgi_response;
 
-	if (status != 200) {
+	if (status != 201) {
 		response.clear();
 		resource = og_resource;
 		this->response(fd);
@@ -187,4 +188,5 @@ void	Post::cgiResponse(int fd) {
 	}
 
 	send(fd, response.c_str(), response.length(), 0);
+	sent = true;
 }

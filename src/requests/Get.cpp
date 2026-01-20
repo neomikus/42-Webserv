@@ -151,4 +151,5 @@ void	Get::response(int fd) {
 	response += makeString(responseBody.getBody());
 
 	send(fd, response.c_str(), response.size(), 0);
+	sent = true;
 }

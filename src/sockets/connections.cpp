@@ -40,7 +40,8 @@ bool	Request::readBody(int fd) {
 
 	int rd = recv(fd, buffer, 1024, 0);
 	if (rd == -1 || rd == 0) {
-		std::cerr << "Read error!" << std::endl;
+		if (rd == -1)
+			std::cerr << "Read error!" << std::endl;
 		readError = true;
 		return (false);
 	}
@@ -173,7 +174,8 @@ Request *makeRequest(int fd)
 	Request *retval;
 	if (rd == -1 || rd == 0) {
 		retval = new Request();
-		std::cerr << "Read error!" << std::endl;
+		if (rd == -1)
+			std::cerr << "Read error!" << std::endl;
 		retval->setReadError(true);
 	}
 
@@ -244,13 +246,44 @@ void	closeConnection(int epfd, int evtfd, std::list<int> &clients) {
 	clients.erase(std::find(clients.begin(), clients.end(), evtfd));
 }
 
+void	handleEpollEvent(int epfd, std::map<int, Request *> &requests, 	std::list<int>	&clients, std::vector<Server> &servers, int event, int fd) {
+	std::vector<char> rawRequest;
+
+	if ((event & EPOLLIN) && !requests[fd]) {
+		requests[fd] = makeRequest(fd);
+	}
+	Request *currentRequest = requests[fd];
+	if ((event & EPOLLIN)
+				&& currentRequest->readHeader(fd, servers) 
+				&& !currentRequest->getReadError() 
+				&& currentRequest->readBody(fd)) {
+		handleEvent(epfd, fd);
+	} else if (event & EPOLLOUT) {
+		if (currentRequest->getLocation().getCgi() != "" &&
+		(currentRequest->getMethod() == "GET" || currentRequest->getMethod() == "POST"))
+			currentRequest->cgiResponse(fd, epfd);
+		else
+			currentRequest->response(fd);
+		if (currentRequest->getSent()) {
+			rawRequest.clear();
+			delete requests[fd];
+			requests.erase(fd);
+			closeConnection(epfd, fd, clients);
+		}
+	} if (event & EPOLLHUP || event & EPOLLERR || (requests[fd] && requests[fd]->getReadError())) {
+		closeConnection(epfd, fd, clients);
+		if (requests[fd])
+			delete requests[fd];
+		requests.erase(fd);
+	}
+}
+
 
 void	acceptConnections(int epfd, std::vector<Server> &servers) {
 	std::list<int>	clients;
 
 	struct epoll_event events[EPOLL_EVENT_COUNT];
 
-	std::vector<char> rawRequest;
 	// FD, Request map
 	std::map<int, Request *> requests;
 	std::cout << "Accepting connections..." << std::endl;
@@ -262,35 +295,9 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 				connect(epfd, events[i].data.fd, clients);
 				requests[events[i].data.fd] = NULL;
 			} else if (checkfds(events[i].data.fd, clients)) {
-				if ((events[i].events & EPOLLIN) && !requests[events[i].data.fd]) {
-					requests[events[i].data.fd] = makeRequest(events[i].data.fd);
-				}
-				Request *currentRequest = requests[events[i].data.fd];
-				if ((events[i].events & EPOLLIN)
-							&& currentRequest->readHeader(events[i].data.fd, servers) 
-							&& !currentRequest->getReadError() 
-							&& currentRequest->readBody(events[i].data.fd)) {
-					handleEvent(epfd, events[i].data.fd);
-				} else if (events[i].events & EPOLLOUT) {
-					if (currentRequest->getLocation().getCgi() != "" &&
-					(currentRequest->getMethod() == "GET" || currentRequest->getMethod() == "POST"))
-					{
-						currentRequest->cgiResponse(events[i].data.fd);
-					}
-					else
-						currentRequest->response(events[i].data.fd);
-					rawRequest.clear();
-					delete requests[events[i].data.fd];
-					requests.erase(events[i].data.fd);
-					closeConnection(epfd, events[i].data.fd, clients);
-				} if (events[i].events & EPOLLHUP || events[i].events & EPOLLERR || (requests[events[i].data.fd] && requests[events[i].data.fd]->getReadError())) {
-					closeConnection(epfd, events[i].data.fd, clients);
-					if (requests[events[i].data.fd])
-						delete requests[events[i].data.fd];
-					requests.erase(events[i].data.fd);
-				}
+				handleEpollEvent(epfd, requests, clients, servers, events[i].events, events[i].data.fd);
 			} else {
-				
+				/* PIPE CASE */
 			}
 		}
 	}
