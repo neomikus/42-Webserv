@@ -71,15 +71,20 @@ void Get::cgi(int epfd)
         exit(1);
     }
     else {
+		time_t time_start;
+		time(&time_start);
+
         close(pipefd[1]);
 		if (waitpid(child, &childStatus, WNOHANG) == -1) {
             std::cerr << "waitpid failed: " << std::endl;
             status = 502;
             return;
         }
+		std::thread timeout(checkTimeout, time_start, child, childStatus);
+		timeout.detach();
 
 		/* Timeout paused
-		time_t time_start;
+		
 		time(&time_start);
 
         while (true)
@@ -102,12 +107,6 @@ void Get::cgi(int epfd)
 		*/
 
 		/* Child status errors
-        int child_status = 0;
-        if (waitpid(child, &child_status, WNOHANG) == -1) {
-            std::cerr << "waitpid failed: " << std::endl;
-            status = 502;
-            return;
-        }
     
         if (WIFEXITED(child_status)) {
             int exit_code = WEXITSTATUS(child_status);
@@ -116,7 +115,6 @@ void Get::cgi(int epfd)
                 status = 502;
             }
             else status = 200;
-
         }
         else if (WIFSIGNALED(child_status)) {
             int sig = WTERMSIG(child_status);
@@ -152,6 +150,13 @@ void	Get::cgiResponse(int fd, int epfd) {
 	}
 
 	if (pipeRead) {
+		if (getTimeout()) {
+			resource = og_resource;
+			status = 504;
+			this->response(fd);
+			return;
+		}
+		
 		if (status != 200) {
 			resource = og_resource;
 			this->response(fd);

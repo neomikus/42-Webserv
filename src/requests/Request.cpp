@@ -95,6 +95,7 @@ Request::Request() {
 	inpipe = -1;
 	outpipe = -1;
 	pipeRead = false;
+	cgiTimeout = false;
 }
 
 Request::Request(const Request &model) {

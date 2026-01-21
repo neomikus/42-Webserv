@@ -29,6 +29,8 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <utility>
+#include <mutex>
+#include <thread>
 
 #define HMAG		"\033[95m"
 #define HCYA		"\033[96m"
@@ -46,7 +48,7 @@ const long long KB = BYTE * 1024;
 const long long MB = KB * 1024;
 const long long GB = MB * 1024;
 
-#define MAX_HEADER_SIZE 16000
+#define MAX_HEADER_SIZE 16000	
 
 extern bool	sigstop;
 extern int	errorCode;
