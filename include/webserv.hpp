@@ -29,8 +29,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <utility>
-#include <mutex>
-#include <thread>
+#include <pthread.h>
 
 #define HMAG		"\033[95m"
 #define HCYA		"\033[96m"

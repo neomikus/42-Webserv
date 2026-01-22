@@ -20,14 +20,14 @@ void Get::cgi(int epfd)
         return;
 	}
 
-    pid_t child = fork();
-    if (child == -1) {
+    childPid = fork();
+    if (childPid == -1) {
         std::cerr << "fork failed: " << std::endl;
         close(pipefd[0]);
         close(pipefd[1]);
         status = 500;
         return;
-    } else if (child == 0) {
+    } else if (childPid == 0) {
         close(pipefd[0]);
 
         if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
@@ -75,16 +75,17 @@ void Get::cgi(int epfd)
 		time(&time_start);
 
         close(pipefd[1]);
-		if (waitpid(child, &childStatus, WNOHANG) == -1) {
+		
+		if (waitpid(childPid, &childStatus, WNOHANG) == -1) {
             std::cerr << "waitpid failed: " << std::endl;
             status = 502;
             return;
         }
-		std::thread timeout(checkTimeout, time_start, child, childStatus);
-		timeout.detach();
+		pthread_t timeout;
+		pthread_create(&timeout, NULL, checkTimeout, (void *)this);
+		pthread_detach(timeout);
 
-		/* Timeout paused
-		
+		/* Timeout paused		
 		time(&time_start);
 
         while (true)
@@ -149,14 +150,15 @@ void	Get::cgiResponse(int fd, int epfd) {
 		return;
 	}
 
+	if (getTimeout()) {
+		resource = og_resource;
+		status = 504;
+		close(outpipe);
+		this->response(fd);
+		return;
+	}
+	
 	if (pipeRead) {
-		if (getTimeout()) {
-			resource = og_resource;
-			status = 504;
-			this->response(fd);
-			return;
-		}
-		
 		if (status != 200) {
 			resource = og_resource;
 			this->response(fd);

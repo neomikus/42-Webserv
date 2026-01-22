@@ -10,7 +10,7 @@ class Request
 	private:
 		std::vector<Server> 				candidates;
 		long long							bodyRead;
-		std::mutex							cgiTimeoutMutex;
+		pthread_mutex_t						cgiTimeoutMutex;
 
 	protected:
 		bool								readError;
@@ -30,6 +30,7 @@ class Request
 		bool								pipeRead;
 		bool								cgiTimeout;
 		std::string							cgiOutput;
+		pid_t								childPid;
 		int									childStatus;
 
 
@@ -77,6 +78,8 @@ class Request
 		void				setStatus(int newStatus);
 		void				setTimeout(bool timeout);
 		bool 				getTimeout();
+		int					getChildStatus();
+		pid_t				getChildPid();
 		
 		std::string			&getMethod();
 		std::string			&getProtocol();
@@ -88,7 +91,7 @@ class Request
 		
 	};
 
-void		checkTimeout(Request *ths, int time_start, int pid, int child_status);
+void		*checkTimeout(void *ptr);
 
 std::string	getStatusText(int status);
 

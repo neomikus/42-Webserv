@@ -17,36 +17,24 @@ void		Request::closePipe(int epfd) {
 
 bool		Request::getTimeout() {
 	bool timeout;
-	cgiTimeoutMutex.lock();
+	pthread_mutex_lock(&cgiTimeoutMutex);
 	timeout = cgiTimeout;
-	cgiTimeoutMutex.unlock();
+	pthread_mutex_unlock(&cgiTimeoutMutex);
 	return (timeout);
 }
 
 void		Request::setTimeout(bool value) {
-	cgiTimeoutMutex.lock();
+	pthread_mutex_lock(&cgiTimeoutMutex);
 	cgiTimeout = value;
-	cgiTimeoutMutex.unlock();
+	pthread_mutex_unlock(&cgiTimeoutMutex);
 }
 
-void		checkTimeout(Request *ths, int time_start, int pid, int child_status) {
+void		*checkTimeout(void *ptr) {
+	Request *ths = (Request *)ptr;
 	sleep(CGI_WAIT_TIME);
-	if (!WIFEXITED(child_status)) {
+	if (!WIFEXITED(ths->getChildStatus())) {
+		kill(ths->getChildPid(), SIGTERM);
 		ths->setTimeout(true);
 	}
-
-	/* This can be more efficient
-	while (true) {
-		static time_t time_running; 
-		time(&time_running);
-		if (time_running - time_start > CGI_WAIT_TIME) {
-			kill(pid, SIGTERM);
-			ths->setTimeout(true);
-			return;
-		} else if (WIFEXITED(child_status)) {
-			return;
-		}
-		sleep(1);
-	}
-	*/
+	return (ptr);
 }

@@ -96,6 +96,7 @@ Request::Request() {
 	outpipe = -1;
 	pipeRead = false;
 	cgiTimeout = false;
+	pthread_mutex_init(&cgiTimeoutMutex, NULL);
 }
 
 Request::Request(const Request &model) {
@@ -277,4 +278,6 @@ std::vector<char>	&Request::getRawHeader() {return(this->rawHeader);}
 Location			&Request::getLocation() {return(this->location);};
 int					Request::getOutpipe(){return(this->outpipe);};
 void				Request::setStatus(int newStatus) {status = newStatus;};
+pid_t				Request::getChildPid(){return(this->childPid);};
+int					Request::getChildStatus(){return(this->childStatus);};
 void				Request::cgiResponse(int fd, int epfd) {(void)fd;(void)epfd;};
