@@ -19,7 +19,7 @@ if content_length > 0:
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     file_name = f"resource_{timestamp}.txt"
     
-    upload_dir = "../../www/uploads"
+    upload_dir = "www/uploads/"
     
     if not os.path.exists(upload_dir):
         try:
