@@ -287,6 +287,10 @@ void	handleEpollEvent(int epfd, std::map<int, Request *> &requests, 	std::list<i
 			currentRequest->response(fd);
 		if (currentRequest->getSent()) {
 			rawRequest.clear();
+			if (currentRequest->getOutpipe() > 0)
+				currentRequest->closeOutpipe(epfd);
+			if (currentRequest->getInpipe() > 0 )
+				currentRequest->closeInpipe(epfd);
 			delete requests[fd];
 			requests.erase(fd);
 			closeConnection(epfd, fd, clients);
@@ -328,7 +332,9 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 					if (currentRequest)
 						currentRequest->writeToPipe(currentRequest->getFilesVector(), epfd);
 				} else if (events[i].events & EPOLLHUP) {
-					searchByOutpipe(requests, events[i].data.fd)->closeOutpipe(epfd);
+					Request *currentRequest = searchByOutpipe(requests, events[i].data.fd);
+					if (currentRequest)
+						currentRequest->closeOutpipe(epfd);
 				}
 			}
 		}
