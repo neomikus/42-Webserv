@@ -87,11 +87,6 @@ void Post::cgi(int epfd)
 	else {
 		close(outpipefd[1]);
 		close(inpipefd[0]);
-		if (waitpid(childPid, &childStatus, WNOHANG) == -1) {
-            std::cerr << "waitpid failed: " << std::endl;
-            status = 502;
-            return;
-        }
 		pthread_t timeout;
 		pthread_create(&timeout, NULL, checkTimeout, (void *)this);
 		pthread_detach(timeout);
@@ -156,8 +151,15 @@ void	Post::cgiResponse(int fd, int epfd) {
 	
 	if (pipeRead) {
 		closeInpipe(epfd);
-		
-		if (WEXITSTATUS(childStatus)) {
+		if (waitpid(childPid, &childStatus, WNOHANG) == -1) {
+            std::cerr << "waitpid failed: " << std::endl;
+            status = 502;
+			resource = og_resource;
+			this->response(fd);
+            return;
+        }
+
+		if (WIFEXITED(childStatus) && WEXITSTATUS(childStatus)) {
 			std::cerr << "child exited with code: " << WEXITSTATUS(childStatus) << std::endl;
 			status = 502;
 		}
