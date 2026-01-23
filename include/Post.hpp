@@ -10,6 +10,7 @@ class Post: public Request {
 	private:
 		typedef std::vector<File>	files;
 		bool						body_parsed;
+		int							inpipefd[2];
 
 		files				filesVector;
 		std::string			contentType;
@@ -25,7 +26,7 @@ class Post: public Request {
 		void				getBody(File &responseBody);
 		void				parseHeader(std::vector<Server> &servers);
 
-		std::string	cgi();
+		void				cgi(int epfd);
 		
 	public:
 		Post();
@@ -33,6 +34,7 @@ class Post: public Request {
 		Post(const Post &model);
 		~Post();
 
+		std::vector<File>	&getFilesVector();
 		void	response(int fd);
 		void	cgiResponse(int fd, int epfd);
 };

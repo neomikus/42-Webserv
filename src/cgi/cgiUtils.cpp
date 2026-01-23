@@ -9,9 +9,30 @@ void		Request::readFromPipe() {
 		cgiOutput += buffer;
 }
 
-void		Request::closePipe(int epfd) {
+void		Request::writeToPipe(std::vector<File> &filesVector, int epfd) {
+	(void)epfd;
+	std::vector<File>::iterator it = filesVector.begin();
+	if (!pipeWritten)
+		write(inpipe, makeString(it->getBody()).c_str(), it->getSize());
+	//++it;
+
+	//if (it == filesVector.end()) {
+	pipeWritten = true;
+	//}
+}
+
+void		Request::closeInpipe(int epfd) {
+	close(inpipe);
+	epoll_ctl(epfd, EPOLL_CTL_DEL, inpipe, NULL);
+	inpipe = -2;
+	pipeRead = true;
+}
+
+
+void		Request::closeOutpipe(int epfd) {
 	close(outpipe);
 	epoll_ctl(epfd, EPOLL_CTL_DEL, outpipe, NULL);
+	outpipe = -2;
 	pipeRead = true;
 }
 

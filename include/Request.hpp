@@ -28,6 +28,7 @@ class Request
 
 		bool								headerRead;
 		bool								pipeRead;
+		bool								pipeWritten;
 		bool								cgiTimeout;
 		std::string							cgiOutput;
 		pid_t								childPid;
@@ -69,7 +70,9 @@ class Request
 		bool				readHeader(int fd, std::vector<Server> &servers);
 		bool				readBody(int fd);
 		void				readFromPipe();
-		void				closePipe(int epfd);
+		void				writeToPipe(std::vector<File> &filesVector, int epfd);
+		void				closeOutpipe(int epfd);
+		void				closeInpipe(int epfd);
 		
 		bool				getReadError();
 		void				setReadError(bool value);
@@ -88,6 +91,7 @@ class Request
 		std::vector<char>	&getRawHeader();
 		Location			&getLocation();
 		int					getOutpipe();
+		int					getInpipe();
 		
 	};
 

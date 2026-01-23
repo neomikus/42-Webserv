@@ -400,4 +400,8 @@ void	Post::response(int fd) {
 	sent = true;
 }
 
+std::vector<File>	&Post::getFilesVector() {
+	return (this->filesVector);
+}
+
 Post::~Post(){}

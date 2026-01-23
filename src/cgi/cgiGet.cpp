@@ -71,11 +71,8 @@ void Get::cgi(int epfd)
         exit(1);
     }
     else {
-		time_t time_start;
-		time(&time_start);
-
         close(pipefd[1]);
-		
+
 		if (waitpid(childPid, &childStatus, WNOHANG) == -1) {
             std::cerr << "waitpid failed: " << std::endl;
             status = 502;
@@ -84,28 +81,6 @@ void Get::cgi(int epfd)
 		pthread_t timeout;
 		pthread_create(&timeout, NULL, checkTimeout, (void *)this);
 		pthread_detach(timeout);
-
-		/* Timeout paused		
-		time(&time_start);
-
-        while (true)
-		{
-			static time_t time_running; 
-			time(&time_running);
-			if (time_running - time_start > CGI_WAIT_TIME)
-			{
-        		close(pipefd[0]);
-				kill(child, SIGTERM);
-				status = 504;
-            	return;
-			}
-			n = read(pipefd[0], buffer, sizeof(buffer));
-			if (n > 0)
-				output.append(buffer, n);
-			if (n == 0)
-				break;
-		}
-		*/
 
 		/* Child status errors
     
@@ -143,22 +118,28 @@ void	Get::cgiResponse(int fd, int epfd) {
 
 	if (outpipe == -1) {
 		cgi(epfd);
+		resource = og_resource;
 		if (status >= 500) {
-			resource = og_resource;
 			this->response(fd);
 		}
 		return;
 	}
 
-	if (getTimeout()) {
+	/*if (getTimeout()) {
 		resource = og_resource;
 		status = 504;
 		close(outpipe);
 		this->response(fd);
 		return;
-	}
+	}*/
 	
 	if (pipeRead) {
+		if (WEXITSTATUS(childStatus)) {
+			resource = og_resource;
+			this->response(fd);
+			return;
+		}
+
 		if (status != 200) {
 			resource = og_resource;
 			this->response(fd);
@@ -178,4 +159,5 @@ void	Get::cgiResponse(int fd, int epfd) {
 		send(fd, response.c_str(), response.size(), 0);
 		sent = true;
 	}
+	resource = og_resource;
 }

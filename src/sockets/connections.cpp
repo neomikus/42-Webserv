@@ -231,11 +231,22 @@ Request *makeRequest(int fd)
 	return (retval);
 }
 
-Request *searchByPipe(std::map<int, Request *> &requests, int fd) {
+Request *searchByOutpipe(std::map<int, Request *> &requests, int fd) {
 	for (std::map<int, Request *>::iterator it = requests.begin(); it != requests.end(); ++it) {
 		if (!it->second)
 			continue;
 		if (it->second->getOutpipe() == fd) {
+			return (it->second);
+		}
+	}
+	return (NULL);
+}
+
+Request *searchByInpipe(std::map<int, Request *> &requests, int fd) {
+	for (std::map<int, Request *>::iterator it = requests.begin(); it != requests.end(); ++it) {
+		if (!it->second)
+			continue;
+		if (it->second->getInpipe() == fd) {
 			return (it->second);
 		}
 	}
@@ -308,13 +319,16 @@ void	acceptConnections(int epfd, std::vector<Server> &servers) {
 			} else {
 				if (events[i].events & EPOLLIN) {
 					// Outpipe case
-					Request *currentRequest = searchByPipe(requests, events[i].data.fd);
+					Request *currentRequest = searchByOutpipe(requests, events[i].data.fd);
 					if (currentRequest)
 						currentRequest->readFromPipe();
 				} else if (events[i].events & EPOLLOUT) {
 					// Inpipe case
+					Post *currentRequest = (Post *)searchByInpipe(requests, events[i].data.fd);
+					if (currentRequest)
+						currentRequest->writeToPipe(currentRequest->getFilesVector(), epfd);
 				} else if (events[i].events & EPOLLHUP) {
-					searchByPipe(requests, events[i].data.fd)->closePipe(epfd);
+					searchByOutpipe(requests, events[i].data.fd)->closeOutpipe(epfd);
 				}
 			}
 		}

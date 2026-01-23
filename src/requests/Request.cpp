@@ -95,6 +95,7 @@ Request::Request() {
 	inpipe = -1;
 	outpipe = -1;
 	pipeRead = false;
+	pipeWritten = false;
 	cgiTimeout = false;
 	pthread_mutex_init(&cgiTimeoutMutex, NULL);
 }
@@ -277,6 +278,7 @@ std::string			&Request::getQuery() {return(this->query);}
 std::vector<char>	&Request::getRawHeader() {return(this->rawHeader);}
 Location			&Request::getLocation() {return(this->location);};
 int					Request::getOutpipe(){return(this->outpipe);};
+int					Request::getInpipe(){return(this->inpipe);};
 void				Request::setStatus(int newStatus) {status = newStatus;};
 pid_t				Request::getChildPid(){return(this->childPid);};
 int					Request::getChildStatus(){return(this->childStatus);};
