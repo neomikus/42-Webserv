@@ -128,7 +128,7 @@ void	Get::cgiResponse(int fd, int epfd) {
 	if (getTimeout()) {
 		resource = og_resource;
 		status = 504;
-		close(outpipe);
+		closeOutpipe(epfd);
 		this->response(fd);
 		return;
 	}
