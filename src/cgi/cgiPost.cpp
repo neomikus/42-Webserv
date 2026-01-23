@@ -87,7 +87,6 @@ void Post::cgi(int epfd)
 	else {
 		close(outpipefd[1]);
 		close(inpipefd[0]);
-
 		if (waitpid(childPid, &childStatus, WNOHANG) == -1) {
             std::cerr << "waitpid failed: " << std::endl;
             status = 502;
@@ -96,28 +95,6 @@ void Post::cgi(int epfd)
 		pthread_t timeout;
 		pthread_create(&timeout, NULL, checkTimeout, (void *)this);
 		pthread_detach(timeout);
-		
-		/*
-		if (WIFEXITED(child_status)) {
-			int exit_code = WEXITSTATUS(child_status);
-			if (exit_code != 0) {
-				std::cerr << "childPid exited with code " << exit_code << std::endl;
-				status = 502;
-				output.clear();
-			}
-			else status = 201;
-		
-		}
-		else if (WIFSIGNALED(child_status)) {
-			int sig = WTERMSIG(child_status);
-			std::cerr << "childPid killed by signal " << sig << std::endl;
-			status = 502;
-			output.clear();
-		}
-		else {
-			status = 502;
-		}
-		*/
 		status = 201;
 	}
 }
@@ -179,6 +156,12 @@ void	Post::cgiResponse(int fd, int epfd) {
 	
 	if (pipeRead) {
 		closeInpipe(epfd);
+		
+		if (WEXITSTATUS(childStatus)) {
+			std::cerr << "child exited with code: " << WEXITSTATUS(childStatus) << std::endl;
+			status = 502;
+		}
+
 		if (status != 201) {
 			resource = og_resource;
 			this->response(fd);

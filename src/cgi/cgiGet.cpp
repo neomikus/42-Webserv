@@ -63,7 +63,6 @@ void Get::cgi(int epfd)
         argv[3] = NULL;		
 
         execve(argv[0], argv, new_envp);
-		
         std::cerr << "exec failed: " << std::endl;
 
 		delete[] new_envp[env_count];
@@ -81,26 +80,6 @@ void Get::cgi(int epfd)
 		pthread_t timeout;
 		pthread_create(&timeout, NULL, checkTimeout, (void *)this);
 		pthread_detach(timeout);
-
-		/* Child status errors
-    
-        if (WIFEXITED(child_status)) {
-            int exit_code = WEXITSTATUS(child_status);
-            if (exit_code != 0) {
-                std::cerr << "child exited with code " << exit_code << std::endl;
-                status = 502;
-            }
-            else status = 200;
-        }
-        else if (WIFSIGNALED(child_status)) {
-            int sig = WTERMSIG(child_status);
-            std::cerr << "child killed by signal " << sig << std::endl;
-            status = 502;
-        }
-        else
-			status = 502;
-	
-		*/
 		status = 200;
 	}
 }
@@ -135,9 +114,8 @@ void	Get::cgiResponse(int fd, int epfd) {
 	
 	if (pipeRead) {
 		if (WEXITSTATUS(childStatus)) {
-			resource = og_resource;
-			this->response(fd);
-			return;
+			std::cerr << "child exited with code: " << WEXITSTATUS(childStatus) << std::endl;
+			status = 502;
 		}
 
 		if (status != 200) {
