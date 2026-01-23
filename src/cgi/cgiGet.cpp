@@ -125,13 +125,13 @@ void	Get::cgiResponse(int fd, int epfd) {
 		return;
 	}
 
-	/*if (getTimeout()) {
+	if (getTimeout()) {
 		resource = og_resource;
 		status = 504;
 		close(outpipe);
 		this->response(fd);
 		return;
-	}*/
+	}
 	
 	if (pipeRead) {
 		if (WEXITSTATUS(childStatus)) {
