@@ -1,7 +1,5 @@
 <h1>Codes to implement</h1>
 
-? still in doubt
-
 <h2>2XX</h2>
 
 - [x] 200 OK
@@ -19,14 +17,14 @@
 - [x] 403 Forbidden
 - [x] 404 Not Found
 - [x] 405 Method Not Allowed
-- [x] 406 Not Acceptable (To fix)
-- [x] 411 Lenght Required (To fix)
-- [x] 413 Payload Too Large?
-- [x] 418 I'm a teapot (Por el meme)
+- [x] 406 Not Acceptable
+- [x] 411 Lenght Required
+- [x] 413 Payload Too Large
+- [x] 418 I'm a teapot
 
 <h2>5XX</h2>
 
-- [x] 500 Internal Server Error?  (Should probably not happen in our webserver)
+- [x] 500 Internal Server Error
 - [x] 501 Not Implemented
 - [x] 502 Bad Gateway
 - [x] 504 Gateway Timeout

@@ -100,7 +100,8 @@ File	generateAutoIndex(std::string resource, std::string directory) {
 	contents << ".application{color: crimson;} .application::before{font-family: 'Font Awesome 5 Free'; font-weight: 900; content: '\\e697  ';}" << std::endl;
 	contents << "</style></head>" << std::endl;	
 
-	contents << "<body><script src='https://kit.fontawesome.com/b096cabf1e.js' crossorigin='anonymous'></script>" << "<header><h1>Index of " << (resource.empty() ? "/" : resource.c_str()) << "</h1></header>" << std::endl << "<table>" << std::endl;
+	// Put your fontawesome api key here
+	contents << "<body><script></script>" << "<header><h1>Index of " << (resource.empty() ? "/" : resource.c_str()) << "</h1></header>" << std::endl << "<table>" << std::endl;
 	contents << "<tr class='header'><td>File</td><td>Last modified</td><td>Size</td></tr>" << std::endl;
 
 	if (!resource.empty()) {
