@@ -1,5 +1,11 @@
 <h1>🌐 42-Webserv 🌐</h1>
 Webserv is a web server project developed as part of the <a href="https://www.42network.org/">42 School</a> curriculum, compliant with HTTP 1.1 and REST and based on Nginx both in features and configuration files
+<br><br>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/neomikus/neomikus/refs/heads/main/media/No-AI-badge-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/neomikus/neomikus/refs/heads/main/media/No-AI-badge-light.png">
+  <img alt="Developed by a human, not AI">
+</picture>
 
 <h2>✅ Features ✅</h2>
 <ul>
