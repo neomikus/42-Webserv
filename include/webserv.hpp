@@ -3,6 +3,7 @@
 
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -28,7 +29,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <utility>
-
+#include <pthread.h>
 
 #define HMAG		"\033[95m"
 #define HCYA		"\033[96m"
@@ -46,15 +47,17 @@ const long long KB = BYTE * 1024;
 const long long MB = KB * 1024;
 const long long GB = MB * 1024;
 
-#define DEFAULT_ERROR_PAGE "www/html/default_error_page.html"
+#define MAX_HEADER_SIZE 16000	
 
 extern bool	sigstop;
 extern int	errorCode;
 extern std::string errorLine;
 extern char **global_envp;
 
-
+#define EPOLL_EVENT_COUNT 100
 #define BUFFER_SIZE 1024
+
+#define CGI_WAIT_TIME 5
 
 #include "Socket.hpp"
 
@@ -98,6 +101,7 @@ char		*makeCString(const std::vector<char> vec);
 char		*makeCString(std::vector<char>::iterator start, std::vector<char>::iterator end);
 
 std::string					toString(int n);
+std::string					getTime();
 
 bool	checkDirectory(std::string resource);
 
@@ -106,8 +110,10 @@ bool	checkDirectory(std::string resource);
 class File;
 
 void	teapotGenerator(File &responseBody);
+void	errorPageGenerator(File &responseBody, int &status);
 File	generateAutoIndex(std::string resource, std::string directory);
 
 std::string	getMIME(std::string needle, bool reverse);
+
 
 #endif

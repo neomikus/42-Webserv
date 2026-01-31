@@ -5,15 +5,16 @@
 
 class Delete: public Request {
 	private:
-		Delete();
-		void    getBody(int &status, Location &currentLocation, File &responseBody);
-		void	deleteResource(int &status);
+		void	parseHeader(std::vector<Server> &servers);
+		void    getBody(File &responseBody);
+		void	deleteResource();
 
 	public:
-		Delete(std::vector<std::string> splitedResponse);
+		Delete();
+		//Delete(std::vector<std::string> splitedResponse);
 		Delete(const Delete &model);
 		~Delete();
-		void	response(int fd, std::list<int> &clients, Server &server);
+		void	response(int fd);
 };
 
 #endif

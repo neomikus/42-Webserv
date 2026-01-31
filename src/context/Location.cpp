@@ -7,9 +7,10 @@ Location::Location() {
 	root = "";
 	autoindex = false;
 	allowed_methods a_methods = {false, false, false};
-	this->methods = a_methods;
+	methods = a_methods;
 	max_body_size = MB;
-
+	redirect = std::make_pair(0, "");
+	collection_route = "";
 }
 
 Location::~Location(){
@@ -26,6 +27,8 @@ Location::Location(const Location& model) {
     level = model.level;
     methods = model.methods;
 	max_body_size = model.max_body_size;
+	redirect = model.redirect;
+	collection_route = model.collection_route;
     for (size_t i = 0; i < model.locations.size(); i++) {
         locations.push_back(Location(model.locations[i]));
     }
@@ -42,17 +45,49 @@ Location &Location::operator=(const Location &model) {
 	level = model.level;
 	methods = model.methods;
 	max_body_size = model.max_body_size;
+	redirect = model.redirect;
+	collection_route = model.collection_route;
 	for (size_t i = 0; i < model.locations.size(); i++) {
 		locations.push_back(Location(model.locations[i]));
 	}
 	return(*this);
 }
 
+void	Location::parseRedirect(std::string value) {
+	//std::cout << "[" << value << "]" << std::endl;
+	if (value.empty())
+	{
+		errorCode = 4;
+		return ;
+	}
+	redirect.first = atoi(value.c_str());
+	if (redirect.first != 301 && redirect.first != 302)
+	{
+		errorCode = 15;
+		return ;
+	}
+	redirect.second = strTrim(value.substr(3), ' ');
+	if (redirect.second.empty())
+	{
+		errorCode = 16;
+		return ;
+	}
+}
+void	Location::parseCollectionRoute(std::string value) {
+	//std::cout << "[" << value << "]" << std::endl;
+	if (value.empty())
+	{
+		errorCode = 4;
+		return ;
+	}
+	collection_route = strTrim(value, '/');
+}
+
 void	Location::parseCgi(std::string value) {
 	//std::cout << "[" << value << "]" << std::endl;
 	if (cgi_option != "")
 	{
-		errorCode = 3;
+		errorCode = 4;
 		return ;
 	}
 	cgi_option = value;
@@ -78,7 +113,7 @@ void	Location::parseErrorPage(std::string value) {
 	error_page.to_replace = 0;
 
 	std::string	strPage;
-	std::string	redirect;
+	std::string	redirect_page;
 	std::string	error_codes;
 
 	strPage = strTrim(value.substr(value.find('/') + 1));
@@ -94,14 +129,14 @@ void	Location::parseErrorPage(std::string value) {
 	if (value.find('=') != value.npos)
 	{
 		error_codes = strTrim(value.substr(0, value.find('=')));
-		redirect = strTrim(value.substr(value.find('=') + 1));	}
+		redirect_page = strTrim(value.substr(value.find('=') + 1));	}
 	else
 	{
 		error_codes = value;
 		error_page.to_replace = -1;
 	}
 
-	if (error_codes.empty() || (!redirect.empty() && !strIsDigit(redirect)))
+	if (error_codes.empty() || (!redirect_page.empty() && !strIsDigit(redirect_page)))
 	{
 		errorCode = 10;
 		return ;
@@ -134,7 +169,7 @@ void	Location::parseErrorPage(std::string value) {
 
 	error_page.page = strPage;
 	if (error_page.to_replace != -1)
-		error_page.to_replace = atoi(redirect.c_str());
+		error_page.to_replace = atoi(redirect_page.c_str());
 
 	error_pages.push_back(error_page);
 }
@@ -271,6 +306,8 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 	this->error_pages = father.getError_pages();
 	this->root = father.getRoot();
 	this->autoindex = father.getAutoindex();
+	this->collection_route = father.getCollectionRoute();
+	this->redirect = father.getRedirect();
 
 	if (nest != 0 && value.empty())
 	{
@@ -297,8 +334,9 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 	uri = value;
 	cgi_option = "";
 	
-	std::string key_words[11] = {
-	"error_page", "location", "autoindex", "root", "index", "cgi", "allowed_methods", "client_max_body_size", "listen", "server_name", "error"};
+	std::string key_words[13] = {
+	"error_page", "location", "autoindex", "root", "index", "cgi", "allowed_methods",
+	"client_max_body_size", "return", "collectionendpoint", "listen", "server_name", "error"};
 	for (std::string buffer; std::getline(confFile, buffer);)
 	{
 		buffer = strTrim(buffer);
@@ -313,11 +351,11 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 			return ;
 		}
 		int key;
-		for (key = 0; key < 10; key++)
+		for (key = 0; key < 12; key++)
 			if (buffer.substr(0, buffer.find_first_of(' ')) == key_words[key])
 				break;
 
-		if (key == 10 || ((key == 8 || key == 9) && nest != 0))
+		if (key == 12 || ((key == 10 || key == 11) && nest != 0))
 		{
 			errorCode = 7;
 			errorLine = buffer;
@@ -361,6 +399,12 @@ Location::Location(std::string value, std::ifstream &confFile, int nest, const L
 				break;
 			case 7:
 				parseBodySize(value);
+				break;
+			case 8:
+				parseRedirect(value);
+				break;
+			case 9:
+				parseCollectionRoute(value);
 				break;
 			default:
 				break;
@@ -431,6 +475,8 @@ std::ostream &operator<<(std::ostream &stream, Location location) {
 	}
 
 	stream << tabs <<  "| MAX BODY SIZE\t: " << location.getMax_body_size() <<  + "\n";
+	stream << tabs <<  "| RETURN\t: " << location.getRedirect().first << " " << location.getRedirect().second <<  + "\n";
+	stream << tabs <<  "| COLECTION PATH: " << location.getCollectionRoute() <<  + "\n";
 
 	std::vector<Location> _locations = location.getLocations();
 	if (!_locations.empty())
@@ -458,4 +504,7 @@ bool						Location::getAutoindex() const {return autoindex;}
 allowed_methods				Location::getMethods() const {return methods;}
 std::vector<error_page>		Location::getError_pages() const {return error_pages;}
 long long					Location::getMax_body_size() const {return max_body_size;}
+std::pair<int, std::string>	Location::getRedirect() const {return redirect;}
+std::string					Location::getCollectionRoute() const {return collection_route;}
+
 void						Location::setLevel(long long newLevel) {level = newLevel;}

@@ -167,6 +167,8 @@ std::string makeString(const std::vector<char> vec) {
 std::string makeString(std::vector<char>::iterator start, std::vector<char>::iterator end) {
 	std::string	retval;
 
+	if (std::distance(start, end) <= 0)
+		return ("");
 	for (std::vector<char>::iterator it = start; it != end ; ++it) {
 		retval += *it;
 	}
@@ -194,4 +196,11 @@ char *makeCString(std::vector<char>::iterator start, std::vector<char>::iterator
 
 	retval[i] = '\0';
 	return (retval);
+}
+
+std::string	getTime() {
+	time_t currentTime = time(0);
+	std::stringstream temp;
+	temp << currentTime;
+	return (temp.str());
 }

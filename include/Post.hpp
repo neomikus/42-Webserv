@@ -8,27 +8,35 @@ class File;
 
 class Post: public Request {
 	private:
-		typedef std::vector<File> files;
+		typedef std::vector<File>	files;
+		bool						body_parsed;
+		int							inpipefd[2];
 
 		files				filesVector;
 		std::string			contentType;
 		std::string			boundary;
 		std::string			newResourceName;
-		Post();
-		void		parseBody(std::vector<char> &rawBody);
-		void		parseMultipartData(std::vector<char> &rawBody);
-		void		parseFormData(std::string rawBody);
-		void		parsePlainData(std::vector<char> rawBody);
-		void		updateResource(int &status);
-		void		writeContent(File &fileBody);
-		void		getBody(int &status, Location &currentLocation, File &responseBody);
+		void				parseChunkedData();
+		void				parseMultipartData();
+		void				parseFormData();
+		void				parsePlainData();
+		void				parseBody();
+		void				updateResource();
+		void				writeContent(File &fileBody);
+		void				getBody(File &responseBody);
+		void				parseHeader(std::vector<Server> &servers);
+
+		void				cgi(int epfd);
+		
 	public:
-		Post(std::vector<std::string> splittedResponse, std::vector<char> &rawBody);
-		Post	&operator=(const Post &model);
+		Post();
+		Post		&operator=(const Post &model);
 		Post(const Post &model);
 		~Post();
 
-		void	response(int fd, std::list<int> &clients, Server &server);
+		std::vector<File>	&getFilesVector();
+		void	response(int fd);
+		void	cgiResponse(int fd, int epfd);
 };
 
 #endif

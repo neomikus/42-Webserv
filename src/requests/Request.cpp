@@ -2,6 +2,32 @@
 #include "Request.hpp"
 #include "Server.hpp"
 #include "File.hpp"
+#include "Post.hpp"
+
+Location	selectContext(Location &location, std::string fatherUri, std::string &resource) {
+   std::string uri = "/" + resource;
+
+	if (uri[uri.size() - 1] == '/')
+		uri.erase(uri.end() - 1);
+	if (fatherUri != "/")
+		uri = uri.substr(fatherUri.size());
+	else
+		fatherUri = "";
+
+	while (!uri.empty() && uri != "/")
+	{
+		for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
+		{
+			if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
+				return (*it);
+			if (it->getUri() == uri)
+				return (selectContext(*it, fatherUri + it->getUri(), resource));
+		}
+		uri = trimLastWord(uri, '/');
+	}
+
+	return (location);
+}
 
 void	Request::parseMethodResourceProtocol(const std::string line)
 {
@@ -16,57 +42,43 @@ void	Request::parseMethodResourceProtocol(const std::string line)
 	buffer >> resource;
 	buffer >> protocol;
 
-	std::vector<std::string>	queries = strSplit(resource.substr(resource.find("?") + 1, resource.size()), "&");
-	for (std::vector<std::string>::iterator it = queries.begin(); it != queries.end(); ++it) {
-		std::vector<std::string>	currentQuery = strSplit(*it, "=");
-		if (currentQuery.size() != 2)
-			continue;
-		std::pair<std::string, std::string>	temp(currentQuery.front(), currentQuery.back());
-	}
-	
+	size_t tokenPos = resource.find("?");
+	if (tokenPos != resource.npos)
+		query = resource.substr(tokenPos + 1);
 	resource = resource.substr(0, resource.find("?"));
-
 	resource = ltrim(resource, '/');
 }
 
+void	Request::parseHeader(std::vector<Server> &servers) {
+	std::vector<std::string>	header = strSplit(makeString(rawHeader), "\r\n");
 
-Request::Request(std::vector<std::string> splitedRaw) {
-	*this = Request();
-	parseMethodResourceProtocol(splitedRaw[0]);
-	if (error)
-		return ;
-	for (std::vector<std::string>::iterator it = splitedRaw.begin(); it != splitedRaw.end(); ++it)
+	for (std::vector<std::string>::iterator it = header.begin(); it != header.end(); ++it)
 	{
-		std::stringstream	tokens;
-		tokens << *it;
-
-		std::string _temp;
-		tokens >> _temp;
-
-		if (_temp == "Host:")
-		{
-			hostPort.host = it->substr(6, it->find(':', 6) - 6);
+		if (it->find("Host") != it->npos) {
+			std::string temp = strTrim(it->substr(cstrlen("Host:")));
+			hostPort.host = temp.substr(0, temp.find(":"));
 			hostPort.port = atoi(it->substr(6 + hostPort.host.length() + 1).c_str());
-
-		}
-		if (_temp == "User-Agent:")
-			userAgent = it->substr(12);
-		if (_temp == "Accept:")
-			accept = strSplit(it->substr(8), ",");
-		if (_temp == "Accept-Encoding:")
-			acceptEncoding = strSplit(it->substr(17), ", ");
-		if (_temp == "Connection:")
-		{
-			tokens >> _temp;
-			if (_temp == "keep-alive")
+		} else if (it->find("User-Agent") != it->npos) {
+			userAgent = strTrim(it->substr(cstrlen("User-Agent:")));
+		} else if (it->find("Accept") != it->npos) {
+			accept = strSplit(strTrim(it->substr(cstrlen("Accept:"))), ",");
+		} else if (it->find("Connection") != it->npos) {
+			if (strTrim(it->substr(cstrlen("Connection:"))) == "keep-alive")
 				keepAlive = true;
+		} else if (it->find("Referer") != it->npos) {
+			referer = strTrim(it->substr(cstrlen("Referer")));
+		} else if (it->find("Content-Length") != it->npos) {
+			contentLength = atol(strTrim(it->substr(cstrlen("Content-Length: "))).c_str());
+		} else if (it->find("Transfer-Encoding") != it->npos) {
+			transferEncoding = strTrim(it->substr(cstrlen("Transfer-Encoding:")));
 		}
-		if (_temp == "Referer:")
-			referer = it->substr(9);		
 	}
+	headerRead = true;
+	location = selectContext(selectServer(servers).getVLocation(), "", resource);
 }
 
 Request::Request() {
+	readError = false;
 	error = false;
 	method = "";
 	resource = "";
@@ -74,9 +86,22 @@ Request::Request() {
 	userAgent = "";
 	keepAlive = false;
 	referer = "";
+	transferEncoding = "";
+	contentLength = -1;
+	headerRead = false;
+	status = 0;
+	bodyRead = false;
+	sent = false;
+	inpipe = -1;
+	outpipe = -1;
+	pipeRead = false;
+	pipeWritten = false;
+	cgiTimeout = false;
+	pthread_mutex_init(&cgiTimeoutMutex, NULL);
 }
 
 Request::Request(const Request &model) {
+	this->readError = model.readError;
 	this->error = model.error;
 	this->method = model.method;
 	this->resource = model.resource;
@@ -84,13 +109,15 @@ Request::Request(const Request &model) {
 	this->hostPort = model.hostPort;
 	this->userAgent = model.userAgent;
 	this->accept = model.accept;
-	this->acceptEncoding = model.acceptEncoding;
 	this->keepAlive = model.keepAlive;
 	this->referer = model.referer;
+	this->inpipe = model.inpipe;
+	this->outpipe = model.outpipe;
+	this->sent = model.sent;
 }
-
 
 Request	&Request::operator=(const Request &model) {
+	this->readError = model.readError;
 	this->error = model.error;
 	this->method = model.method;
 	this->resource = model.resource;
@@ -98,12 +125,13 @@ Request	&Request::operator=(const Request &model) {
 	this->hostPort = model.hostPort;
 	this->userAgent = model.userAgent;
 	this->accept = model.accept;
-	this->acceptEncoding = model.acceptEncoding;
 	this->keepAlive = model.keepAlive;
 	this->referer = model.referer;
+	this->inpipe = model.inpipe;
+	this->outpipe = model.outpipe;
+	this->sent = model.sent;
 	return (*this);
 }
-
 
 Request::~Request() {
 	
@@ -123,10 +151,11 @@ bool	checkAllowedMethods(std::string &method, allowed_methods methods) {
 
 Server	&Request::selectServer(std::vector<Server> &servers) {
 
+	
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 		std::vector<hostport> hostports = it->getHostports();
 		for (std::vector<hostport>::iterator it2 = hostports.begin(); it2 != hostports.end(); ++it2) {
-			if ((hostPort.host == it2->host || it2->host == "0.0.0.0") && (hostPort.port == it2->port || it2->port == -1))
+			if ((hostPort.port == it2->port || it2->port == -1))
 				candidates.push_back(*it);
 		}
 	}
@@ -142,7 +171,7 @@ Server	&Request::selectServer(std::vector<Server> &servers) {
 	return (*candidates.begin());
 }
 
-bool	checkPermissions(std::string resource) {
+bool	Request::checkPermissions() {
 	struct stat resBuffer;
 
 	stat(resource.c_str(), &resBuffer);
@@ -152,7 +181,7 @@ bool	checkPermissions(std::string resource) {
 	return (true);
 }
 
-int	Request::getStatus(Location &currentLocation) {
+int	Request::getStatus() {
 	if (error)
 		return (400);
 	if (method != "PUT" && method != "HEAD" &&
@@ -161,24 +190,28 @@ int	Request::getStatus(Location &currentLocation) {
 		return (501);
 	if (protocol != "HTTP/1.0" && protocol != "HTTP/1.1")
 		return (505);
-	if (!checkAllowedMethods(method, currentLocation.getMethods()))
+	if (!checkAllowedMethods(method, location.getMethods()))
 		return (405);
+	if (method == "POST" && transferEncoding != "chunked" && contentLength == -1) {
+		return (411);
+	}
+	if (location.getRedirect().first) {
+		return (location.getRedirect().first);
+	}
 	if (method != "POST" && !resource.empty() && access(resource.c_str(), F_OK)) {
-		if (resource == "teapot")
+		std::vector<std::string> trimmedResource = strSplit(resource, "/");
+		if (trimmedResource.back() == "teapot")
 			return (418);
 		return (404);
 	}
-	if (!resource.empty() && !checkPermissions(resource))
+	if (method != "POST" && !resource.empty() && !checkPermissions())
 		return (403);
-	// Save request body size in parsing!!!
-	//if (currentLocation.getMax_body_size() > request_body_size)
-	//	return (413);
 	if (method == "POST")
 		return (201);
 	return (200);
 }
 
-std::string Request::checkErrorPages(std::vector<error_page> error_pages, int &status) {
+std::string Request::checkErrorPages(std::vector<error_page> error_pages) {
 	for (std::vector<error_page>::iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
 		for (std::vector<int>::iterator it2 = it->to_catch.begin(); it2 != it->to_catch.end(); ++it2) {
 			if (*it2 == status) {
@@ -188,70 +221,43 @@ std::string Request::checkErrorPages(std::vector<error_page> error_pages, int &s
 			}
 		}
 	}
-	return (DEFAULT_ERROR_PAGE);
+	return ("");
 }
 
 void	Request::getErrorPages(std::string &page, File &responseBody) {
 	if (access(page.c_str(), F_OK))
-		responseBody.open(DEFAULT_ERROR_PAGE);
+		errorPageGenerator(responseBody, status);
 	else
 		responseBody.open(page);
 }
 
-Location Request::selectContext(Location &location, std::string fatherUri) {
-   std::string uri = "/" + resource;
-
-   if (uri[uri.size() - 1] == '/')
-	   uri.erase(uri.end() - 1);
-   if (fatherUri != "/")
-	   uri = uri.substr(fatherUri.size());
-   else
-	   fatherUri = "";
-
-   while(!uri.empty())
-   {	
-	   for (std::vector<Location>::iterator it = location.getLocations().begin(); it != location.getLocations().end(); ++it)
-	   {
-		   if (it->getUri()[0] == '*' && uri.substr(uri.size() - (it->getUri().size() - 1)) == it->getUri().substr(1))
-			   return (*it);
-		   if (it->getUri() == uri)
-			   return (selectContext(*it, fatherUri + it->getUri()));
-	   }
-	   if (uri == "/")
-		   break;
-	   uri = trimLastWord(uri, '/');
-   }
-
-   return (location);
-}
-
-void	Request::getBody(int &status, Location &currentLocation, File &responseBody) {
-	std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+void	Request::getBody(File &responseBody) {
+	std::string page = checkErrorPages(location.getError_pages());
 	if (!page.empty())
 		getErrorPages(page, responseBody);
 	else
-		responseBody.open(DEFAULT_ERROR_PAGE);
+		errorPageGenerator(responseBody, status);
 }
 
-void	Request::response(int fd, std::list<int> &clients, Server &server) {
-	Location 	location = selectContext(server.getVLocation(), "");
+void	Request::response(int fd) {
 	if (!location.getRoot().empty())
 		resource = location.getRoot() + resource;
 	
-	int	status = getStatus(location);
+	if (!status)
+		status = getStatus();
 
 	File		responseBody;
 
-	getBody(status, location, responseBody);
+	getBody(responseBody);
 
 	std::string response;
 
 	response += "HTTP/1.1 "; // This is always true
 	response += toString(status);
 	response += " " + getStatusText(status);
-	// I don't know how much we need to add to the response?
+	 
 	response += "Content Lenght: ";
-    response += responseBody.getSize();
+	response += responseBody.getSize();
 	response += "\r\n";
 	
 	response += "\r\n";
@@ -259,7 +265,21 @@ void	Request::response(int fd, std::list<int> &clients, Server &server) {
 	response += makeString(responseBody.getBody());
 
 	send(fd, response.c_str(), response.length(), 0);
-	close(fd);
-	(void)clients;
-	//clients.erase(std::find(clients.begin(), clients.end(), fd));
+	sent = true;
 }
+
+bool				Request::getReadError() {return(this->readError);}
+bool				Request::getSent() {return(this->sent);};
+void				Request::setReadError(bool value) {this->readError = value;}
+std::string			&Request::getMethod() {return(this->method);}
+std::string			&Request::getResource() {return(this->resource);}
+std::string			&Request::getProtocol() {return(this->protocol);}
+std::string			&Request::getQuery() {return(this->query);}
+std::vector<char>	&Request::getRawHeader() {return(this->rawHeader);}
+Location			&Request::getLocation() {return(this->location);};
+int					Request::getOutpipe(){return(this->outpipe);};
+int					Request::getInpipe(){return(this->inpipe);};
+void				Request::setStatus(int newStatus) {status = newStatus;};
+pid_t				Request::getChildPid(){return(this->childPid);};
+int					Request::getChildStatus(){return(this->childStatus);};
+void				Request::cgiResponse(int fd, int epfd) {(void)fd;(void)epfd;};

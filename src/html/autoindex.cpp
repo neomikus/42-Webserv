@@ -55,7 +55,6 @@ std::string	getFileElement(std::string current, std::string path) {
 
 	// Last modified cell
 	retval << "<td>" << ctime(&fileBuffer.st_mtime) << "</td>" << std::endl;
-	// Find something allowed by the subject!!!
 
 	// Size cell
 	if (type == "directory")
@@ -101,7 +100,7 @@ File	generateAutoIndex(std::string resource, std::string directory) {
 	contents << ".application{color: crimson;} .application::before{font-family: 'Font Awesome 5 Free'; font-weight: 900; content: '\\e697  ';}" << std::endl;
 	contents << "</style></head>" << std::endl;	
 
-	contents << "<body><script src='https://kit.fontawesome.com/0704200816.js' crossorigin='anonymous'></script>" << "<header><h1>Index of " << (resource.empty() ? "/" : resource.c_str()) << "</h1></header>" << std::endl << "<table>" << std::endl;
+	contents << "<body><script src='https://kit.fontawesome.com/b096cabf1e.js' crossorigin='anonymous'></script>" << "<header><h1>Index of " << (resource.empty() ? "/" : resource.c_str()) << "</h1></header>" << std::endl << "<table>" << std::endl;
 	contents << "<tr class='header'><td>File</td><td>Last modified</td><td>Size</td></tr>" << std::endl;
 
 	if (!resource.empty()) {
@@ -139,6 +138,7 @@ File	generateAutoIndex(std::string resource, std::string directory) {
 	contents << "</table></body>" << std::endl;
 
 	retval.write(contents.str().c_str());
+	retval.setType("text/html");
 	closedir(dirPTR);
 	return (retval);
 }

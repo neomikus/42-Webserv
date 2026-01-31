@@ -9,43 +9,96 @@ class Request
 {
 	private:
 		std::vector<Server> 				candidates;
+		long long							bodyRead;
+		pthread_mutex_t						cgiTimeoutMutex;
+
 	protected:
-		bool								error; // necesary : (firstline)method resource protocol
+		bool								readError;
+		bool								error;
+		bool								sent;
+		int									outpipe;
+		int									inpipe;
+
+		std::vector<char>					rawHeader;
+		std::vector<char>					rawBody;
 		std::string							method;
-		std::map<std::string, std::string>	query;
+		std::string							query;
 		std::string							resource;
 		std::string							protocol;
 
-		hostport					hostPort;
-		std::string					userAgent; // I don't know if this is useful to us or not, maybe for cookies?
-		std::vector<std::string>	accept; // May be renamed acceptFormat?
-		// Accept-Language is horrible
-		std::vector<std::string>	acceptEncoding;
-		bool						keepAlive; // Connection: keep-alive = true, Connection: close = false
-		std::string					referer;
-		// Sec fetch: Do later
+		bool								headerRead;
+		bool								pipeRead;
+		bool								pipeWritten;
+		bool								cgiTimeout;
+		std::string							cgiOutput;
+		pid_t								childPid;
+		int									childStatus;
+
+
+		long								contentLength;
+		hostport							hostPort;
+		std::string							userAgent; // I don't know if this is useful to us or not, maybe for cookies?
+		std::vector<std::string>			accept; // May be renamed acceptFormat?
+		std::string							transferEncoding;
+		bool								keepAlive; // Connection: keep-alive = true, Connection: close = false
+		std::string							referer;
+
+		Location							location;
+		int									status;
 
 		void						parseMethodResourceProtocol(std::string line);
-		int							getStatus(Location &currentLocation);
-		virtual void				getBody(int &status, Location &currentLocation, File &responseBody);
+		bool						checkPermissions();
+		int							getStatus();
+		virtual void				getBody(File &responseBody);
 		virtual	void				writeContent(File &fileBody) {(void)fileBody;};
-		std::string					checkErrorPages(std::vector<error_page> error_pages, int &status);
+		std::string					checkErrorPages(std::vector<error_page> error_pages);
 		void						getErrorPages(std::string &error_page, File &responseBody);
-		Location 					selectContext(Location &location, std::string fatherUri);
-	
-	public:
+		virtual void				parseHeader(std::vector<Server> &servers);
+
 		
+
+	public:
 		Request();
-		Request(std::vector<std::string> splitedRaw);
+		//Request(std::vector<std::string> splitedRaw);
 		Request(const Request &model);
 		Request	&operator=(const Request &model);
 		virtual ~Request();
 		Server	&selectServer(std::vector<Server> &servers);
-		virtual void	response(int fd, std::list<int> &clients, Server &server); // May return int for response code or for error check?
+		virtual void	response(int fd); // May return int for response code or for error check?
+		virtual void	cgiResponse(int fd, int epfd);
 
-};
+		bool				readHeader(int fd, std::vector<Server> &servers);
+		bool				readBody(int fd);
+		void				readFromPipe();
+		void				writeToPipe(std::vector<File> &filesVector, int epfd);
+		void				closeOutpipe(int epfd);
+		void				closeInpipe(int epfd);
+		
+		bool				getReadError();
+		void				setReadError(bool value);
+		bool				getSent();
+
+		void				setStatus(int newStatus);
+		void				setTimeout(bool timeout);
+		bool 				getTimeout();
+		int					getChildStatus();
+		pid_t				getChildPid();
+		
+		std::string			&getMethod();
+		std::string			&getProtocol();
+		std::string			&getResource();
+		std::string			&getQuery();
+		std::vector<char>	&getRawHeader();
+		Location			&getLocation();
+		int					getOutpipe();
+		int					getInpipe();
+		
+	};
+
+void		*checkTimeout(void *ptr);
 
 std::string	getStatusText(int status);
-void cgi(int &status,File &responseBody, std::string resource, std::string command);
+
+Location	selectContext(Location &location, std::string fatherUri, std::string &resource);
 
 #endif

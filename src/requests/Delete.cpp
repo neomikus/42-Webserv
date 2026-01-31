@@ -1,9 +1,8 @@
 #include "webserv.hpp"
 #include "Delete.hpp"
 
-Delete::Delete(){}
-
-Delete::Delete(std::vector<std::string> splitedResponse): Request(splitedResponse){
+Delete::Delete(): Request() {
+	contentLength = 0;
 }
 
 Delete::Delete(const Delete &model): Request(model) {
@@ -14,19 +13,32 @@ Delete::~Delete() {
 
 }
 
-bool checkStat(std::string resource, int &status) {
+void	Delete::parseHeader(std::vector<Server> &servers) {
+	Request::parseHeader(servers);
+}
+
+bool checkStat(std::string &resource, int &status) {
 	struct stat resBuffer;
 
-	stat(resource.c_str(), &resBuffer);
+	if (stat(resource.c_str(), &resBuffer)) {
+		status = 500;
+		return (false);
+	}
 
-	if (S_ISDIR(resBuffer.st_mode) || !(resBuffer.st_mode & S_IWUSR)) {
+	if (resBuffer.st_mode && S_ISDIR(resBuffer.st_mode)) {
 		status = 403;
         return (false);
 	}
+
+	if (resBuffer.st_mode && !(resBuffer.st_mode & S_IWUSR)) {
+		status = 403;
+		return (false);
+	}
+
 	return (true);
 }
 
-void	Delete::deleteResource(int &status) {
+void	Delete::deleteResource() {
     if (status != 200)
         return;
 
@@ -39,35 +51,30 @@ void	Delete::deleteResource(int &status) {
     }
 }
 
-void    Delete::getBody(int &status, Location &currentLocation, File &responseBody) {
-	(void)currentLocation;
-	if (status == 200) {
-		;
-	} else if (status == 204) {
-		; // Nothing to return!!!
-	} else {
-		std::string page = checkErrorPages(currentLocation.getError_pages(), status);
+void    Delete::getBody(File &responseBody) {
+	if (status != 200 && status != 201) {
+		std::string page = checkErrorPages(location.getError_pages());
 		if (!page.empty())
 			getErrorPages(page, responseBody);
 		else
-			responseBody.open(DEFAULT_ERROR_PAGE);
+			errorPageGenerator(responseBody, status);
 	}
 }
 
-void	Delete::response(int fd, std::list<int> &clients, Server &server) {
-	Location 	location = selectContext(server.getVLocation(), "");
-	int	status = getStatus(location);
-    deleteResource(status);
+void	Delete::response(int fd) {
+	resource = location.getRoot() + "/" + resource;
+	status = getStatus();
+    deleteResource();
 	File		responseBody;
 
-	getBody(status, location, responseBody);
+	getBody(responseBody);
 	
     std::string response;
 
 	response += "HTTP/1.1 "; // This is always true
 	response += toString(status);
 	response += " " + getStatusText(status);
-	// I don't know how much we need to add to the response?
+	 
 	response += "Content Lenght: ";
     response += responseBody.getSize();
 	response += "\r\n";
@@ -83,6 +90,5 @@ void	Delete::response(int fd, std::list<int> &clients, Server &server) {
 	response += makeString(responseBody.getBody());
 
 	send(fd, response.c_str(), response.length(), 0);
-	close(fd);
-	(void)clients;
+	sent = true;
 }

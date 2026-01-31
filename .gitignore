@@ -46,3 +46,4 @@ tmp_reporte_cppcheck.txt
 
 # Uploads folder contents
 www/uploads/*
+www/forms/*

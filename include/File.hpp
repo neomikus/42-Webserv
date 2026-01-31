@@ -22,19 +22,19 @@ class File
 
 		void	open(const std::string filename);
 		void	open(const char *filename);
-		void	write(fileIterator &start, fileIterator &end);
+		void	write(fileIterator start, fileIterator end);
 		void	write(const char *str);
 		
 		void	toDisk(std::string filename);
 
-		std::vector<char>	&getBody() {return (body);}
-		long long			&getSize() {return (_size);}
-		std::string			getType() const {return(type);}
-		std::string			&getName() {return(name);}
-		std::string			getName() const {return(name);}
+		std::vector<char>	&getBody();
+		long long			&getSize();
+		std::string			getType() const;
+		std::string			&getName();
+		std::string			getName() const;
 
-		void				setType(std::string newType) {type = newType;}
-		void				setName(std::string newName) {name = newName;}
+		void				setType(std::string newType);
+		void				setName(std::string newName);
 };
 
 #endif

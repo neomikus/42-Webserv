@@ -8,25 +8,22 @@
 	- [ ] Otros archivos de código
 3. Implementar:
 	- [x] Terminar POST (Mica)
-	- [ ] Códigos de Error restantes
-	- [ ] CGI está bien hecho?
-	- [ ] Max allowed size for client requests
+	- [x] Códigos de Error restantes
+	- [x] CGI Get
+	- [x] CGI Post
+	- [x] Max allowed size for client requests
 	- [x] Terminar de implementar root
 	- [x] Implementar index (Mica)
-	- [ ] Chunked requests?
+	- [x] Chunked requests
 	- [x] DELETE
 	- [x] autoindex
 	- [ ] Collection endpoint (upload file to directory)
-	- [ ] Redefinir como funciona interface:port
 	- [ ] HTTP redirects
-	- [ ] Comprobar recv/poll relation
-	- [ ] Comprobar send/poll relation
-	- [ ] Get connection info when connecting to client socket
-	- [ ] inet_addr to something allowed by the subject
-	- [ ] See HTTP 1.0 vs 1.1
+	- [x] Comprobar recv/poll relation
+	- [x] Comprobar send/poll relation
 4. Probar:
-	- [ ] Siege
-	- [ ] Stress test
+	- [x] Siege
+	- [x] Stress test
 	- [ ] Complex config files
 5. Bonus:
 	- [ ] Virtual hosts

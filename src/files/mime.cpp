@@ -1,22 +1,5 @@
 #include "webserv.hpp"
 
-// Can't use it at 42
-/*
-#include <magic.h>
-#define MAGIC_DATABASE "/usr/share/file/misc/magic.mgc"
-
-std::string	getMIME(std::string filename) {
-	std::string	retval("application/octet-stream");
-	magic_t	magic = magic_open(MAGIC_MIME_TYPE);
-	magic_load(magic, MAGIC_DATABASE);
-	const char *mime = magic_file(magic, filename.c_str());
-	if (mime)
-		retval = mime;
-	magic_close(magic);
-	return (retval);
-}
-*/
-
 // MY QUEST FOR MIME TYPES IN C++ STARTS NOW!!!
 
 #define MIME_PATH "/usr/share/mime/"
@@ -62,8 +45,9 @@ std::map<std::string, std::string> mime_init() {
 					}			
 				}
 			}
-			
+			currentFile.close();
 		}		
+		
 		closedir(mimeDir);
 	}
 	return (mimeLib);
@@ -110,7 +94,7 @@ std::map<std::string, std::string> mime_reverse_init() {
 					}			
 				}
 			}
-			
+			currentFile.close();
 		}		
 		closedir(mimeDir);
 	}

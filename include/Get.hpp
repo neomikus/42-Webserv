@@ -5,18 +5,24 @@
 
 class Get: public Request {
 	private:
+		std::string redirectUrl;
 
-		Get();
-		bool	checkRedirect(Location &location, int &status);
-		bool	checkIndex(Location &location, File &responseBody);
-		bool	checkAutoindex(Location &location, File &responseBody);
-		void	getBody(int &status, Location &currentLocation, File &responseBody);
+		bool	checkRedirect();
+		bool	checkIndex(File &responseBody);
+		bool	checkAutoindex(File &responseBody);
+		void	getBody(File &responseBody);
+		bool	checkAcceptedFormats(File &responseBody);	
+		void	acceptedFormats(File &responseBody);
+		void	parseHeader(std::vector<Server> &servers);
+		void	cgi(int epfd);
 	public:
-		Get(std::vector<std::string> splitedResponse);
+		Get();
+		//Get(std::vector<std::string> splitedResponse);
+		void	cgiResponse(int fd, int epfd);
 		Get(const Get &model);
 		~Get();
 	
-		void	response(int fd, std::list<int> &clients, Server &server);
+		void	response(int fd);
 };
 
 #endif

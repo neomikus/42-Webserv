@@ -16,6 +16,13 @@ File::File(const std::string filename) {
 
 	file.open(filename.c_str(), std::ios::binary);
 
+	if (!file.is_open()) {
+		_size = 0;
+		type = "none";
+		std::cerr << "Can't open file " << filename << std::endl;
+		return;
+	}
+
     file.seekg(0, std::ios::end);
     _size = file.tellg();
     file.seekg(0, std::ios::beg);
@@ -26,6 +33,8 @@ File::File(const std::string filename) {
 		type = getMIME(filename.substr(filename.find_last_of(".")), false);
 	else
 		type = "text/plain";
+
+	file.close();
 }
 
 File::File(const char *filename) {
@@ -44,6 +53,8 @@ File::File(const char *filename) {
 		type = getMIME(std::string(filename).substr(std::string(filename).find_last_of(".")), false);
 	else
 		type = "text/plain";
+
+	file.close();
 }
 
 File::~File() {
@@ -55,6 +66,13 @@ void	File::open(const std::string filename) {
 
 	file.open(filename.c_str(), std::ios::binary);
 
+	if (!file.is_open()) {
+		_size = 0;
+		type = "none";
+		std::cerr << "Can't open file " << filename << std::endl;
+		return;
+	}
+
     file.seekg(0, std::ios::end);
     _size = file.tellg();
     file.seekg(0, std::ios::beg);
@@ -65,12 +83,21 @@ void	File::open(const std::string filename) {
 		type = getMIME(filename.substr(filename.find_last_of(".")), false);
 	else
 		type = "text/plain";
+	
+	file.close();
 }
 
 void	File::open(const char *filename) {
 	std::ifstream	file;
 
 	file.open(filename, std::ios::binary);
+	
+	if (!file.is_open()) {
+		_size = 0;
+		type = "none";
+		std::cerr << "Can't open file " << filename << std::endl;
+		return;
+	}
 
     file.seekg(0, std::ios::end);
     _size = file.tellg();
@@ -82,20 +109,22 @@ void	File::open(const char *filename) {
 		type = getMIME(std::string(filename).substr(std::string(filename).find_last_of(".")), false);
 	else
 		type = "text/plain";
+	
+	file.close();
 }
 
-void	File::write(fileIterator &start, fileIterator &end) {
+void	File::write(fileIterator start, fileIterator end) {
 	_size = std::distance(start, end);
-	
+
 	for (; start != end; ++start)
 		body.push_back(*start);
 }
 
 void	File::write(const char *str) {
+	_size += cstrlen(str);
+
 	for (size_t i = 0; str[i]; i++)
 		body.push_back(str[i]);
-
-	_size += cstrlen(str);
 }
 
 void	File::toDisk(std::string filename) {
@@ -105,4 +134,33 @@ void	File::toDisk(std::string filename) {
 		::write(fd, &*it, 1);
 	}
 	close(fd);
+}
+
+std::vector<char>	&File::getBody() {
+	return (body);
+}
+
+long long	&File::getSize() {
+	return (_size);
+}
+
+std::string	File::getType() const {
+	return (type);
+}
+
+std::string	&File::getName() {
+	return (name);
+}
+
+std::string	File::getName() const {
+	return (name);
+}
+
+
+void	File::setType(std::string newType) {
+	type = newType;
+}
+
+void	File::setName(std::string newName) {
+	name = newName;
 }
